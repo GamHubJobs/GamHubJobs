@@ -1011,7 +1011,7 @@ footer {
 /* ============================================================
    VIEW 4 — CV PREVIEW
    ============================================================ */
-#view-preview { display: none; background: #e8e5dc; min-height: 100vh; }
+#view-preview { display: none; background: #e8e5dc; min-height: 100vh; padding-top: 68px; }
 #view-preview.active { display: block; }
 
 .preview-topbar {
@@ -1020,7 +1020,7 @@ footer {
   padding: 0 20px;
   height: 56px;
   display: flex; align-items: center; gap: 8px;
-  position: sticky; top: 0; z-index: 100;
+  position: sticky; top: 68px; z-index: 100;
   overflow-x: auto;
   /* Hide scrollbar but keep scrollable */
   scrollbar-width: none;
@@ -3163,7 +3163,7 @@ footer {
   .preview-topbar-divider { display: none; }
   .preview-topbar-title   { font-size: 12px; }
   /* Stack download as primary full-width button below topbar */
-  #view-preview { padding-top: 0; }
+  #view-preview { padding-top: 68px; }
   .cv-wrapper { padding: 24px 12px 100px; }
   /* Wizard grid — 2 cols on tiny phones */
   .profession-grid { grid-template-columns: repeat(2, 1fr); }
