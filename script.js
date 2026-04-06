@@ -1656,7 +1656,7 @@ async function finaliseDownload(token) {
    Replaces EmailJS for both free and paid job submissions.
    Opens WhatsApp with full job details pre-filled.
    ============================================================ */
-async function sendJobNotificationWhatsApp(jobPayload, plan) {
+function sendJobNotificationWhatsApp(jobPayload, plan) {
   try {
     const perks = (() => {
       try { return JSON.parse(jobPayload.perks || '[]').join(', '); }
@@ -1702,7 +1702,8 @@ async function sendJobNotificationWhatsApp(jobPayload, plan) {
     const encoded = encodeURIComponent(msg);
     const waUrl = 'https://wa.me/2206371941?text=' + encoded;
 
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    /* Use location.href on mobile — never blocked, opens WhatsApp directly */
+    window.location.href = waUrl;
 
   } catch(err) {
     console.error('[WhatsApp notify] Failed:', err);
