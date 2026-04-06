@@ -1,56 +1,13 @@
 /* ============================================================
-   ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗
-  ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
-  ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
-  ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
-  ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
-   ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
    GAMHUB JOBS — APP CONFIGURATION
-   ============================================================
-   All credentials live here and ONLY here.
-   To update any value, change it in this block.
-   Never scatter credentials anywhere else in the code.
    ============================================================ */
 const APP_CONFIG = {
-
-  /* ── Supabase ────────────────────────────────────────────────
-     Find these at:
-     supabase.com → Your Project → Settings → API            */
   SUPABASE_URL:      'https://whrlhlssojgpbcwregmf.supabase.co',
-  // ^ Project URL — Settings → API → Project URL
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndocmxobHNzb2pncGJjd3JlZ21mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTg4NjUsImV4cCI6MjA4OTIzNDg2NX0.4T2hePXxyJ8KdKjbVpGax7wh2ruPCkd2BxHUlcuedno',
-  // ^ Anon/public key — Settings → API → Project API keys → anon public
-
-  /* ── ModemPay ────────────────────────────────────────────────
-     Find this at:
-     modem-pay.com → Dashboard → API Keys → pk_live_ key     */
   MODEMPAY_PUBLIC_KEY: 'pk_live_51ebe3d202c7d2dfd9b31befc1536124a934c826ea02ba062aae2914bf5c2a39',
-  // ^ Public key — safe to expose in frontend code
-  // ^ NEVER put your sk_live_ secret key here
-
-  /* ── Supabase Edge Function ──────────────────────────────────
-     Deployed at:
-     supabase.com → Edge Functions → modempay-charge → URL   */
   EDGE_FN_URL: 'https://whrlhlssojgpbcwregmf.supabase.co/functions/v1/modempay-charge',
-  // ^ Only needed if using the Edge Function payment method
-
-  /* ── EmailJS — for job submission notifications ──────────────
-     Setup:
-     1. Go to https://www.emailjs.com/ and create a free account
-     2. Add an Email Service (e.g. Gmail) → copy the Service ID
-     3. Create an Email Template → copy the Template ID
-     4. Go to Account → Public Key → copy it here
-     Template variables available: to_email, to_name, job_title,
-     company, contact_email, location, job_type, industry, salary,
-     deadline, experience, plan, description, requirements, perks,
-     website, apply_url, logo_url, submitted_at, payment_status   */
-  EMAILJS_SERVICE_ID:  'service_ielm9ul',
-  EMAILJS_TEMPLATE_ID: 'template_koqbk5q',
-  EMAILJS_PUBLIC_KEY:  'Y2Z5w_yLWC9mgnFJc',
-
 };
 
-/* ── Config validation — runs once on startup ─────────────── */
 (function validateConfig() {
   const required = [
     ['SUPABASE_URL',      APP_CONFIG.SUPABASE_URL],
@@ -61,7 +18,6 @@ const APP_CONFIG = {
     !val || val.includes('REPLACE') || val.trim() === ''
   );
   if (missing.length > 0) {
-    /* Show toast after DOM loads */
     window.addEventListener('DOMContentLoaded', () => {
       missing.forEach(([key]) =>
         toast('Configuration error — ' + key + ' is missing. Please contact support.', 'error', 8000)
@@ -73,8 +29,6 @@ const APP_CONFIG = {
 /* ============================================================
    UTILITIES
    ============================================================ */
-
-/** HTML escape — security: all user content passes through this */
 function h(s) {
   if (s === null || s === undefined) return '';
   return String(s)
@@ -85,46 +39,27 @@ function h(s) {
     .replace(/'/g,'&#39;');
 }
 
-/* ── Input sanitization helpers ───────────────────────────── */
-/**
- * Trim whitespace and enforce a maximum character length.
- * All user text inputs pass through this before being saved.
- */
 function sanitizeText(val, maxLen) {
   if (val === null || val === undefined) return '';
   return String(val).trim().slice(0, maxLen || 2000);
 }
 
-/**
- * Validate a URL is http/https only.
- * Returns the URL if valid, empty string otherwise.
- */
 function sanitizeUrl(val) {
   const s = String(val || '').trim();
   return /^https?:\/\//i.test(s) ? s.slice(0, 500) : '';
 }
 
-/**
- * Validate an email address format.
- */
 function sanitizeEmail(val) {
   const s = String(val || '').trim().slice(0, 254);
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : '';
 }
 
-/**
- * Clamp a number between min and max.
- */
 function sanitizeNumber(val, min, max) {
   const n = parseInt(val, 10);
   if (isNaN(n)) return min;
   return Math.min(max, Math.max(min, n));
 }
 
-/**
- * Sanitize the full job posting payload before it goes to Supabase.
- * Enforces field length limits and validates URLs/emails.
- */
 function sanitizeJobPayload(payload) {
   return {
     title:        sanitizeText(payload.title,        120),
@@ -148,7 +83,6 @@ function sanitizeJobPayload(payload) {
   };
 }
 
-/** Show a toast notification */
 function toast(msg, type='default', duration=3500) {
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
@@ -164,7 +98,6 @@ function toast(msg, type='default', duration=3500) {
   }, duration);
 }
 
-/** Generate a simple slug */
 function slug(s) {
   return (s||'unnamed').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
@@ -187,13 +120,10 @@ function showView(id) {
   currentView = id;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  /* Stamp current view on <body> so the WhatsApp widget
-     can position itself above any fixed bottom bars */
   document.body.className = document.body.className
     .replace(/\bview-\S+/g, '').trim();
   document.body.classList.add('view-' + id);
 
-  /* On entering certain views, run setup */
   if (id === 'builder')     setupBuilderContext();
   if (id === 'preview')   { renderCV(); initGearTour(); }
   if (id === 'employer')    initEmployerPortal();
@@ -201,7 +131,6 @@ function showView(id) {
   if (id === 'job-search')  initJobSearchView();
 }
 
-/* Navbar scroll effect */
 window.addEventListener('scroll', () => {
   document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
 });
@@ -222,21 +151,6 @@ function scrollToTemplates(){ showView('landing'); setTimeout(()=>document.getEl
 
 /* ============================================================
    DATA STORES
-   ============================================================ */
-
-/* ============================================================
-   API RATE LIMITER — client-side token-bucket per endpoint
-   ============================================================
-   Prevents abuse of all external API routes by tracking call
-   counts per endpoint key in a sliding time window.
-
-   Limits:
-     supabase_write   5 calls / 60 seconds   (job inserts/updates)
-     supabase_read   20 calls / 60 seconds   (job fetches)
-     supabase_profile 10 calls / 60 seconds  (profile reads/writes)
-     scraper          2 calls / 120 seconds  (CORS proxy scrapes)
-     payment          3 calls / 600 seconds  (ModemPay form submits)
-     auth             5 calls / 60 seconds   (magic link sends)
    ============================================================ */
 const rateLimiter = (() => {
   const BUCKETS = {
@@ -357,7 +271,6 @@ function initWizard() {
   renderProfessionGrid();
   renderPaletteGrid();
   renderFontGrid();
-  // Restore selections
   if (wizardData.profession) {
     document.querySelectorAll('.profession-card').forEach(c => {
       if (c.dataset.id === wizardData.profession) c.classList.add('selected');
@@ -458,21 +371,16 @@ function selectFont(id) {
 
 function goToWizardStep(step) {
   wizardStep = step;
-  // Update content panels
   document.querySelectorAll('.wizard-step-content').forEach((el,i) => {
     el.classList.toggle('active', i+1 === step);
   });
-  // Update step indicators
   document.querySelectorAll('.wsi-step').forEach((el,i) => {
     el.classList.toggle('active', i+1 === step);
     el.classList.toggle('done', i+1 < step);
   });
-  // Progress bar
   document.getElementById('wizard-progress-fill').style.width = `${(step/3)*100}%`;
   document.getElementById('wizard-step-label').textContent = step;
-  // Prev button visibility
   document.getElementById('wizard-prev-btn').style.visibility = step === 1 ? 'hidden' : 'visible';
-  // Next button label
   document.getElementById('wizard-next-btn').textContent = step === 3 ? 'Start Building →' : 'Continue →';
 }
 
@@ -481,7 +389,6 @@ function wizardNext() {
   if (wizardStep === 2 && !wizardData.palette)    { toast('Please choose a color palette', 'error'); return; }
   if (wizardStep === 3 && !wizardData.font)       { toast('Please select a font style', 'error'); return; }
   if (wizardStep < 3) { goToWizardStep(wizardStep + 1); return; }
-  // Wizard complete → go to builder with sample data
   prefillSampleData();
   showView('builder');
   toast('Design saved! Now fill in your details.', 'gold');
@@ -492,11 +399,11 @@ function wizardPrev() {
 }
 
 /* ============================================================
-   SAMPLE DATA (non-technical persona)
+   SAMPLE DATA
    ============================================================ */
 function prefillSampleData() {
   const existing = loadData('cvData');
-  if (existing && existing._filled) return; // Don't overwrite user data
+  if (existing && existing._filled) return;
 
   const data = {
     _filled: true,
@@ -542,7 +449,6 @@ let builderStep = 1;
 let autoSaveTimer = null;
 let photoDataURL = null;
 
-// Profession tips per builder step
 const BUILDER_TIPS = {
   personal: {
     default: 'Write a concise 2-3 sentence summary focusing on your most relevant experience and top skills.',
@@ -576,33 +482,27 @@ function setupBuilderContext() {
   const pal  = PALETTES.find(p => p.id === wiz.palette) || { name:'Default' };
   const fnt  = FONTS.find(f => f.id === wiz.font) || { label:'Default' };
 
-  // Badges
   document.getElementById('builder-badges').innerHTML = `
     <div class="context-badge"><span class="cb-icon">${prof.icon}</span>${h(prof.label)}</div>
     <div class="context-badge"><span class="cb-icon">🎨</span>${h(pal.name)}</div>
     <div class="context-badge"><span class="cb-icon">Aa</span>${h(fnt.label)}</div>
   `;
 
-  // Achievement section label
   const achievLabels = { uxui:'Case Studies', graphic:'Case Studies', writer:'Published Work', photo:'Portfolio', scientist:'Research & Publications' };
   const achLabel = achievLabels[wiz.profession] || 'Achievements & Work Samples';
   document.getElementById('achievements-title').textContent = achLabel;
 
-  // Tips
   document.getElementById('tip-personal').innerHTML = `<strong>💡 Tip:</strong> ${h(getTip('personal'))}`;
   document.getElementById('tip-skills').innerHTML   = `<strong>💡 Tip:</strong> ${h(getTip('skills'))}`;
   document.getElementById('tip-edu').innerHTML      = `<strong>💡 Tip:</strong> ${h(getTip('edu'))}`;
 
-  // Build progress bar
   const steps = ['Personal','Skills','Experience','Education','Achievements','Contact'];
   document.getElementById('builder-progress').innerHTML = steps.map((s,i) => `
     <div class="bp-step ${i===0?'active':''}" data-step="${i+1}" onclick="goToBuilderStep(${i+1})">${i+1}. ${s}</div>
   `).join('');
 
-  // Load existing data
   loadBuilderData();
 
-  // Start autosave
   if (autoSaveTimer) clearInterval(autoSaveTimer);
   autoSaveTimer = setInterval(autoSave, 8000);
 
@@ -623,25 +523,21 @@ function loadBuilderData() {
   if (d.refs)       document.getElementById('b-refs').value      = d.refs;
   if (d.photo)      { photoDataURL = d.photo; updatePhotoPreview(d.photo); }
 
-  // Skills
   const skillsList = document.getElementById('skills-list');
   skillsList.innerHTML = '';
   if (d.skills && d.skills.length) d.skills.forEach(s => addSkill(s.name, s.level));
   else { addSkill('Communication'); addSkill('Problem Solving'); }
 
-  // Experience
   const expList = document.getElementById('experience-list');
   expList.innerHTML = '';
   if (d.experience && d.experience.length) d.experience.forEach(e => addExperience(e));
   else addExperience();
 
-  // Education
   const eduList = document.getElementById('education-list');
   eduList.innerHTML = '';
   if (d.education && d.education.length) d.education.forEach(e => addEducation(e));
   else addEducation();
 
-  // Achievements
   const achList = document.getElementById('achievements-list');
   achList.innerHTML = '';
   if (d.achievements && d.achievements.length) d.achievements.forEach(a => addAchievement(a));
@@ -705,7 +601,6 @@ function collectBuilderData() {
 function autoSave() {
   const dot   = document.getElementById('autosave-dot');
   const label = document.getElementById('autosave-label');
-  /* Sanitize before persisting — enforces field lengths, validates URLs */
   const data  = sanitizeCVData(collectBuilderData());
   saveData('cvData', data);
   dot.classList.add('saved');
@@ -713,10 +608,6 @@ function autoSave() {
   setTimeout(() => { dot.classList.remove('saved'); label.textContent = 'Auto saving...'; }, 2500);
 }
 
-/**
- * Sanitize CV builder data before storing in localStorage.
- * Limits every field length and validates URLs/emails.
- */
 function sanitizeCVData(d) {
   if (!d) return d;
   return {
@@ -776,7 +667,6 @@ function builderPrev() {
   if (builderStep > 1) goToBuilderStep(builderStep - 1);
 }
 
-/* Add skill row */
 function addSkill(name='') {
   const list = document.getElementById('skills-list');
   const div  = document.createElement('div');
@@ -791,7 +681,6 @@ function addSkill(name='') {
   list.appendChild(div);
 }
 
-/* Add experience entry */
 function addExperience(d={}) {
   const list = document.getElementById('experience-list');
   const div  = document.createElement('div');
@@ -809,7 +698,6 @@ function addExperience(d={}) {
   list.appendChild(div);
 }
 
-/* Add education entry */
 function addEducation(d={}) {
   const list = document.getElementById('education-list');
   const div  = document.createElement('div');
@@ -826,7 +714,6 @@ function addEducation(d={}) {
   list.appendChild(div);
 }
 
-/* Add achievement entry */
 function addAchievement(d={}) {
   const list = document.getElementById('achievements-list');
   const wiz  = loadData('wizard') || {};
@@ -848,7 +735,6 @@ function addAchievement(d={}) {
   list.appendChild(div);
 }
 
-/* Photo upload */
 function handlePhotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -866,9 +752,7 @@ function updatePhotoPreview(src) {
   el.innerHTML = `<img src="${src}" alt="Photo preview">`;
 }
 
-/* Generate CV */
 function generateCV() {
-  /* Require login before saving/generating CV */
   if (!currentUser) {
     showAuthModal(function() { generateCV(); });
     return;
@@ -903,10 +787,6 @@ function renderCV() {
 }
 
 function buildCVHTML(d) {
-  /* Photo: use raw src (base64 data URL) — do NOT escape through h()
-     as that would corrupt the data: URI. It is safe here because
-     this string only comes from the user's own file upload. */
-  /* Validate photo is a data: URI before injecting into img src */
   const safePhoto = d.photo && /^data:image\/(jpeg|png|webp|gif);base64,/.test(d.photo)
     ? d.photo : null;
   const photoHTML = safePhoto
@@ -917,7 +797,6 @@ function buildCVHTML(d) {
   const certs = (d.certs||'').split('\n').map(c=>c.trim()).filter(Boolean);
   const refs  = (d.refs||'').split('\n').map(r=>r.trim()).filter(Boolean);
 
-  // Contact row
   const contactItems = [
     d.email    && `<span class="cv-contact-item">✉ ${h(d.email)}</span>`,
     d.phone    && `<span class="cv-contact-item">📱 ${h(d.phone)}</span>`,
@@ -925,14 +804,12 @@ function buildCVHTML(d) {
     d.linkedin && `<span class="cv-contact-item">🔗 ${h(d.linkedin)}</span>`,
   ].filter(Boolean).join('');
 
-  // Skills
   const skillsHTML = (d.skills||[]).map(s => `
     <div class="cv-skill-bar">
       <div class="cv-skill-name">${h(s.name)}</div>
     </div>
   `).join('');
 
-  // Experience
   const expHTML = (d.experience||[]).map(e => `
     <div class="cv-exp-item">
       <div class="cv-exp-title">${h(e.title)}</div>
@@ -942,7 +819,6 @@ function buildCVHTML(d) {
     </div>
   `).join('');
 
-  // Education
   const eduHTML = (d.education||[]).map(e => `
     <div class="cv-edu-item">
       <div class="cv-edu-inst">${h(e.institution)}</div>
@@ -951,7 +827,6 @@ function buildCVHTML(d) {
     </div>
   `).join('');
 
-  // Achievements
   const wiz = loadData('wizard') || {};
   const achLabelMap = { uxui:'Case Studies', graphic:'Case Studies', writer:'Published Work', photo:'Portfolio', scientist:'Research & Publications' };
   const achLabel = achLabelMap[wiz.profession] || 'Achievements';
@@ -964,7 +839,6 @@ function buildCVHTML(d) {
     </div>
   `).join('');
 
-  // Refs
   const refHTML = refs.map(r => {
     const parts = r.split('–').map(p=>p.trim());
     return `<div class="cv-ref"><div class="cv-ref-name">${h(parts[0]||r)}</div><div>${h(parts.slice(1).join(' · '))}</div></div>`;
@@ -999,39 +873,8 @@ function buildCVHTML(d) {
 }
 
 /* ============================================================
-   PDF DOWNLOAD GATEWAY — ModemPay HTML Checkout
-   ─────────────────────────────────────────────────────────────
-   Uses ModemPay's HTML Checkout: a plain form POST.
-   No API calls, no SDK, no Edge Function needed.
-
-   Flow:
-   1. User clicks Download PDF
-   2. First download is always FREE — executes immediately
-   3. After the free download, a payment modal appears
-   4. User picks a plan (CV: GMD 25, CL: GMD 15, Bundle: GMD 35)
-   5. We build a hidden HTML form with all required ModemPay fields
-   6. We .submit() the form → browser POSTs to ModemPay checkout
-   7. User pays on ModemPay's hosted page (mobile money / wallet)
-   8. ModemPay redirects back to return_url with ?payment_status=success
-   9. App reads the URL → triggers the PDF download automatically
+   PDF DOWNLOAD GATEWAY
    ============================================================ */
-
-/* ── Free download counter — backed by Supabase profiles ─────
-   The profiles table needs a free_downloads_used column (integer,
-   default 0). Run this once in Supabase SQL Editor if needed:
-
-     alter table profiles
-       add column if not exists free_downloads_used integer default 0;
-
-   This cannot be tampered with via browser DevTools because it
-   lives on the server, not in localStorage.
-   ──────────────────────────────────────────────────────────── */
-
-/**
- * Returns how many free downloads this user has left.
- * Reads free_downloads_used from the Supabase profiles table.
- * Returns 0 on any error (fail closed = safer).
- */
 async function getFreeDownloadsLeft() {
   if (!currentUser) return 0;
   if (!rateLimiter.check('supabase_profile')) {
@@ -1046,25 +889,20 @@ async function getFreeDownloadsLeft() {
       .single();
 
     if (error) {
-      /* PGRST116 = row not found = brand new user = give them their free download */
       if (error.code === 'PGRST116') return 1;
       throw error;
     }
 
     const used = data?.free_downloads_used || 0;
-    const FREE_DOWNLOADS = 1; /* change this number to give more free downloads */
+    const FREE_DOWNLOADS = 1;
     return Math.max(0, FREE_DOWNLOADS - used);
 
   } catch (err) {
     console.warn('[Downloads] Could not read counter:', err.message);
-    return 0; /* fail closed */
+    return 0;
   }
 }
 
-/**
- * Increments free_downloads_used in the Supabase profiles table by 1.
- * Creates the profile row if it doesn't exist yet (upsert).
- */
 async function useFreeDownload() {
   if (!currentUser) return false;
   if (!rateLimiter.check('supabase_profile')) {
@@ -1087,31 +925,26 @@ async function useFreeDownload() {
 
   } catch (err) {
     console.warn('[Downloads] Counter error:', err.message);
-    return false; // fail closed — no free download if counter fails
+    return false;
   }
 }
 
-/* ── CV PDF download ──────────────────────────────────────── */
 async function downloadPDF() {
-  /* Step 1: Must be logged in — counter lives in Supabase, not browser */
   if (!currentUser) {
     showAuthModal(function() { downloadPDF(); });
     return;
   }
 
-  /* Step 2: Navigate to preview if not already there */
   if (currentView !== 'preview') {
     showView('preview');
     setTimeout(() => downloadPDF(), 600);
     return;
   }
 
-  /* Step 3: Check free downloads remaining from Supabase (async, tamper-proof) */
   toast('Checking your download allowance…', 'default', 2000);
   const freeLeft = await getFreeDownloadsLeft();
 
   if (freeLeft > 0) {
-    /* Step 4a: Free download — increment counter in Supabase then download */
     await useFreeDownload();
     if (freeLeft - 1 === 0) {
       toast('Free download used ✦ Next download costs GMD ' + MODEMPAY_CONFIG.DOWNLOAD_PRICES.cv + '.', 'gold', 5000);
@@ -1122,31 +955,25 @@ async function downloadPDF() {
     return;
   }
 
-  /* Step 4b: No free downloads left — show payment options */
   showDownloadPaymentModal('cv');
 }
 
-/* ── Cover letter PDF download ────────────────────────────── */
 async function downloadCoverLetter() {
-  /* Step 1: Must be logged in — counter lives in Supabase, not browser */
   if (!currentUser) {
     showAuthModal(function() { downloadCoverLetter(); });
     return;
   }
 
-  /* Step 2: Navigate to cover letter view if not already there */
   if (currentView !== 'coverletter') {
     showView('coverletter');
     setTimeout(() => downloadCoverLetter(), 600);
     return;
   }
 
-  /* Step 3: Check free downloads remaining from Supabase (async, tamper-proof) */
   toast('Checking your download allowance…', 'default', 2000);
   const freeLeft = await getFreeDownloadsLeft();
 
   if (freeLeft > 0) {
-    /* Step 4a: Free download — increment counter in Supabase then download */
     await useFreeDownload();
     if (freeLeft - 1 === 0) {
       toast('Free download used ✦ Next download costs GMD ' + MODEMPAY_CONFIG.DOWNLOAD_PRICES.coverletter + '.', 'gold', 5000);
@@ -1157,11 +984,9 @@ async function downloadCoverLetter() {
     return;
   }
 
-  /* Step 4b: No free downloads left — show payment options */
   showDownloadPaymentModal('coverletter');
 }
 
-/* ── Payment modal — shows plan options before checkout ───── */
 function showDownloadPaymentModal(type) {
   var prices    = MODEMPAY_CONFIG.DOWNLOAD_PRICES;
   var typeLabel = { cv:'CV', coverletter:'Cover Letter', bundle:'CV + Cover Letter Bundle' };
@@ -1178,11 +1003,9 @@ function showDownloadPaymentModal(type) {
     '<p style="font-size:14px;color:var(--text2);text-align:center;line-height:1.7;margin-bottom:24px">Your free download has been used.<br>Pay securely via ModemPay — mobile money accepted.</p>' +
     '<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">🔒 Secured by ModemPay · GMD transactions</p>';
 
-  /* Options container */
   var opts = document.createElement('div');
   opts.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-bottom:20px;';
 
-  /* Individual plan option */
   if (type !== 'bundle') {
     var card1 = document.createElement('div');
     card1.style.cssText = 'background:var(--surface);border:2px solid var(--gold);border-radius:var(--radius-lg);padding:16px;cursor:pointer;';
@@ -1194,7 +1017,6 @@ function showDownloadPaymentModal(type) {
     opts.appendChild(card1);
   }
 
-  /* Bundle option */
   var card2 = document.createElement('div');
   card2.style.cssText = 'background:var(--surface);border:2px solid rgba(212,168,83,0.4);border-radius:var(--radius-lg);padding:16px;cursor:pointer;';
   card2.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;margin-bottom:3px">✦ CV + Cover Letter Bundle</div><div style="font-size:12px;color:var(--text2)">Best value — both documents</div></div><div style="font-family:var(--font-mono);font-size:16px;color:var(--gold);font-weight:700">GMD ' + prices.bundle + '</div></div>';
@@ -1204,7 +1026,6 @@ function showDownloadPaymentModal(type) {
   });
   opts.appendChild(card2);
 
-  /* Cancel button */
   var cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-ghost btn-full btn-sm';
   cancelBtn.textContent = 'Cancel';
@@ -1212,37 +1033,17 @@ function showDownloadPaymentModal(type) {
     document.getElementById('download-payment-overlay').remove();
   });
 
-  /* Assemble */
   box.insertBefore(opts, box.lastElementChild);
   box.insertBefore(cancelBtn, box.lastElementChild);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 }
 
-/* ── Core: build & submit ModemPay HTML Checkout form ──────── */
-/*
- * This is the HTML Checkout method from ModemPay's docs:
- *
- *   <form method="POST" action="https://checkout.modempay.com/api/pay">
- *     <input type="hidden" name="public_key" value="pk_live_..." />
- *     <input type="hidden" name="amount" value="450" />
- *     ...
- *     <button type="submit">Pay Now</button>
- *   </form>
- *
- * We build this form dynamically in JS and submit it immediately.
- * No API call. No fetch(). No Edge Function. Just a form POST.
- */
-/* ── ModemPay field length guard ──────────────────────────────
-   ModemPay's API has a VARCHAR(255) limit on every field.
-   mp() trims and truncates before any value reaches the form. */
 function mp(val, max) {
   return String(val || '').trim().slice(0, max || 255);
 }
 
-/* ── The base URL without query string — kept short for ModemPay ── */
 function mpBaseUrl() {
-  /* Use origin + pathname only — no query string, no hash */
   return window.location.origin + window.location.pathname;
 }
 
@@ -1260,12 +1061,10 @@ function submitModemPayForm(type) {
 
   saveData_raw('folio_pending_download', { type: type, token: dlToken, amount: amount });
 
-  /* Keep URLs short — base URL + minimal query params only */
   const base      = mpBaseUrl();
   const returnUrl = base + '?payment_status=success&dl_token=' + dlToken;
   const cancelUrl = base + '?payment_status=cancelled';
 
-  /* Customer details — trimmed and capped at ModemPay's limits */
   const customerName  = mp(cvData.fullname || 'GamHub Jobs User', 100);
   const customerEmail = mp(cvData.email    || 'user@gamhubjobs.gm', 100);
   const customerPhone = mp((cvData.phone || '7000000').replace(/[^0-9]/g, '').slice(-7) || '7000000', 20);
@@ -1302,7 +1101,6 @@ function submitModemPayForm(type) {
   setTimeout(function() { form.submit(); }, 600);
 }
 
-/* ── Job posting payment form ──────────────────────────────── */
 async function submitJobPaymentForm(jobPayload, plan, amount) {
   if (!rateLimiter.check('payment')) {
     const wait = rateLimiter.waitSeconds('payment');
@@ -1310,17 +1108,12 @@ async function submitJobPaymentForm(jobPayload, plan, amount) {
     return;
   }
 
-  /* ── Save job to Supabase BEFORE payment redirect ─────────────
-     We need a real DB id so finalisePaidJob() can find the job
-     when ModemPay sends the user back. Without this the job never
-     appears in the database and "Job not found" is thrown.        */
   toast('Saving your listing…', 'default', 2000);
   let realJobId = null;
 
   try {
     if (SB_CONNECTED) {
       const saved = await sbInsertJob({ ...jobPayload, paid: false });
-      /* sbInsertJob returns the array of inserted rows */
       const row = Array.isArray(saved) ? saved[0] : saved;
       realJobId = row?.id || null;
       console.log('[Job] Pre-saved to Supabase with id:', realJobId);
@@ -1329,10 +1122,8 @@ async function submitJobPaymentForm(jobPayload, plan, amount) {
     console.warn('[Job] Pre-save failed:', err.message);
   }
 
-  /* Fall back to a local id if Supabase was unavailable */
   const jobId = realJobId || ('local-' + Date.now());
 
-  /* Store locally so the My Listings tab can show it */
   saveData_raw('folio_pending_job', Object.assign({}, jobPayload, { _pendingId: jobId, id: jobId }));
 
   const base      = mpBaseUrl();
@@ -1372,7 +1163,6 @@ async function submitJobPaymentForm(jobPayload, plan, amount) {
   setTimeout(function() { form.submit(); }, 800);
 }
 
-/* ── The actual PDF generation (called after payment or free) */
 function executePDFDownload(type) {
   if (type === 'bundle') {
     executePDFDownload('cv');
@@ -1407,14 +1197,6 @@ function executePDFDownload(type) {
 
   toast('Preparing ' + (isCL ? 'cover letter' : 'CV') + ' PDF…', 'default', 6000);
 
-  /*
-   * html2canvas often paints an empty body when the capture node uses a
-   * negative stacking context (e.g. z-index: -1) or when a shallow-cloned
-   * CV loses layout. Fix: mount a fresh A4-width tree in an off-screen
-   * shell (no negative z-index), inject explicit print CSS for the grid,
-   * and for CVs rebuild markup from buildCVHTML so Skills / Experience /
-   * Education match saved data pixel-for-pixel.
-   */
   const EXPORT_W = 794;
   const shell = document.createElement('div');
   shell.id = 'ghj-pdf-export-shell';
@@ -1527,7 +1309,6 @@ function executePDFDownload(type) {
 function toggleCustomizer() {
   document.getElementById('customizer-panel').classList.toggle('open');
   document.getElementById('customizer-overlay').classList.toggle('open');
-  /* Toggle open state on the gear button for visual feedback */
   document.querySelectorAll('.cust-gear-btn').forEach(btn => {
     btn.classList.toggle('open',
       document.getElementById('customizer-panel').classList.contains('open')
@@ -1545,39 +1326,27 @@ function shareToLinkedIn() {
   window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
 }
 
-
 /* ============================================================
-   EMPLOYER PORTAL — FULL MODULE
+   EMPLOYER PORTAL
    ============================================================ */
-
-/* ── Config ───────────────────────────────────────────────── */
 const EMPLOYER_STORAGE = {
-  config:    'folio_sb_config',      // Supabase URL + key
-  draftPost: 'folio_employer_draft', // In-progress post form
-  myJobs:    'folio_employer_jobs',  // Employer's own submitted jobs
+  config:    'folio_sb_config',
+  draftPost: 'folio_employer_draft',
+  myJobs:    'folio_employer_jobs',
 };
 
-/* ADMIN_PASSWORD removed — admin access now via Supabase profiles table role=admin */
-
-/* ── Supabase client (lightweight, no SDK needed) ─────────── */
-
-/* Supabase credentials — set in APP_CONFIG at the top of this file */
 let SB_URL = APP_CONFIG.SUPABASE_URL;
 let SB_KEY  = APP_CONFIG.SUPABASE_ANON_KEY;
 let SB_CONNECTED = false;
 
 function sbLoad() {
-  // Use saved config if available, otherwise fall back to hardcoded defaults
   const cfg = loadData_raw(EMPLOYER_STORAGE.config);
   if (cfg && cfg.url && cfg.key) {
     SB_URL = cfg.url.replace(/\/+$/, '');
     SB_KEY = cfg.key;
   } else {
-    // Save the defaults so they persist
     saveData_raw(EMPLOYER_STORAGE.config, { url: APP_CONFIG.SUPABASE_URL, key: APP_CONFIG.SUPABASE_ANON_KEY });
   }
-  // Pre-fill the input fields
-  // Auto-connect immediately
   sbTestConnection();
 }
 
@@ -1588,13 +1357,7 @@ function saveData_raw(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
 }
 
-function sbDraftSave() {
-  // Nothing needed — just keeps inputs live
-}
-
-
 async function sbTestConnection() {
-  /* Silently test the connection — no visible UI elements needed */
   try {
     const res = await fetch(SB_URL + '/rest/v1/jobs?limit=1', {
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
@@ -1612,7 +1375,6 @@ async function sbTestConnection() {
   }
 }
 
-/** POST a job to Supabase */
 async function sbInsertJob(job) {
   if (!rateLimiter.check('supabase_write')) {
     const wait = rateLimiter.waitSeconds('supabase_write');
@@ -1636,7 +1398,6 @@ async function sbInsertJob(job) {
   return await res.json();
 }
 
-/** FETCH all jobs (admin — all) or approved jobs (public) */
 async function sbFetchJobs(adminMode = false) {
   if (!rateLimiter.check('supabase_read')) {
     throw new Error('Too many read requests — please wait ' + rateLimiter.waitSeconds('supabase_read') + 's.');
@@ -1651,7 +1412,6 @@ async function sbFetchJobs(adminMode = false) {
   return await res.json();
 }
 
-/** PATCH a job (approve/reject) */
 async function sbUpdateJob(id, patch) {
   if (!rateLimiter.check('supabase_write')) {
     throw new Error('Too many updates — please wait ' + rateLimiter.waitSeconds('supabase_write') + 's.');
@@ -1669,7 +1429,6 @@ async function sbUpdateJob(id, patch) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 }
 
-/* ── Init ─────────────────────────────────────────────────── */
 function initEmployerPortal() {
   sbLoad();
   setDeadlineDefault();
@@ -1686,7 +1445,6 @@ function setDeadlineDefault() {
   }
 }
 
-/* ── Tab switcher ─────────────────────────────────────────── */
 function switchPortalTab(tab, btn) {
   document.querySelectorAll('.portal-tab').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -1696,7 +1454,6 @@ function switchPortalTab(tab, btn) {
   if (tab === 'admin')  renderAdminPanel();
 }
 
-/* ── Live preview ─────────────────────────────────────────── */
 function updateJobPreview() {
   const title   = document.getElementById('pj-title')?.value       || '';
   const company = document.getElementById('pj-company')?.value     || '';
@@ -1708,16 +1465,14 @@ function updateJobPreview() {
   document.getElementById('prev-title').textContent   = title   || 'Job Title';
   document.getElementById('prev-company').textContent = company || 'Company Name';
 
-  /* Live logo preview */
   const logoUrl  = document.getElementById('pj-logo-url')?.value.trim() || '';
   const logoWrap = document.getElementById('prev-logo-wrap');
   if (logoWrap) {
     logoWrap.innerHTML = logoUrl
-      ? (/^https?:\/\//i.test(logoUrl) ? '<img src="' + h(logoUrl) + '" class="job-card-logo" style="width:32px;height:32px">' : '<div class="job-card-logo-placeholder" style="width:32px;height:32px;font-size:13px">🏢</div>')  
+      ? (/^https?:\/\//i.test(logoUrl) ? '<img src="' + h(logoUrl) + '" class="job-card-logo" style="width:32px;height:32px">' : '<div class="job-card-logo-placeholder" style="width:32px;height:32px;font-size:13px">🏢</div>')
       : '<div class="job-card-logo-placeholder" style="width:32px;height:32px;font-size:13px">🏢</div>';
   }
 
-  /* Live plan badge preview */
   const plan     = getSelectedPlan ? getSelectedPlan() : 'free';
   const badgeEl  = document.getElementById('prev-plan-badge');
   if (badgeEl) {
@@ -1740,7 +1495,6 @@ function updateJobPreview() {
   }
 }
 
-/* ── Form helpers ─────────────────────────────────────────── */
 function updateCharCount(inputId, countId, max) {
   const val = document.getElementById(inputId)?.value || '';
   document.getElementById(countId).textContent = `${val.length} / ${max}`;
@@ -1762,8 +1516,6 @@ function selectPlan(card, plan) {
   card.classList.add('selected');
   card.dataset.plan = plan;
 
-  // Update submit button label and note to reflect selected plan
-  const prices = { free: 0, featured: 10, premium: 10 };
   const labels = {
     free:     '✦ Submit Free Listing',
     featured: '💳 Pay GMD 10 & Submit Featured Listing',
@@ -1779,7 +1531,6 @@ function selectPlan(card, plan) {
   if (labelEl) labelEl.textContent = labels[plan] || labels.free;
   if (noteEl)  noteEl.textContent  = notes[plan]  || notes.free;
 
-  /* selectPlan updates live preview badge */
   const badgeEl = document.getElementById('prev-plan-badge');
   if (badgeEl) {
     badgeEl.innerHTML = plan === 'premium'
@@ -1801,62 +1552,30 @@ function getSelectedPerks() {
 }
 
 /* ============================================================
-   MODEMPAY PAYMENT GATEWAY — PUBLIC KEY MODE
-   ============================================================
-   Uses ModemPay's PUBLIC key (pk_live_...) directly in the
-   browser. This is safe because the public key can only be
-   used to CREATE a payment intent UI — it cannot move money,
-   access your account, or perform any sensitive actions.
-
-   Flow:
-   1. User clicks Pay
-   2. Browser calls ModemPay API directly with the PUBLIC key
-   3. ModemPay returns a checkout_url
-   4. Browser redirects user to that checkout page
-   5. User pays using mobile money / wallet
-   6. ModemPay redirects back with ?payment_status=success
-   7. App finalises the job post or triggers the PDF download
-
-   ✦ PASTE YOUR pk_live_ KEY INTO MODEMPAY_PUBLIC_KEY BELOW
+   MODEMPAY CONFIG
    ============================================================ */
-
-/* ModemPay public key — set in APP_CONFIG at the top of this file */
 const MODEMPAY_PUBLIC_KEY = APP_CONFIG.MODEMPAY_PUBLIC_KEY;
 
 const MODEMPAY_CONFIG = {
-  /* ModemPay public API endpoint — safe to call from browser */
   API_URL: 'https://api.modem-pay.com/v1/payment-intents',
-
-  /* Job listing plan prices in GMD */
   PRICES: {
     free:     0,
     featured: 10,
     premium:  10,
   },
-
-  /* PDF download prices in GMD */
   DOWNLOAD_PRICES: {
-    cv:          25,   /* CV PDF */
-    coverletter: 15,   /* Cover Letter PDF */
-    bundle:      35,   /* Both together */
+    cv:          25,
+    coverletter: 15,
+    bundle:      35,
   },
-
-  /* How many free downloads before payment kicks in (per browser) */
   FREE_DOWNLOADS: 1,
-
-  /* ModemPay redirects here after payment */
   RETURN_URL: window.location.href.split('?')[0] + '?payment_status=success',
   CANCEL_URL: window.location.href.split('?')[0] + '?payment_status=cancelled',
 };
 
-/* ── Check for payment return on page load ────────────────── */
-/*
-   ModemPay redirects back to this page with URL params.
-   We read them here and route to the right handler:
-     ?payment_status=success&job_id=xxx    → finalise job post
-     ?payment_status=success&dl_token=xxx  → trigger PDF download
-     ?payment_status=cancelled             → show cancellation toast
-*/
+/* ============================================================
+   PAYMENT RETURN HANDLER
+   ============================================================ */
 (function checkPaymentReturn() {
   const params  = new URLSearchParams(window.location.search);
   const status  = params.get('payment_status');
@@ -1866,21 +1585,16 @@ const MODEMPAY_CONFIG = {
   const clean = () => window.history.replaceState({}, '', window.location.pathname);
 
   if (status === 'success' && jobId) {
-    /* ── Job post payment confirmed ── */
     window.addEventListener('DOMContentLoaded', () => {
       finalisePaidJob(jobId);
       clean();
     });
-
   } else if (status === 'success' && dlToken) {
-    /* ── PDF download payment confirmed ── */
     window.addEventListener('DOMContentLoaded', () => {
       finaliseDownload(dlToken);
       clean();
     });
-
   } else if (status === 'cancelled') {
-    /* ── Payment cancelled by user ── */
     window.addEventListener('DOMContentLoaded', () => {
       const pending = loadData_raw('folio_pending_download');
       if (pending) {
@@ -1895,9 +1609,7 @@ const MODEMPAY_CONFIG = {
   }
 })();
 
-/* ── Finalise download after payment ──────────────────────── */
 async function finaliseDownload(token) {
-  /* Check the DATABASE for verified payment — not the URL parameter */
   try {
     const { data, error } = await supabaseClient
       .from('payments')
@@ -1907,8 +1619,6 @@ async function finaliseDownload(token) {
       .single();
 
     if (error || !data) {
-      /* Payment not verified in database yet
-         Webhook may not have arrived — wait 3 seconds and try once more */
       await new Promise(r => setTimeout(r, 3000));
 
       const { data: retry } = await supabaseClient
@@ -1919,22 +1629,17 @@ async function finaliseDownload(token) {
         .single();
 
       if (!retry) {
-        toast(
-          'Payment is being verified — please wait a moment and try downloading again.',
-          'gold', 6000
-        );
+        toast('Payment is being verified — please wait a moment and try downloading again.', 'gold', 6000);
         showView('preview');
         return;
       }
 
-      /* Second attempt succeeded */
       const type = retry.payment_type || 'cv';
       toast('Payment confirmed! ✦ Starting download…', 'success', 3000);
       executePDFDownload(type);
       return;
     }
 
-    /* First attempt succeeded */
     const type = data.payment_type || 'cv';
     toast('Payment confirmed! ✦ Starting download…', 'success', 3000);
     showView(type === 'coverletter' ? 'coverletter' : 'preview');
@@ -1946,46 +1651,136 @@ async function finaliseDownload(token) {
   }
 }
 
-/* ── Finalise a job after successful payment ──────────────── */
+/* ============================================================
+   WHATSAPP JOB NOTIFICATION
+   Replaces EmailJS for both free and paid job submissions.
+   Opens WhatsApp with full job details pre-filled.
+   ============================================================ */
+async function sendJobNotificationWhatsApp(jobPayload, plan) {
+  try {
+    const perks = (() => {
+      try { return JSON.parse(jobPayload.perks || '[]').join(', '); }
+      catch { return ''; }
+    })();
+
+    const submittedAt = new Date().toLocaleString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    const paymentStatus = plan === 'free'
+      ? 'FREE LISTING — No payment required'
+      : 'PAID — GMD ' + (MODEMPAY_CONFIG.PRICES[plan] || 0) + ' via ModemPay';
+
+    const msg =
+      '🆕 *NEW JOB SUBMISSION — GamHub Jobs*\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '🏢 *COMPANY DETAILS*\n' +
+      '• Company: ' + (jobPayload.company || '—') + '\n' +
+      '• Industry: ' + (jobPayload.industry || '—') + '\n' +
+      '• Contact Email: ' + (jobPayload.email || '—') + '\n' +
+      '• Website: ' + (jobPayload.website || '—') + '\n\n' +
+      '📋 *JOB DETAILS*\n' +
+      '• Title: ' + (jobPayload.title || '—') + '\n' +
+      '• Location: ' + (jobPayload.location || '—') + '\n' +
+      '• Type: ' + (jobPayload.type || '—') + '\n' +
+      '• Salary: ' + (jobPayload.salary || 'Not specified') + '\n' +
+      '• Experience: ' + (jobPayload.experience || '—') + '\n' +
+      '• Deadline: ' + (jobPayload.deadline || '—') + '\n' +
+      '• Plan: ' + (plan || 'free').toUpperCase() + '\n' +
+      '• Payment: ' + paymentStatus + '\n\n' +
+      '📝 *DESCRIPTION*\n' +
+      (jobPayload.description || '—') + '\n\n' +
+      '✅ *REQUIREMENTS*\n' +
+      (jobPayload.requirements || '—') + '\n\n' +
+      '🎁 *PERKS*\n' +
+      (perks || '—') + '\n\n' +
+      '🔗 *APPLY URL*\n' +
+      (jobPayload.apply_url || '—') + '\n\n' +
+      '🕐 Submitted: ' + submittedAt;
+
+    const encoded = encodeURIComponent(msg);
+    const waUrl = 'https://wa.me/2206371941?text=' + encoded;
+
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+
+  } catch(err) {
+    console.error('[WhatsApp notify] Failed:', err);
+  }
+}
+
+/* ============================================================
+   SAVE JOB DIRECTLY (free listings)
+   ============================================================ */
+async function saveJobDirectly(jobPayload) {
+  let savedRemotely = false;
+  try {
+    if (SB_CONNECTED) {
+      await sbInsertJob(jobPayload);
+      savedRemotely = true;
+    }
+  } catch(err) {
+    console.warn('[Employer] Supabase insert failed:', err.message);
+  }
+
+  const localId  = `local-${Date.now()}`;
+  const localJob = { ...jobPayload, id: localId, _local: !savedRemotely };
+  const myJobs   = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
+  myJobs.unshift(localJob);
+  saveData_raw(EMPLOYER_STORAGE.myJobs, myJobs);
+
+  document.getElementById('post-job-form').style.display = 'none';
+  document.getElementById('submission-success').classList.add('show');
+
+  /* Notify via WhatsApp */
+  await sendJobNotificationWhatsApp(jobPayload, jobPayload.plan || 'free');
+
+  toast(
+    savedRemotely ? 'Job submitted! Saved to database ✓' : 'Job saved locally (connect Supabase to go live)',
+    savedRemotely ? 'success' : 'gold', 5000
+  );
+  updatePortalStats();
+}
+
+/* ============================================================
+   FINALISE PAID JOB (featured / premium listings)
+   ============================================================ */
 async function finalisePaidJob(jobId) {
   showView('employer');
 
-  /* The job was pre-saved to Supabase before the redirect.
-     Mark it as paid and show the success state. */
   try {
-    /* Try to mark payment confirmed in Supabase */
     if (SB_CONNECTED) {
       await sbUpdateJob(jobId, { paid: true, payment_confirmed: true });
     }
   } catch(err) {
     console.warn('[Payment] Could not mark job paid in DB:', err.message);
-    /* Non-fatal — job is already saved, admin can still approve it */
   }
 
-  /* Always show success — the job is in Supabase regardless */
   const formEl    = document.getElementById('post-job-form');
   const successEl = document.getElementById('submission-success');
   if (formEl)    formEl.style.display = 'none';
   if (successEl) successEl.classList.add('show');
   toast('Payment confirmed! ✦ Your job listing has been submitted for review.', 'success', 6000);
 
-  /* Save to My Listings locally too */
   const pending = loadData_raw('folio_pending_job');
   if (pending) {
     const localJobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
     localJobs.unshift({ ...pending, id: jobId, paid: true, _pendingId: undefined });
     saveData_raw(EMPLOYER_STORAGE.myJobs, localJobs);
-    /* Send admin email notification for paid job */
-    await sendJobNotificationEmail(pending, pending.plan || 'free');
+
+    /* Notify via WhatsApp */
+    await sendJobNotificationWhatsApp(pending, pending.plan || 'free');
+
     localStorage.removeItem('folio_pending_job');
   }
 
   updatePortalStats();
 }
 
-/* ── Main submit function ─────────────────────────────────── */
+/* ============================================================
+   SUBMIT JOB POST
+   ============================================================ */
 async function submitJobPost() {
-  /* ── 1. Collect & validate all form fields ── */
   const title       = document.getElementById('pj-title')?.value.trim()        || '';
   const company     = document.getElementById('pj-company')?.value.trim()      || '';
   const email       = document.getElementById('pj-email')?.value.trim()        || '';
@@ -2009,8 +1804,7 @@ async function submitJobPost() {
   const requirements = document.getElementById('pj-requirements')?.value.trim() || '';
   const perks        = getSelectedPerks();
   const plan         = getSelectedPlan();
-
-  const logoUrl = document.getElementById('pj-logo-url')?.value.trim() || '';
+  const logoUrl      = document.getElementById('pj-logo-url')?.value.trim()     || '';
 
   const rawPayload = {
     title, company, email, location, deadline,
@@ -2024,277 +1818,26 @@ async function submitJobPost() {
     approved: false,
     submitted_at: new Date().toISOString(),
   };
-  /* Sanitize all fields before saving or sending to Supabase */
   const jobPayload = sanitizeJobPayload(rawPayload);
 
-  /* ── 2. Show spinner ── */
   const btn = document.getElementById('submit-job-btn');
   const spinnerEl = document.getElementById('submit-spinner');
   btn.classList.add('btn-submitting');
   btn.disabled = true;
 
-  /* ── 3. Route by plan ── */
   const amount = MODEMPAY_CONFIG.PRICES[plan] || 0;
 
   if (amount === 0) {
-    /* FREE plan — no payment needed, save directly */
     await saveJobDirectly(jobPayload);
     btn.classList.remove('btn-submitting');
     btn.disabled = false;
-
   } else {
-    /* PAID plan — use ModemPay HTML Checkout form (simplest method) */
     btn.classList.remove('btn-submitting');
     btn.disabled = false;
     submitJobPaymentForm(jobPayload, plan, amount);
   }
 }
 
-/* ============================================================
-   EMAILJS — Job submission notification to admin
-   ============================================================
-   Setup steps:
-   1. Sign up free at https://www.emailjs.com/
-   2. Add an Email Service (Gmail, Outlook, etc) → copy Service ID
-   3. Create an Email Template using the variables listed in APP_CONFIG
-   4. Copy your Public Key from Account → General
-   5. Replace the three REPLACE values in APP_CONFIG at the top
-   ============================================================ */
-async function sendJobNotificationEmail(jobPayload, plan) {
-  try {
-    if (!APP_CONFIG.EMAILJS_PUBLIC_KEY || APP_CONFIG.EMAILJS_PUBLIC_KEY.includes('REPLACE')) {
-      console.warn('[Email] EmailJS not configured — skipping notification');
-      return;
-    }
-
-    emailjs.init(APP_CONFIG.EMAILJS_PUBLIC_KEY);
-
-    const perks = (() => {
-      try { return JSON.parse(jobPayload.perks || '[]').join(', '); }
-      catch { return ''; }
-    })();
-
-    const templateParams = {
-      to_email:       'gamhubjobs@gmail.com',
-      to_name:        'GamHub Jobs Admin',
-      job_title:      jobPayload.title        || '',
-      company:        jobPayload.company      || '',
-      contact_email:  jobPayload.email        || '',
-      location:       jobPayload.location     || '',
-      job_type:       jobPayload.type         || '',
-      industry:       jobPayload.industry     || '',
-      salary:         jobPayload.salary       || 'Not specified',
-      deadline:       jobPayload.deadline     || '',
-      experience:     jobPayload.experience   || '',
-      plan:           plan                    || 'free',
-      description:    jobPayload.description  || '',
-      requirements:   jobPayload.requirements || '',
-      perks:          perks,
-      website:        jobPayload.website      || '',
-      apply_url:      jobPayload.apply_url    || '',
-      logo_url:       jobPayload.logo_url     || '',
-      submitted_at:   new Date().toLocaleString('en-GB', {
-        day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      }),
-      payment_status: plan === 'free'
-        ? 'FREE LISTING — No payment required'
-        : 'PAID — GMD ' + (MODEMPAY_CONFIG.PRICES[plan] || 0) + ' via ModemPay',
-    };
-
-    await emailjs.send(
-      APP_CONFIG.EMAILJS_SERVICE_ID,
-      APP_CONFIG.EMAILJS_TEMPLATE_ID,
-      templateParams
-    );
-
-    console.log('[Email] Job notification sent to admin ✓');
-  } catch(err) {
-    console.warn('[Email] Notification failed:', err.message);
-  }
-}
-
-/* ── Save job (free / post-payment) ──────────────────────── */
-async function saveJobDirectly(jobPayload) {
-  let savedRemotely = false;
-  try {
-    if (SB_CONNECTED) {
-      await sbInsertJob(jobPayload);
-      savedRemotely = true;
-    }
-  } catch(err) {
-    console.warn('[Employer] Supabase insert failed:', err.message);
-  }
-
-  const localId  = `local-${Date.now()}`;
-  const localJob = { ...jobPayload, id: localId, _local: !savedRemotely };
-  const myJobs   = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
-  myJobs.unshift(localJob);
-  saveData_raw(EMPLOYER_STORAGE.myJobs, myJobs);
-
-  document.getElementById('post-job-form').style.display = 'none';
-  document.getElementById('submission-success').classList.add('show');
-
-  /* Notify admin by email */
-  await sendJobNotificationEmail(jobPayload, jobPayload.plan || 'free');
-
-  toast(
-    savedRemotely ? 'Job submitted! Saved to database ✓' : 'Job saved locally (connect Supabase to go live)',
-    savedRemotely ? 'success' : 'gold', 5000
-  );
-  updatePortalStats();
-}
-
-/* ── Create ModemPay Payment Intent via Edge Function ────── */
-async function createPaymentIntent({ amount, company, title, plan, pendingId, email, returnUrl }) {
-  /*
-   * Mirrors the ModemPay SDK pattern exactly:
-   *
-   *   const modempay = new ModemPay('YOUR_KEY');
-   *   const intent = await modempay.paymentIntents.create({ amount: 450 });
-   *   console.log(intent.data.payment_link);  // ← redirect user here
-   *
-   * Since our app is a single HTML file (no npm), we replicate what the
-   * SDK does internally — a POST to /v1/payment-intents with Bearer auth —
-   * and read intent.data.payment_link from the response, exactly as the
-   * SDK snippet shows.
-   *
-   * The PUBLIC key (pk_live_...) is safe here. It can only create a
-   * payment checkout. It cannot move money or access your account.
-   */
-
-  /* ── Guard: public key must be set ── */
-  if (!APP_CONFIG.MODEMPAY_PUBLIC_KEY || APP_CONFIG.MODEMPAY_PUBLIC_KEY.includes('REPLACE')) {
-    toast('Configuration error — ModemPay public key is missing. Please contact support.', 'error', 6000);
-    throw new Error('ModemPay public key not configured in APP_CONFIG.');
-  }
-
-  /* ── Guard: must be hosted online, not opened as a local file ── */
-  if (window.location.protocol === 'file:') {
-    throw new Error(
-      'Payments require the app to be hosted online. ' +
-      'Upload index.html to Netlify or GitHub Pages first.'
-    );
-  }
-
-  const finalReturnUrl = returnUrl || (MODEMPAY_CONFIG.RETURN_URL + '&job_id=' + encodeURIComponent(pendingId));
-  const cancelUrl      = MODEMPAY_CONFIG.CANCEL_URL;
-
-  /* ── POST to ModemPay — same as SDK's paymentIntents.create() ── */
-  const res = await fetch('https://api.modem-pay.com/v1/payment-intents', {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': 'Bearer ' + MODEMPAY_PUBLIC_KEY,
-    },
-    body: JSON.stringify({
-      amount:              amount,
-      currency:            'GMD',
-      return_url:          finalReturnUrl,
-      cancel_url:          cancelUrl,
-      skip_url_validation: true,
-      metadata: {
-        job_title:      title,
-        company:        company,
-        plan:           plan,
-        pending_id:     pendingId,
-        employer_email: email,
-        source:         'gamhub-jobs',
-      },
-    }),
-    signal: AbortSignal.timeout(15000),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error('ModemPay error ' + res.status + ': ' + errText);
-  }
-
-  /* ── Read response exactly as SDK does: intent.data.payment_link ── */
-  const intent = await res.json();
-
-  const paymentLink = intent?.data?.payment_link   // SDK-style
-                   || intent?.data?.checkout_url   // alternative field
-                   || intent?.payment_link          // flat response
-                   || intent?.checkout_url;         // another alternative
-
-  if (!paymentLink) {
-    throw new Error(
-      'ModemPay did not return a payment link. ' +
-      'Full response: ' + JSON.stringify(intent).slice(0, 300)
-    );
-  }
-
-  return paymentLink;
-}
-
-/* ── Fallback UI if Edge Function not yet deployed ────────── */
-function showPaymentFallback(jobPayload, plan, amount, errMsg) {
-  /*
-   * Shows a friendly modal explaining payment isn't live yet,
-   * with option to save as free listing instead or pay manually.
-   */
-  const planLabel = plan === 'featured' ? '⭐ Featured' : '🏆 Premium';
-
-  // Create overlay
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position:fixed;inset:0;background:rgba(0,0,0,0.75);
-    z-index:9000;display:flex;align-items:center;justify-content:center;
-    padding:24px;
-  `;
-
-  overlay.innerHTML = `
-    <div style="
-      background:var(--bg2);border:1px solid var(--border);
-      border-radius:var(--radius-xl);padding:40px;max-width:480px;width:100%;
-      animation:fadeUp 0.3s var(--ease);
-    ">
-      <div style="font-size:40px;margin-bottom:16px">💳</div>
-      <h3 style="font-size:22px;margin-bottom:10px">${planLabel} — GMD ${amount}</h3>
-      <p style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px">
-        ${errMsg.includes('hosted online') ?
-          'Payments only work when the app is hosted online. Upload your <strong style="color:var(--gold)">index.html</strong> to GitHub Pages or Netlify — it takes 5 minutes and is free. Once hosted, payments will work automatically.' :
-          'The payment gateway could not be reached. The Supabase Edge Function needs to be deployed with your ModemPay secret key.'
-        }
-        <br><br>
-        <strong style="color:var(--gold)">In the meantime, you have two options:</strong>
-      </p>
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:14px;margin-bottom:20px;font-size:13px;color:var(--muted)">
-        <strong style="color:var(--text2);display:block;margin-bottom:4px">Error detail (for developer):</strong>
-        ${h(errMsg)}
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-gold btn-full" onclick="
-          this.closest('div[style*=fixed]').remove();
-          saveJobDirectly(window._pendingJobPayload);
-        ">
-          Save as Free Listing (submit for review now)
-        </button>
-        <button class="btn btn-outline btn-full" onclick="
-          window.open('https://dashboard.modem-pay.com','_blank');
-          this.closest('div[style*=fixed]').remove();
-        ">
-          Go to ModemPay Dashboard to pay manually
-        </button>
-        <button class="btn btn-ghost btn-full" onclick="this.closest('div[style*=fixed]').remove()">
-          Cancel — go back to form
-        </button>
-      </div>
-    </div>
-  `;
-
-  // Attach payload to window temporarily for the inline onclick above
-  window._pendingJobPayload = jobPayload;
-  document.body.appendChild(overlay);
-
-  // Re-enable submit button
-  const btn = document.getElementById('submit-job-btn');
-  btn.classList.remove('btn-submitting');
-  btn.disabled = false;
-}
-
-/* ── Reset form ───────────────────────────────────────────── */
 function resetPostForm() {
   document.getElementById('pj-title').value       = '';
   document.getElementById('pj-company').value     = '';
@@ -2314,7 +1857,6 @@ function resetPostForm() {
   document.getElementById('submission-success').classList.remove('show');
 }
 
-/* ── My Listings (employer view) ──────────────────────────── */
 function renderManageJobs() {
   const container = document.getElementById('manage-jobs-list');
   const jobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
@@ -2371,7 +1913,6 @@ function deleteMyJob(id) {
   toast('Listing deleted', 'default');
 }
 
-/* ── Portal stats ─────────────────────────────────────────── */
 function updatePortalStats() {
   const jobs    = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
   const total   = jobs.length;
@@ -2382,36 +1923,12 @@ function updatePortalStats() {
   document.getElementById('stat-pending').textContent = pending;
 }
 
-/* ── Admin panel — Supabase role-based access ─────────────── */
-/*
- * Admin access requires the logged-in user to have
- * role = 'admin' in the Supabase 'profiles' table.
- *
- * To grant admin access:
- * 1. Go to Supabase Dashboard → Table Editor → profiles
- * 2. Find the user's row (matched by their user id or email)
- * 3. Set the 'role' column value to: admin
- * 4. Save — they will have admin access on next check
- *
- * To create the profiles table (if it doesn't exist):
- * Run this in Supabase SQL Editor:
- *   create table profiles (
- *     id uuid references auth.users on delete cascade,
- *     email text,
- *     role text default 'user',
- *     primary key (id)
- *   );
- *   alter table profiles enable row level security;
- *   create policy "Users can read own profile"
- *     on profiles for select using (auth.uid() = id);
- */
 let adminLoggedIn = false;
 
 async function checkAdminAccess() {
   const statusEl = document.getElementById('admin-access-status');
   const btn      = document.getElementById('admin-check-btn');
 
-  /* Must be logged in first */
   if (!currentUser) {
     if (statusEl) statusEl.innerHTML =
       '<span style="color:#f87171">You must be logged in to access admin.</span>' +
@@ -2423,7 +1940,6 @@ async function checkAdminAccess() {
   if (statusEl) statusEl.textContent = 'Verifying your role in Supabase…';
 
   try {
-    /* Query the profiles table for this user's role */
     const { data, error } = await supabaseClient
       .from('profiles')
       .select('role')
@@ -2433,14 +1949,12 @@ async function checkAdminAccess() {
     if (error) throw new Error(error.message);
 
     if (data && data.role === 'admin') {
-      /* ✓ Confirmed admin */
       adminLoggedIn = true;
       document.getElementById('admin-login').style.display = 'none';
       document.getElementById('admin-panel').classList.add('active');
       renderAdminPanel();
       toast('Admin access granted ✦', 'gold');
     } else {
-      /* ✗ Not an admin */
       const role = (data && data.role) ? data.role : 'user';
       if (statusEl) statusEl.innerHTML =
         '<span style="color:#f87171">Access denied.</span> Your role is <code style="color:var(--gold)">' +
@@ -2463,7 +1977,6 @@ async function checkAdminAccess() {
 }
 
 function adminLogin() {
-  /* Legacy shim — now delegates to checkAdminAccess */
   checkAdminAccess();
 }
 
@@ -2471,7 +1984,6 @@ function adminLogout() {
   adminLoggedIn = false;
   document.getElementById('admin-login').style.display = '';
   document.getElementById('admin-panel').classList.remove('active');
-  /* Reset status message */
   const statusEl = document.getElementById('admin-access-status');
   if (statusEl) statusEl.textContent = 'Checking your access level…';
 }
@@ -2488,13 +2000,11 @@ async function renderAdminPanel() {
 
   let jobs = [];
 
-  /* ── Use the secure admin-only RPC function ── */
   try {
     const { data, error } = await supabaseClient
       .rpc('get_all_jobs_admin');
 
     if (error) {
-      /* Access denied means the user is not actually an admin in the DB */
       if (error.message.includes('Access denied')) {
         container.innerHTML = `
           <div style="text-align:center;padding:40px;color:#f87171">
@@ -2510,12 +2020,10 @@ async function renderAdminPanel() {
 
   } catch (err) {
     console.warn('[Admin] RPC failed, trying local fallback:', err.message);
-    /* Fallback: show only locally stored jobs */
     jobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
     toast('Could not reach database — showing local jobs only', 'error', 5000);
   }
 
-  /* ── Filter to pending only ── */
   const pending = jobs.filter(j => !j.approved && !j.rejected);
 
   const countEl = document.getElementById('admin-pending-count');
@@ -2542,8 +2050,7 @@ async function renderAdminPanel() {
           📍 ${h(job.location)} · 💼 ${h(job.type)} ·
           ⏰ ${h(job.deadline)} · 📋 ${h(job.plan || 'free')}
         </p>
-        <p style="margin-top:6px;color:var(--text2);font-size:12px;
-                  max-width:600px;line-height:1.5">
+        <p style="margin-top:6px;color:var(--text2);font-size:12px;max-width:600px;line-height:1.5">
           ${h((job.description || '').slice(0, 200))}…
         </p>
         <p style="margin-top:6px;font-size:11px;color:var(--muted)">
@@ -2554,14 +2061,8 @@ async function renderAdminPanel() {
         </p>
       </div>
       <div class="admin-approve-btns">
-        <button class="btn-approve"
-          onclick="adminApprove('${h(job.id)}', ${!!job._local})">
-          ✓ Approve
-        </button>
-        <button class="btn-reject"
-          onclick="adminReject('${h(job.id)}', ${!!job._local})">
-          ✗ Reject
-        </button>
+        <button class="btn-approve" onclick="adminApprove('${h(job.id)}', ${!!job._local})">✓ Approve</button>
+        <button class="btn-reject"  onclick="adminReject('${h(job.id)}', ${!!job._local})">✗ Reject</button>
       </div>
     </div>
   `).join('');
@@ -2581,7 +2082,6 @@ async function adminApprove(id, isLocal) {
     }
   }
 
-  // Update local copy too
   const jobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
   const idx  = jobs.findIndex(j => String(j.id) === String(id));
   if (idx !== -1) { jobs[idx].approved = true; saveData_raw(EMPLOYER_STORAGE.myJobs, jobs); }
@@ -2611,17 +2111,13 @@ async function adminReject(id, isLocal) {
 
 function adminRefresh() { renderAdminPanel(); }
 
-
-/* ── Init on DOMContentLoaded (added to existing init) ───── */
 document.addEventListener('DOMContentLoaded', () => {
-  sbLoad(); // Connect to Supabase immediately on page load
+  sbLoad();
 });
 
 /* ============================================================
-   JOB SEARCH — Full module
+   JOB SEARCH
    ============================================================ */
-
-/* ── Job data ── */
 const JOB_LISTINGS = [
   {
     id: 'frontend-developer-gamtech',
@@ -2639,7 +2135,7 @@ const JOB_LISTINGS = [
     logo: '',
     applyLink: 'https://gamhubjobs.com',
     applyInfo: 'Send your CV and portfolio to careers@gamtech.gm with subject line "Frontend Developer Application". Shortlisted candidates will be contacted within 5 working days.',
-    description: 'We are looking for a skilled Frontend Developer to join our growing team. You will build responsive web interfaces using HTML, CSS, and JavaScript frameworks. Strong understanding of UX principles and cross-browser compatibility required. Experience with React or Vue.js is a plus. You will collaborate closely with our design and backend teams to deliver high-quality digital products for clients across The Gambia.',
+    description: 'We are looking for a skilled Frontend Developer to join our growing team. You will build responsive web interfaces using HTML, CSS, and JavaScript frameworks. Strong understanding of UX principles and cross-browser compatibility required. Experience with React or Vue.js is a plus.',
     requirements: '• Bachelor\'s degree in Computer Science, IT, or related field\n• 2+ years of hands-on frontend development experience\n• Proficiency in HTML5, CSS3, and modern JavaScript (ES6+)\n• Experience with at least one JS framework (React, Vue, or Angular)\n• Understanding of responsive design and mobile-first development\n• Familiarity with Git version control\n• Good communication skills in English',
     perks: '• Competitive monthly salary\n• Health insurance coverage\n• Flexible working hours\n• Annual performance bonus\n• Professional development budget\n• Friendly, collaborative team culture',
   },
@@ -2659,8 +2155,8 @@ const JOB_LISTINGS = [
     logo: '',
     applyLink: 'https://gamhubjobs.com',
     applyInfo: 'Apply via our website at atlanticmedia.gm/careers or email hr@atlanticmedia.gm with your CV, cover letter, and a portfolio of past campaigns.',
-    description: 'We need a creative Digital Marketing Specialist to drive our online presence across multiple brands. Responsibilities include managing social media channels, creating content calendars, running paid ad campaigns on Google and Meta, analysing performance metrics, and producing monthly reports. You will work with clients in tourism, retail, and hospitality sectors.',
-    requirements: '• Degree in Marketing, Communications, or related field\n• 1–3 years of digital marketing experience\n• Hands-on experience with Google Ads and Meta Ads Manager\n• Proficiency in social media management tools (Hootsuite, Buffer)\n• Strong copywriting and content creation skills\n• Analytical mindset — comfortable working with data and KPIs\n• Knowledge of SEO fundamentals is an advantage',
+    description: 'We need a creative Digital Marketing Specialist to drive our online presence across multiple brands. Responsibilities include managing social media channels, creating content calendars, running paid ad campaigns on Google and Meta, analysing performance metrics, and producing monthly reports.',
+    requirements: '• Degree in Marketing, Communications, or related field\n• 1–3 years of digital marketing experience\n• Hands-on experience with Google Ads and Meta Ads Manager\n• Proficiency in social media management tools\n• Strong copywriting and content creation skills\n• Analytical mindset — comfortable working with data and KPIs',
     perks: '• Creative and energetic work environment\n• Monthly airtime and data allowance\n• Opportunity to manage high-profile campaigns\n• Team outings and company events\n• Clear career progression path',
   },
   {
@@ -2678,10 +2174,10 @@ const JOB_LISTINGS = [
     experience: '3+ years',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Submit applications to recruitment@trustbank.gm. Include your CV, certified copies of qualifications, and a cover letter. Only shortlisted candidates will be contacted.',
-    description: 'We are seeking a meticulous Accountant to manage financial records, prepare monthly and quarterly reports, and ensure full compliance with Gambian tax regulations and banking standards. The ideal candidate has strong attention to detail, integrity, and the ability to work under pressure during reporting periods. You will also support internal and external audit processes.',
-    requirements: '• Degree in Accounting, Finance, or equivalent professional qualification (ACCA, CPA)\n• Minimum 3 years of accounting experience, preferably in a banking environment\n• Proficiency in accounting software (Sage, QuickBooks, or similar)\n• Strong knowledge of IFRS and local tax regulations\n• High level of accuracy and attention to detail\n• Excellent organisational and time management skills\n• Integrity and confidentiality',
-    perks: '• Competitive salary with annual increments\n• Comprehensive medical benefits for employee and family\n• Pension and retirement scheme\n• Staff banking benefits\n• Structured training and career development programme\n• Stable, professional work environment',
+    applyInfo: 'Submit applications to recruitment@trustbank.gm. Include your CV, certified copies of qualifications, and a cover letter.',
+    description: 'We are seeking a meticulous Accountant to manage financial records, prepare monthly and quarterly reports, and ensure full compliance with Gambian tax regulations and banking standards.',
+    requirements: '• Degree in Accounting, Finance, or equivalent professional qualification (ACCA, CPA)\n• Minimum 3 years of accounting experience, preferably in a banking environment\n• Proficiency in accounting software (Sage, QuickBooks, or similar)\n• Strong knowledge of IFRS and local tax regulations\n• High level of accuracy and attention to detail',
+    perks: '• Competitive salary with annual increments\n• Comprehensive medical benefits\n• Pension and retirement scheme\n• Staff banking benefits\n• Structured training and career development programme',
   },
   {
     id: 'graphic-designer-saul',
@@ -2698,9 +2194,9 @@ const JOB_LISTINGS = [
     experience: '1+ year',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Email hello@saulcreative.gm with the subject "Graphic Designer Application". Attach your portfolio (PDF or link), CV, and brief cover note explaining your design style.',
-    description: 'Looking for a talented Graphic Designer to support our boutique studio on a part-time basis (20 hours/week). You will produce brand identities, social media visuals, print materials, and web graphics for our diverse client base. The role is ideal for a creative professional seeking flexible work alongside studies or other commitments.',
-    requirements: '• Portfolio demonstrating strong visual design skills\n• Proficiency in Adobe Creative Suite (Illustrator, Photoshop, InDesign)\n• Understanding of brand consistency and typography\n• Ability to work independently and meet deadlines\n• Knowledge of basic print production standards\n• Figma or Sketch experience is a bonus\n• Minimum 1 year of relevant design experience or strong portfolio',
+    applyInfo: 'Email hello@saulcreative.gm with the subject "Graphic Designer Application". Attach your portfolio (PDF or link), CV, and brief cover note.',
+    description: 'Looking for a talented Graphic Designer to support our boutique studio on a part-time basis (20 hours/week). You will produce brand identities, social media visuals, print materials, and web graphics for our diverse client base.',
+    requirements: '• Portfolio demonstrating strong visual design skills\n• Proficiency in Adobe Creative Suite (Illustrator, Photoshop, InDesign)\n• Understanding of brand consistency and typography\n• Ability to work independently and meet deadlines\n• Knowledge of basic print production standards',
     perks: '• Flexible part-time schedule\n• Creative, inspiring studio environment\n• Exposure to diverse client briefs\n• Mentorship from senior designers\n• Potential to transition to full-time role',
   },
   {
@@ -2718,10 +2214,10 @@ const JOB_LISTINGS = [
     experience: '3–5 years',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Applications must be submitted through ActionAid\'s online recruitment portal at actionaid.org/gambia/careers. Attach your CV and a motivation letter of no more than 2 pages. Applications sent by email will not be accepted.',
-    description: 'ActionAid Gambia is recruiting a Programme Officer to coordinate and implement community development projects focusing on gender equality, food security, and youth empowerment. The Officer will manage relationships with community partners, local authorities, and international donors. Travel to project sites across The Gambia is required.',
-    requirements: '• Bachelor\'s degree in Development Studies, Social Sciences, or related field\n• Minimum 3 years of programme management experience in the development sector\n• Proven experience in project monitoring, evaluation, and reporting\n• Strong budget management and financial literacy\n• Excellent report writing skills in English\n• Experience working with marginalised communities\n• Valid driver\'s licence and willingness to travel',
-    perks: '• Salary aligned with international NGO standards\n• Health and life insurance\n• Annual leave and generous parental leave\n• Pension contribution\n• Training and capacity building opportunities\n• Being part of a global organisation working for social justice',
+    applyInfo: 'Applications must be submitted through ActionAid\'s online recruitment portal at actionaid.org/gambia/careers.',
+    description: 'ActionAid Gambia is recruiting a Programme Officer to coordinate and implement community development projects focusing on gender equality, food security, and youth empowerment.',
+    requirements: '• Bachelor\'s degree in Development Studies, Social Sciences, or related field\n• Minimum 3 years of programme management experience in the development sector\n• Proven experience in project monitoring, evaluation, and reporting\n• Strong budget management and financial literacy\n• Excellent report writing skills in English',
+    perks: '• Salary aligned with international NGO standards\n• Health and life insurance\n• Annual leave and generous parental leave\n• Pension contribution\n• Training and capacity building opportunities',
   },
   {
     id: 'it-support-gamcel',
@@ -2738,10 +2234,10 @@ const JOB_LISTINGS = [
     experience: '1–2 years',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Send your CV and copies of relevant certifications to jobs@gamcel.gm. Use the subject line "IT Support Technician – Brikama". Walk-in applications are also accepted at our Brikama branch HR office Monday–Friday, 9am–4pm.',
-    description: 'We are hiring an IT Support Technician to maintain hardware, software, and network systems across our Brikama operations. You will troubleshoot technical issues for staff, perform routine maintenance, manage device inventory, and ensure uptime across critical telecom infrastructure. The role involves both desk-side and remote support.',
-    requirements: '• HND or degree in IT, Computer Science, or Networking\n• CompTIA A+, Network+, or equivalent certification preferred\n• 1–2 years of IT helpdesk or support experience\n• Knowledge of Windows and Linux operating systems\n• Familiarity with network equipment (routers, switches, firewalls)\n• Strong problem-solving skills and patience\n• Good verbal communication',
-    perks: '• Monthly salary plus annual bonus\n• Staff phone and data plan\n• Transport allowance\n• Medical insurance\n• Internal promotion opportunities within Gamcel Group',
+    applyInfo: 'Send your CV and copies of relevant certifications to jobs@gamcel.gm.',
+    description: 'We are hiring an IT Support Technician to maintain hardware, software, and network systems across our Brikama operations.',
+    requirements: '• HND or degree in IT, Computer Science, or Networking\n• CompTIA A+, Network+, or equivalent certification preferred\n• 1–2 years of IT helpdesk or support experience\n• Knowledge of Windows and Linux operating systems\n• Familiarity with network equipment',
+    perks: '• Monthly salary plus annual bonus\n• Staff phone and data plan\n• Transport allowance\n• Medical insurance\n• Internal promotion opportunities',
   },
   {
     id: 'social-media-kairaba',
@@ -2758,9 +2254,9 @@ const JOB_LISTINGS = [
     experience: '2+ years',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Email marketing@kairababeach.gm with your CV and links to social media accounts or campaigns you have managed. Remote candidates welcome; occasional on-site visits to the hotel may be required.',
-    description: 'Kairaba Beach Hotel is looking for a skilled Social Media Manager to grow our digital footprint and showcase the best of Gambian hospitality online. You will create and schedule content across Instagram, Facebook, and TikTok, engage authentically with followers, collaborate with travel influencers, and deliver monthly performance reports to management.',
-    requirements: '• 2+ years of social media management experience (hospitality or travel sector preferred)\n• Proven track record of growing audiences and engagement\n• Strong photography, videography, or content creation skills\n• Experience with social scheduling tools (Buffer, Later, or similar)\n• Excellent written English and storytelling ability\n• Data-driven — comfortable with Meta Business Suite and analytics\n• Knowledge of influencer partnerships',
+    applyInfo: 'Email marketing@kairababeach.gm with your CV and links to social media accounts or campaigns you have managed.',
+    description: 'Kairaba Beach Hotel is looking for a skilled Social Media Manager to grow our digital footprint and showcase the best of Gambian hospitality online.',
+    requirements: '• 2+ years of social media management experience\n• Proven track record of growing audiences and engagement\n• Strong photography, videography, or content creation skills\n• Experience with social scheduling tools\n• Excellent written English and storytelling ability',
     perks: '• Fully remote position\n• Complimentary stays at the hotel\n• Performance-based bonus\n• Exposure to international tourism market\n• Creative freedom to build the brand\'s digital identity',
   },
   {
@@ -2778,10 +2274,10 @@ const JOB_LISTINGS = [
     experience: 'Student / Graduate',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Apply by emailing internships@qcell.gm with your CV, a brief motivation letter, and your GitHub profile or code samples if available. The programme runs for 3 months with potential for full-time offer.',
-    description: 'QCell is offering a 3-month paid software engineering internship for final-year university students or recent graduates. You will work alongside senior engineers on live mobile and web products used by hundreds of thousands of Gambians. This is a hands-on role — not a shadowing programme. You will ship real code.',
-    requirements: '• Currently enrolled in final year of Computer Science, IT, or Software Engineering — OR recent graduate (within 12 months)\n• Knowledge of at least one programming language: Python, JavaScript, or Java\n• Understanding of basic data structures and algorithms\n• Familiarity with Git and version control\n• Strong willingness to learn and receive feedback\n• Good written and spoken English',
-    perks: '• Monthly stipend of GMD 5,000\n• Mentorship from senior QCell engineers\n• Real project experience for your portfolio\n• Certificate of completion\n• High-performing interns considered for full-time roles\n• Networking opportunities within the Gambian tech ecosystem',
+    applyInfo: 'Apply by emailing internships@qcell.gm with your CV, a brief motivation letter, and your GitHub profile or code samples if available.',
+    description: 'QCell is offering a 3-month paid software engineering internship for final-year university students or recent graduates.',
+    requirements: '• Currently enrolled in final year of Computer Science, IT, or Software Engineering — OR recent graduate (within 12 months)\n• Knowledge of at least one programming language: Python, JavaScript, or Java\n• Understanding of basic data structures and algorithms\n• Familiarity with Git and version control',
+    perks: '• Monthly stipend of GMD 5,000\n• Mentorship from senior QCell engineers\n• Real project experience for your portfolio\n• Certificate of completion\n• High-performing interns considered for full-time roles',
   },
   {
     id: 'hr-officer-gra',
@@ -2798,10 +2294,10 @@ const JOB_LISTINGS = [
     experience: '3+ years',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Submit a completed application form (available at gra.gm/careers), certified copies of your certificates, and a cover letter to hr@gra.gm or deliver in person to GRA headquarters, Banjul. Late applications will not be accepted.',
-    description: 'The Gambia Revenue Authority is recruiting an HR Officer to support all aspects of human resource management including talent acquisition, onboarding, staff training coordination, performance management, and policy compliance. The role requires a professional with strong ethics and knowledge of Gambian labour law.',
-    requirements: '• Degree in Human Resource Management, Business Administration, or related field\n• Minimum 3 years of HR generalist experience\n• Thorough knowledge of the Gambia Labour Act\n• Experience with recruitment, performance appraisal systems, and payroll coordination\n• Strong interpersonal and conflict resolution skills\n• High level of confidentiality and professional integrity\n• Proficiency in MS Office (Word, Excel, PowerPoint)',
-    perks: '• Government pension and benefits scheme\n• Paid annual and sick leave\n• Professional training sponsorship\n• Stable public sector employment\n• Opportunity to contribute to national revenue administration',
+    applyInfo: 'Submit a completed application form (available at gra.gm/careers), certified copies of your certificates, and a cover letter to hr@gra.gm.',
+    description: 'The Gambia Revenue Authority is recruiting an HR Officer to support all aspects of human resource management including talent acquisition, onboarding, staff training coordination, performance management, and policy compliance.',
+    requirements: '• Degree in Human Resource Management, Business Administration, or related field\n• Minimum 3 years of HR generalist experience\n• Thorough knowledge of the Gambia Labour Act\n• Experience with recruitment, performance appraisal systems, and payroll coordination\n• High level of confidentiality and professional integrity',
+    perks: '• Government pension and benefits scheme\n• Paid annual and sick leave\n• Professional training sponsorship\n• Stable public sector employment',
   },
   {
     id: 'clinical-nurse-rvth',
@@ -2818,10 +2314,10 @@ const JOB_LISTINGS = [
     experience: '2+ years',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Applications must be submitted in person to the Nursing Administration Office at RVTH, Banjul, during working hours (8am–4pm, Mon–Fri). Bring your original certificates, a certified copy of your nursing licence, and two passport photographs.',
-    description: 'RVTH is seeking experienced Clinical Nurses to join various wards including Medical, Surgical, Paediatrics, and Maternity. Successful candidates will deliver high-quality patient care, administer medications, maintain clinical records, and collaborate with the multidisciplinary team. Night and weekend shifts are required on a rotational basis.',
-    requirements: '• Diploma or Bachelor\'s degree in Nursing\n• Valid nursing licence registered with the Gambia Nurses and Midwives Council\n• Minimum 2 years of clinical nursing experience\n• Strong patient assessment and care planning skills\n• Knowledge of infection control and medication administration protocols\n• Compassion, resilience, and ability to work under pressure\n• BLS/CPR certification preferred',
-    perks: '• Government salary and allowances\n• Medical and pension benefits\n• Opportunities for specialist training\n• Supportive multidisciplinary team environment\n• Serving the national health system',
+    applyInfo: 'Applications must be submitted in person to the Nursing Administration Office at RVTH, Banjul.',
+    description: 'RVTH is seeking experienced Clinical Nurses to join various wards including Medical, Surgical, Paediatrics, and Maternity.',
+    requirements: '• Diploma or Bachelor\'s degree in Nursing\n• Valid nursing licence registered with the Gambia Nurses and Midwives Council\n• Minimum 2 years of clinical nursing experience\n• Strong patient assessment and care planning skills\n• BLS/CPR certification preferred',
+    perks: '• Government salary and allowances\n• Medical and pension benefits\n• Opportunities for specialist training\n• Supportive multidisciplinary team environment',
   },
   {
     id: 'teacher-nusrat',
@@ -2838,10 +2334,10 @@ const JOB_LISTINGS = [
     experience: '1+ year',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Submit your application letter, CV, certified copies of certificates, and two references to the Principal\'s Office at Nusrat Senior Secondary School, Banjul. Applications may also be emailed to principal@nusratschool.gm.',
-    description: 'We are hiring qualified, passionate teachers for Mathematics and English Language at senior secondary level (Grades 10–12). Teachers will plan and deliver lessons aligned with the national curriculum, set and mark assessments, support student welfare, and participate in school extracurricular activities.',
-    requirements: '• Bachelor\'s degree in Education (Mathematics or English) — OR a degree in the subject with a PGDE/teaching certificate\n• Registration with the Teaching Service Commission (TSC) or eligibility to register\n• Minimum 1 year of classroom teaching experience at secondary level\n• Ability to inspire and motivate young learners\n• Strong classroom management skills\n• Good communication and report writing skills',
-    perks: '• Competitive salary\n• Long vacation benefits (school calendar)\n• Professional development and training\n• Supportive school leadership\n• Making a real difference in students\' lives',
+    applyInfo: 'Submit your application letter, CV, certified copies of certificates, and two references to the Principal\'s Office.',
+    description: 'We are hiring qualified, passionate teachers for Mathematics and English Language at senior secondary level (Grades 10–12).',
+    requirements: '• Bachelor\'s degree in Education (Mathematics or English)\n• Registration with the Teaching Service Commission (TSC) or eligibility to register\n• Minimum 1 year of classroom teaching experience at secondary level\n• Strong classroom management skills',
+    perks: '• Competitive salary\n• Long vacation benefits (school calendar)\n• Professional development and training\n• Supportive school leadership',
   },
   {
     id: 'uiux-designer-africell',
@@ -2858,21 +2354,17 @@ const JOB_LISTINGS = [
     experience: '3+ years',
     logo: '',
     applyLink: 'https://gamhubjobs.com',
-    applyInfo: 'Email talent@africell.gm with the subject "UI/UX Designer – Contract". Include your CV, Figma portfolio link or case studies, and your earliest available start date. Interviews will be conducted within 2 weeks of application.',
-    description: 'Africell Gambia seeks a UI/UX Designer on a 6-month contract to lead the redesign of key customer-facing digital products including our mobile app and self-care portal. You will conduct user research, create wireframes and high-fidelity prototypes in Figma, run usability tests, and collaborate closely with our engineering team to ship polished, inclusive interfaces for our millions of Gambian subscribers.',
-    requirements: '• 3+ years of professional UI/UX design experience\n• Strong Figma skills — prototyping, components, auto-layout\n• Portfolio demonstrating mobile app and web design projects\n• Experience conducting user research and usability testing\n• Understanding of accessibility standards (WCAG)\n• Ability to translate business requirements into intuitive user flows\n• Excellent collaboration and presentation skills\n• Experience in telecoms or fintech is a strong advantage',
-    perks: '• Highly competitive contract rate\n• Work on products used by millions of Gambians\n• Modern office with great facilities\n• Collaborative engineering team\n• Potential for contract renewal or permanent offer\n• Professional visibility in the West African tech ecosystem',
+    applyInfo: 'Email talent@africell.gm with the subject "UI/UX Designer – Contract". Include your CV, Figma portfolio link or case studies, and your earliest available start date.',
+    description: 'Africell Gambia seeks a UI/UX Designer on a 6-month contract to lead the redesign of key customer-facing digital products including our mobile app and self-care portal.',
+    requirements: '• 3+ years of professional UI/UX design experience\n• Strong Figma skills — prototyping, components, auto-layout\n• Portfolio demonstrating mobile app and web design projects\n• Experience conducting user research and usability testing\n• Understanding of accessibility standards (WCAG)',
+    perks: '• Highly competitive contract rate\n• Work on products used by millions of Gambians\n• Modern office with great facilities\n• Potential for contract renewal or permanent offer',
   },
 ];
 
-/* ── State ── */
-
-/* ── Init ── */
 function initJobSearchView() {
   renderJobs(JOB_LISTINGS);
 }
 
-/* ── Filter ── */
 function filterJobs() {
   const kw  = (document.getElementById('js-keyword')?.value || '').toLowerCase().trim();
   const cat = document.getElementById('js-cat')?.value  || '';
@@ -2891,7 +2383,6 @@ function filterJobs() {
   renderJobs(filtered);
 }
 
-/* ── Render ── */
 function renderJobs(list) {
   const grid  = document.getElementById('js-job-grid');
   const empty = document.getElementById('js-empty');
@@ -2916,11 +2407,7 @@ function renderJobs(list) {
   });
 }
 
-/* ── Build card ── */
-/* ── Build job URL ── */
 function getJobUrl(job) {
-  /* Use a slug derived from the job title for a readable URL.
-     Falls back to the page URL with a hash when no real routing exists. */
   const slug = (job.id || job.title)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -2928,19 +2415,16 @@ function getJobUrl(job) {
   return window.location.origin + window.location.pathname + '#job-' + slug;
 }
 
-/* ── Build card ── */
 function createJobCard(job, idx) {
   const card = document.createElement('div');
   card.className = 'js-card';
   card.dataset.idx = String(idx);
 
-  /* Logo or fallback initials */
   const initials = job.company.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
   const logoHTML = job.logo
     ? `<img class="js-logo" src="${escHtml(job.logo)}" alt="${escHtml(job.company)} logo" loading="lazy">`
     : `<div class="js-logo-fallback" aria-hidden="true">${initials}</div>`;
 
-  /* Type badge colour class */
   const typeClass = {
     'Remote':     'remote',
     'Part-Time':  'part',
@@ -2948,11 +2432,10 @@ function createJobCard(job, idx) {
     'Contract':   'contract',
   }[job.type] || '';
 
-  /* Unique IDs for accessibility */
-  const descId    = `js-desc-${idx}`;
-  const vmBtnId   = `js-vmbtn-${idx}`;
+  const descId     = `js-desc-${idx}`;
+  const vmBtnId    = `js-vmbtn-${idx}`;
   const shareBtnId = `js-sharebtn-${idx}`;
-  const dropId    = `js-drop-${idx}`;
+  const dropId     = `js-drop-${idx}`;
   const copyItemId = `js-copy-${idx}`;
 
   card.innerHTML = `
@@ -2963,79 +2446,46 @@ function createJobCard(job, idx) {
         <p class="js-card-company">${escHtml(job.company)}</p>
       </div>
     </div>
-
     <div class="js-card-badges">
       <span class="js-badge js-badge-type ${typeClass}">${escHtml(job.type)}</span>
       <span class="js-badge js-badge-cat">${escHtml(job.category)}</span>
       <span class="js-badge js-badge-loc">${escHtml(job.location)}</span>
     </div>
-
     <p class="js-card-desc" id="${descId}" aria-expanded="false">${escHtml(job.description)}</p>
-
     <div class="js-card-actions">
-      <button
-        class="js-btn-view"
-        id="${vmBtnId}"
-        aria-controls="${descId}"
-        aria-expanded="false"
-      >View Details →</button>
-
-      <a
-        class="js-btn-apply"
-        href="${escHtml(job.applyLink || '#')}"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Apply for ${escHtml(job.title)} at ${escHtml(job.company)}"
-      >Apply Now →</a>
-
+      <button class="js-btn-view" id="${vmBtnId}" aria-controls="${descId}" aria-expanded="false">View Details →</button>
+      <a class="js-btn-apply" href="${escHtml(job.applyLink || '#')}" target="_blank" rel="noopener noreferrer"
+        aria-label="Apply for ${escHtml(job.title)} at ${escHtml(job.company)}">Apply Now →</a>
       <div class="js-share-wrap">
-        <button
-          class="js-btn-share"
-          id="${shareBtnId}"
-          aria-haspopup="true"
-          aria-expanded="false"
-          aria-controls="${dropId}"
-        >
+        <button class="js-btn-share" id="${shareBtnId}" aria-haspopup="true" aria-expanded="false" aria-controls="${dropId}">
           <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="13" cy="2.5" r="1.75" stroke="currentColor" stroke-width="1.4"/>
             <circle cx="13" cy="13.5" r="1.75" stroke="currentColor" stroke-width="1.4"/>
             <circle cx="3"  cy="8"   r="1.75" stroke="currentColor" stroke-width="1.4"/>
-            <line x1="4.7"  y1="7.1" x2="11.3" y2="3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            <line x1="4.7"  y1="8.9" x2="11.3" y2="12.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="4.7" y1="7.1" x2="11.3" y2="3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="4.7" y1="8.9" x2="11.3" y2="12.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
           Share
         </button>
-
-        <div
-          class="js-share-dropdown"
-          id="${dropId}"
-          role="menu"
-          aria-labelledby="${shareBtnId}"
-        >
+        <div class="js-share-dropdown" id="${dropId}" role="menu" aria-labelledby="${shareBtnId}">
           <div class="js-share-dropdown-title">Share this job</div>
-
           <button class="js-share-item priority" role="menuitem" data-action="whatsapp">
             <span class="js-share-item-icon">💬</span>
             <span class="js-share-item-label">WhatsApp</span>
           </button>
-
           <button class="js-share-item" role="menuitem" data-action="copy" id="${copyItemId}">
             <span class="js-share-item-icon">🔗</span>
             <span class="js-share-item-label">Copy Link</span>
           </button>
-
           <button class="js-share-item" role="menuitem" data-action="email">
             <span class="js-share-item-icon">✉️</span>
             <span class="js-share-item-label">Email a Friend</span>
           </button>
-
           <div class="js-share-divider"></div>
-
           <button class="js-share-item" role="menuitem" data-action="linkedin">
             <span class="js-share-item-icon">🔵</span>
             <span class="js-share-item-label">LinkedIn</span>
           </button>
-
           <button class="js-share-item" role="menuitem" data-action="twitter">
             <span class="js-share-item-icon">🐦</span>
             <span class="js-share-item-label">X / Twitter</span>
@@ -3045,41 +2495,28 @@ function createJobCard(job, idx) {
     </div>
   `;
 
-  /* ── Attach event listeners (no inline handlers) ── */
-
-  /* Whole card click → open modal (Part 20) */
   card.style.cursor = 'pointer';
   card.addEventListener('click', () => openJobPage(job));
 
-  /* View More → open modal; stop event reaching card (Part 19) */
   const vmBtn = card.querySelector(`#${vmBtnId}`);
-  vmBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    openJobPage(job);
-  });
+  vmBtn.addEventListener('click', e => { e.stopPropagation(); openJobPage(job); });
 
-  /* Apply link — stop propagation so card click doesn't also fire (Part 19) */
   const applyLink = card.querySelector('.js-btn-apply');
-  if (applyLink) {
-    applyLink.addEventListener('click', e => e.stopPropagation());
-  }
+  if (applyLink) applyLink.addEventListener('click', e => e.stopPropagation());
 
-  /* Share button — toggles dropdown; stop propagation (Part 19) */
   const shareBtn = card.querySelector(`#${shareBtnId}`);
   const drop     = card.querySelector(`#${dropId}`);
   shareBtn.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = drop.classList.contains('open');
-    closeAllShareDropdowns();          // close any other open dropdown
+    closeAllShareDropdowns();
     if (!isOpen) {
       drop.classList.add('open');
       shareBtn.setAttribute('aria-expanded', 'true');
-      /* Focus first item for keyboard users */
       drop.querySelector('.js-share-item')?.focus();
     }
   });
 
-  /* Share menu items — stop propagation to card */
   drop.querySelectorAll('.js-share-item').forEach(item => {
     item.addEventListener('click', e => {
       e.stopPropagation();
@@ -3087,13 +2524,12 @@ function createJobCard(job, idx) {
       const jobUrl  = getJobUrl(job);
       const jobText = job.title + ' at ' + job.company;
 
-      if (action === 'whatsapp')  shareWhatsApp(job, jobUrl, jobText);
-      if (action === 'copy')      copyJobLink(job, jobUrl, item);
-      if (action === 'email')     shareEmail(job, jobUrl, jobText);
-      if (action === 'linkedin')  shareLinkedIn(job, jobUrl);
-      if (action === 'twitter')   shareTwitter(job, jobUrl, jobText);
+      if (action === 'whatsapp') shareWhatsApp(job, jobUrl, jobText);
+      if (action === 'copy')     copyJobLink(job, jobUrl, item);
+      if (action === 'email')    shareEmail(job, jobUrl, jobText);
+      if (action === 'linkedin') shareLinkedIn(job, jobUrl);
+      if (action === 'twitter')  shareTwitter(job, jobUrl, jobText);
 
-      /* Close dropdown after action (except copy — it gives inline feedback) */
       if (action !== 'copy') {
         drop.classList.remove('open');
         shareBtn.setAttribute('aria-expanded', 'false');
@@ -3101,7 +2537,6 @@ function createJobCard(job, idx) {
     });
   });
 
-  /* Close on Escape while inside dropdown */
   drop.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       drop.classList.remove('open');
@@ -3113,7 +2548,6 @@ function createJobCard(job, idx) {
   return card;
 }
 
-/* ── Close all open dropdowns ── */
 function closeAllShareDropdowns() {
   document.querySelectorAll('.js-share-dropdown.open').forEach(d => {
     d.classList.remove('open');
@@ -3122,11 +2556,8 @@ function closeAllShareDropdowns() {
   });
 }
 
-/* Close on outside click */
 document.addEventListener('click', () => closeAllShareDropdowns());
 
-/* ── Expand / collapse description ── */
-/* (kept as stub for any external calls; modal is now the primary detail view) */
 function toggleJobDesc(descId, btnId) {
   const desc = document.getElementById(descId);
   const btn  = document.getElementById(btnId);
@@ -3139,12 +2570,10 @@ function toggleJobDesc(descId, btnId) {
 /* ============================================================
    JOB DETAIL MODAL
    ============================================================ */
-
 function openJobModal(job) {
   const backdrop = document.getElementById('jd-backdrop');
   if (!backdrop) return;
 
-  /* ── Populate header ── */
   const initials = job.company.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
   document.getElementById('jd-logo-wrap').innerHTML = job.logo
     ? `<img class="js-logo" src="${escHtml(job.logo)}" alt="${escHtml(job.company)} logo" loading="lazy">`
@@ -3152,7 +2581,6 @@ function openJobModal(job) {
   document.getElementById('jd-title').textContent   = job.title;
   document.getElementById('jd-company').textContent = job.company + (job.industry ? ' · ' + job.industry : '');
 
-  /* ── Highlight chips ── */
   const typeClass = { 'Remote':'remote','Part-Time':'part','Internship':'intern','Contract':'contract' }[job.type] || '';
   let chips = '';
   if (job.type)     chips += `<span class="jd-chip jd-chip-type ${typeClass}">💼 ${escHtml(job.type)}</span>`;
@@ -3160,7 +2588,6 @@ function openJobModal(job) {
   if (job.salary)   chips += `<span class="jd-chip jd-chip-salary">💰 ${escHtml(job.salary)}</span>`;
   document.getElementById('jd-chips-row').innerHTML = chips;
 
-  /* ── Section 1: Company details ── */
   const companyItems = [
     { label: 'Company',  value: job.company  },
     { label: 'Industry', value: job.industry },
@@ -3178,14 +2605,13 @@ function openJobModal(job) {
     </div>
   `).join('');
 
-  /* ── Section 2: Job details ── */
   const jobItems = [
-    { label: 'Job Title',    value: job.title      },
-    { label: 'Location',     value: job.location   },
-    { label: 'Job Type',     value: job.type       },
-    { label: 'Experience',   value: job.experience },
-    { label: 'Salary',       value: job.salary     },
-    { label: 'Deadline',     value: job.deadline   },
+    { label: 'Job Title',  value: job.title      },
+    { label: 'Location',   value: job.location   },
+    { label: 'Job Type',   value: job.type       },
+    { label: 'Experience', value: job.experience },
+    { label: 'Salary',     value: job.salary     },
+    { label: 'Deadline',   value: job.deadline   },
   ].filter(i => i.value);
 
   document.getElementById('jd-details-grid').innerHTML = jobItems.map(i => `
@@ -3195,19 +2621,12 @@ function openJobModal(job) {
     </div>
   `).join('');
 
-  /* ── Section 3: Description ── */
   document.getElementById('jd-description').textContent = job.description || '';
   document.getElementById('jd-sec-desc').style.display = job.description ? '' : 'none';
-
-  /* ── Section 4: Requirements (newline-separated bullets) ── */
   document.getElementById('jd-requirements').innerHTML = renderListText(job.requirements);
   document.getElementById('jd-sec-req').style.display = job.requirements ? '' : 'none';
-
-  /* ── Section 5: Perks ── */
   document.getElementById('jd-perks').innerHTML = renderListText(job.perks);
   document.getElementById('jd-sec-perks').style.display = job.perks ? '' : 'none';
-
-  /* ── Section 6: How to Apply ── */
   document.getElementById('jd-apply-info').textContent = job.applyInfo || '';
   document.getElementById('jd-sec-apply').style.display = (job.applyInfo || job.applyLink) ? '' : 'none';
 
@@ -3228,11 +2647,8 @@ function openJobModal(job) {
   backBtn.addEventListener('click', closeJobModal);
   applyActionsEl.appendChild(backBtn);
 
-  /* ── Show modal ── */
-  /* Set display first, then trigger transition on next paint */
   backdrop.style.display = 'flex';
 
-  /* Prevent the page behind from scrolling without breaking iOS */
   document.body.dataset.scrollY = window.scrollY;
   document.body.style.position = 'fixed';
   document.body.style.top = '-' + window.scrollY + 'px';
@@ -3241,13 +2657,11 @@ function openJobModal(job) {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       backdrop.classList.add('jd-open');
-      /* Focus close button for keyboard/screen reader users */
       const closeBtn = document.getElementById('jd-close');
       if (closeBtn) closeBtn.focus();
     });
   });
 
-  /* Reset modal scroll */
   const modalBody = document.getElementById('jd-modal-body');
   if (modalBody) modalBody.scrollTop = 0;
 }
@@ -3259,14 +2673,12 @@ function closeJobModal() {
 
   backdrop.classList.remove('jd-open');
 
-  /* Restore page scroll position — reverse of the fixed-body trick */
   const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
   document.body.style.position = '';
   document.body.style.top = '';
   document.body.style.width = '';
   window.scrollTo(0, scrollY);
 
-  /* Hide after transition; fallback timer in case transitionend misfires on mobile */
   clearTimeout(_jdCloseTimer);
   _jdCloseTimer = setTimeout(() => { backdrop.style.display = 'none'; }, 320);
   backdrop.addEventListener('transitionend', function handler() {
@@ -3276,14 +2688,12 @@ function closeJobModal() {
   }, { once: true });
 }
 
-/* Render newline-separated bullet strings as structured HTML */
 function renderListText(str) {
   if (!str) return '';
   return str.split('\n')
     .map(line => line.trim())
     .filter(Boolean)
     .map(line => {
-      /* Strip leading bullet characters */
       const text = line.replace(/^[•\-\*]\s*/, '');
       return `<div class="jd-list-item">
         <span class="jd-list-bullet">✦</span>
@@ -3293,7 +2703,6 @@ function renderListText(str) {
     .join('');
 }
 
-/* Wire up close button and backdrop click */
 document.addEventListener('DOMContentLoaded', () => {
   const closeBtn = document.getElementById('jd-close');
   const backdrop = document.getElementById('jd-backdrop');
@@ -3306,7 +2715,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && b && b.classList.contains('jd-open')) closeJobModal();
   });
 });
-
 
 /* ============================================================
    JOB DETAILS — FULL PAGE VIEW
@@ -3358,16 +2766,16 @@ function openJobPage(job) {
   ae.appendChild(sb);
   showView('job-details');
 }
-function closeJobPage(){showView('job-search');}
+
+function closeJobPage(){ showView('job-search'); }
 document.addEventListener('DOMContentLoaded',()=>{
   const b=document.getElementById('jd-back-btn');
   if(b) b.addEventListener('click',closeJobPage);
 });
 
 /* ============================================================
-   SHARE FUNCTIONS — no inline onclick, no hardcoded URLs
+   SHARE FUNCTIONS
    ============================================================ */
-
 function shareWhatsApp(job, jobUrl, jobText) {
   const msg = encodeURIComponent(
     '🎯 *Job Opportunity*\n\n' +
@@ -3390,7 +2798,6 @@ function copyJobLink(job, jobUrl, itemEl) {
       setTimeout(() => {
         label.textContent = orig;
         itemEl.classList.remove('copied');
-        /* Now close the dropdown */
         const drop = itemEl.closest('.js-share-dropdown');
         const btn  = drop ? document.querySelector(`[aria-controls="${drop.id}"]`) : null;
         if (drop) drop.classList.remove('open');
@@ -3422,12 +2829,10 @@ function legacyCopy(text, cb) {
 function shareEmail(job, jobUrl, jobText) {
   const subject = encodeURIComponent('Job Opportunity: ' + jobText);
   const body    = encodeURIComponent(
-    'Hi,\n\n' +
-    'I thought you might be interested in this job:\n\n' +
+    'Hi,\n\nI thought you might be interested in this job:\n\n' +
     job.title + ' at ' + job.company + '\n' +
     '📍 ' + job.location + '  |  ' + job.type + '\n\n' +
-    job.description + '\n\n' +
-    'Apply here: ' + jobUrl
+    job.description + '\n\nApply here: ' + jobUrl
   );
   window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
 }
@@ -3449,7 +2854,6 @@ function shareTwitter(job, jobUrl, jobText) {
   );
 }
 
-/* ── Escape HTML helper ── */
 function escHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -3482,52 +2886,13 @@ function setupScrollReveals() {
 }
 
 /* ============================================================
-   INIT
+   COVER LETTER GENERATOR
    ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  initAuth();          /* Supabase auth — must run first */
-  initCookieBanner();  /* Cookie consent banner */
-  initTour();          /* Onboarding tour popovers */
-  initWACOverlay();    /* WhatsApp channel prompt — fires after 60s */
-  initWizard();
-  setupScrollReveals();
-
-  // Restore theme
-  const savedTheme = loadData('theme');
-  if (savedTheme) currentTheme = savedTheme;
-
-  // Restore wizard CSS vars
-  const wiz = loadData('wizard');
-  if (wiz) {
-    if (wiz.palette) {
-      const p = PALETTES.find(x => x.id === wiz.palette);
-      if (p) {
-        document.documentElement.style.setProperty('--dw-primary', p.primary);
-        document.documentElement.style.setProperty('--dw-accent', p.accent);
-      }
-    }
-    if (wiz.font) {
-      const f = FONTS.find(x => x.id === wiz.font);
-      if (f) {
-        document.documentElement.style.setProperty('--dw-font-display', f.display);
-        document.documentElement.style.setProperty('--dw-font-body', f.body);
-      }
-    }
-  }
-
-  console.log('%c✦ GamHub Jobs — Gambia\'s Professional Job Platform', 'color:#d4a853;font-size:14px;font-weight:bold');
-});
-
-/* ============================================================
-   COVER LETTER GENERATOR — FULL MODULE
-   ============================================================ */
-
 const CL_STORAGE_KEY = 'folio_cover_letter';
 let clTheme = 'clt-classic';
 let clAutoSaveTimer = null;
 let clMobileShowPreview = false;
 
-/* ── Tone definitions ────────────────────────────────────── */
 const CL_TONES = {
   professional: { opener:'I am writing to express my interest in', fit:'With a proven track record in', energy:'measured and results-focused' },
   confident:    { opener:'I am excited to apply for', fit:'I bring a strong background in', energy:'assertive and achievement-driven' },
@@ -3537,7 +2902,6 @@ const CL_TONES = {
   formal:       { opener:'I respectfully wish to apply for the position of', fit:'My professional background encompasses', energy:'formal and thorough' },
 };
 
-/* ── Placeholder paragraphs shown before user types ─────── */
 const CL_PLACEHOLDERS = {
   opening:     'I am writing to express my strong interest in this position at your organisation. Having followed your work for some time, I am excited by the opportunity to contribute my experience to your team.',
   skills:      'With over [X] years of experience in [field], I have developed expertise in [skill 1], [skill 2], and [skill 3]. My background has equipped me with a practical understanding of what it takes to succeed in this type of role.',
@@ -3546,12 +2910,10 @@ const CL_PLACEHOLDERS = {
   closing:     'I would welcome the opportunity to discuss how my background can contribute to your team\'s goals. Thank you sincerely for your time and consideration. I look forward to hearing from you.',
 };
 
-/* ── AI paragraph templates (local — no API key needed) ─── */
 function generateParagraph(type, data) {
   const tone = CL_TONES[data.tone] || CL_TONES.professional;
   const jobTitle  = data.jobTitle  || 'this position';
   const company   = data.company   || 'your organisation';
-  const name      = data.fullname  || 'the applicant';
   const myTitle   = data.myTitle   || 'professional';
   const source    = data.jobSource ? `which I discovered through ${data.jobSource}` : 'advertised on GamHubJobs.com';
   const topSkills = data.skills?.slice(0,3).map(s=>s.name).join(', ') || 'communication, organisation, and leadership';
@@ -3562,47 +2924,38 @@ function generateParagraph(type, data) {
   switch(type) {
     case 'opening':
       return `${tone.opener} the role of ${jobTitle} at ${company}, ${source}. As an experienced ${myTitle}, I am confident that my skills and background make me a strong candidate for this opportunity. ${summary ? summary.split('.')[0] + '.' : `I am ${tone.energy} and eager to bring genuine value to your team.`}`;
-
     case 'skills':
       return `${tone.fit} ${topSkills}. ${topExp ? `In my role as ${topExp.title} at ${topExp.org}, I was responsible for ${topExp.desc?.split('.')[0]?.toLowerCase() || 'delivering key outcomes and building strong stakeholder relationships'}.` : 'My professional journey has given me a hands-on understanding of what drives results in fast-paced environments.'} I am adept at working both independently and within teams, and I consistently prioritise quality, accuracy, and timely delivery.`;
-
     case 'achievement':
       if (topAch) {
         return `One achievement I am particularly proud of is ${topAch.title?.toLowerCase()}. ${topAch.desc ? topAch.desc.split('.')[0] + '.' : ''} This experience reinforced my ability to take initiative, manage complexity, and deliver outcomes that matter — skills I am eager to apply at ${company}.`;
       }
       return `Throughout my career, I have consistently delivered results that exceed expectations. I am recognised for my ability to identify opportunities, mobilise resources, and execute with precision — an approach I will bring with me to ${company}.`;
-
     case 'company':
       return `I am especially drawn to ${company} because of the meaningful impact your work has in The Gambia and the wider region. I admire your commitment to excellence and believe that joining your team would allow me to grow while contributing to goals I genuinely care about. I am looking for more than a job — I want to be part of an organisation whose mission inspires me, and ${company} represents exactly that.`;
-
     case 'closing':
       return `Thank you sincerely for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to ${company}'s continued success. I am available for an interview at your earliest convenience and can be reached at ${data.email || 'the contact details above'}. I look forward to the possibility of joining your team.`;
-
     default: return '';
   }
 }
 
-/* ── Init ────────────────────────────────────────────────── */
 function initCoverLetter() {
   loadCoverLetterData();
   setDefaultDate();
   updateImportBadge();
   renderCoverLetter();
 
-  // Show toggle button on mobile screens
   const toggleBtn = document.getElementById('cl-toggle-btn');
   const isMobile  = window.innerWidth <= 1000;
   if (toggleBtn) {
     toggleBtn.style.display = isMobile ? '' : 'none';
     toggleBtn.textContent   = 'Preview Letter 👁';
   }
-  // Also re-check on resize
   window.addEventListener('resize', () => {
     const tb = document.getElementById('cl-toggle-btn');
     if (tb) tb.style.display = window.innerWidth <= 1000 ? '' : 'none';
   }, { passive: true });
 
-  // Autosave
   if (clAutoSaveTimer) clearInterval(clAutoSaveTimer);
   clAutoSaveTimer = setInterval(saveCoverLetterData, 8000);
 }
@@ -3625,7 +2978,6 @@ function updateImportBadge() {
   }
 }
 
-/* ── Import from CV ──────────────────────────────────────── */
 function importFromCV() {
   const cv = loadData('cvData');
   if (!cv) { toast('No CV found. Build your CV first.', 'error'); return; }
@@ -3641,7 +2993,6 @@ function importFromCV() {
   toast('CV details imported! ✦ Fill in the job details to personalise.', 'gold');
 }
 
-/* ── Tone selection ──────────────────────────────────────── */
 function selectTone(card) {
   document.querySelectorAll('.tone-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
@@ -3652,23 +3003,19 @@ function getSelectedTone() {
   return document.querySelector('.tone-card.selected')?.dataset?.tone || 'professional';
 }
 
-/* ── Collect all form data ───────────────────────────────── */
 function collectCLData() {
   const cv = loadData('cvData') || {};
   return {
-    // Sender
     fullname: document.getElementById('cl-fullname')?.value || '',
     myTitle:  document.getElementById('cl-title')?.value    || '',
     email:    document.getElementById('cl-email')?.value    || '',
     phone:    document.getElementById('cl-phone')?.value    || '',
     location: document.getElementById('cl-location')?.value || '',
-    // Job target
     jobTitle:    document.getElementById('cl-job-title')?.value      || '',
     company:     document.getElementById('cl-company')?.value        || '',
     hiringMgr:   document.getElementById('cl-hiring-manager')?.value || '',
     companyAddr: document.getElementById('cl-company-address')?.value|| '',
     jobSource:   document.getElementById('cl-job-source')?.value     || '',
-    // Content
     tone:         getSelectedTone(),
     paraOpening:  document.getElementById('cl-para-opening')?.value     || '',
     paraSkills:   document.getElementById('cl-para-skills')?.value      || '',
@@ -3677,7 +3024,6 @@ function collectCLData() {
     paraClosing:  document.getElementById('cl-para-closing')?.value     || '',
     closingPhrase:document.getElementById('cl-closing-phrase')?.value   || 'Yours sincerely,',
     date:         document.getElementById('cl-date')?.value             || '',
-    // CV context for AI
     skills:       cv.skills       || [],
     experience:   cv.experience   || [],
     achievements: cv.achievements || [],
@@ -3686,30 +3032,25 @@ function collectCLData() {
   };
 }
 
-/* ── Render the letter paper ─────────────────────────────── */
 function renderCoverLetter() {
   const d = collectCLData();
   const paper = document.getElementById('cl-paper');
   if (!paper) return;
 
-  // Contacts
   const contacts = [
     d.email    && `<span>✉ ${h(d.email)}</span>`,
     d.phone    && `<span>📱 ${h(d.phone)}</span>`,
     d.location && `<span>📍 ${h(d.location)}</span>`,
   ].filter(Boolean).join('');
 
-  // Subject line
   const subject = d.jobTitle && d.company
     ? `Re: Application for ${h(d.jobTitle)} — ${h(d.company)}`
     : (d.jobTitle ? `Re: Application for ${h(d.jobTitle)}` : 'Cover Letter');
 
-  // Salutation
   const salutation = d.hiringMgr
     ? `Dear ${h(d.hiringMgr)},`
     : 'Dear Hiring Manager,';
 
-  // Paragraphs — use typed content or placeholder
   const paras = [
     d.paraOpening  || CL_PLACEHOLDERS.opening,
     d.paraSkills   || CL_PLACEHOLDERS.skills,
@@ -3732,19 +3073,15 @@ function renderCoverLetter() {
     </div>
     <div class="cl-letter-body">
       <div class="cl-letter-date">${h(d.date || new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}))}</div>
-
       ${(d.hiringMgr || d.company || d.companyAddr) ? `
       <div class="cl-letter-recipient">
         ${d.hiringMgr   ? `<div class="cl-letter-recipient-name">${h(d.hiringMgr)}</div>` : ''}
         ${d.company     ? `<div class="cl-letter-recipient-sub">${h(d.company)}</div>` : ''}
         ${d.companyAddr ? `<div class="cl-letter-recipient-sub">${h(d.companyAddr)}</div>` : ''}
       </div>` : ''}
-
       <div class="cl-letter-subject">${subject}</div>
       <div class="cl-letter-salutation">${salutation}</div>
-
       <div class="cl-letter-paragraphs">${parasHTML}</div>
-
       <div class="cl-letter-closing">
         <div class="cl-letter-closing-line">${h(d.closingPhrase || 'Yours sincerely,')}</div>
         <div class="cl-letter-sig">${h(d.fullname || 'Your Name')}</div>
@@ -3754,12 +3091,7 @@ function renderCoverLetter() {
   `;
 }
 
-/* ── AI Write individual paragraph ──────────────────────── */
 async function aiWriteParagraph(type) {
-  const btnId = `ai-btn-${type}`;
-  const paraId = `cl-para-${type === 'achievement' ? 'achievement' : type}`;
-
-  // Map type to textarea ID
   const idMap = {
     opening: 'cl-para-opening',
     skills: 'cl-para-skills',
@@ -3768,28 +3100,22 @@ async function aiWriteParagraph(type) {
     closing: 'cl-para-closing',
   };
 
+  const btnId    = `ai-btn-${type}`;
   const btn      = document.getElementById(btnId);
   const textarea = document.getElementById(idMap[type]);
   if (!btn || !textarea) return;
 
-  // Show loading shimmer in textarea
   btn.classList.add('loading');
   btn.textContent = '⏳';
   textarea.value = '';
   textarea.placeholder = 'Writing…';
-
-  const shimmers = `<div class="ai-shimmer" style="width:90%"></div>
-    <div class="ai-shimmer" style="width:75%"></div>
-    <div class="ai-shimmer" style="width:85%"></div>`;
   textarea.style.background = 'rgba(212,168,83,0.04)';
 
-  // Simulate slight delay for UX feel
   await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
 
   const data = collectCLData();
   const generated = generateParagraph(type, data);
 
-  // Typewriter reveal
   textarea.value = '';
   textarea.style.background = '';
   textarea.placeholder = '';
@@ -3802,7 +3128,6 @@ async function aiWriteParagraph(type) {
   toast(`${type.charAt(0).toUpperCase() + type.slice(1)} paragraph written ✦`, 'gold', 2000);
 }
 
-/* ── AI Write All ────────────────────────────────────────── */
 async function aiWriteAll() {
   const btn = document.getElementById('ai-write-all-btn');
   btn.disabled = true;
@@ -3830,7 +3155,6 @@ async function aiWriteAll() {
   toast('Cover letter written! Review and personalise each paragraph. ✦', 'gold', 4000);
 }
 
-/* ── Typewriter effect ───────────────────────────────────── */
 async function typewriterFill(textarea, text, speed = 12) {
   textarea.value = '';
   const chars = text.split('');
@@ -3844,7 +3168,6 @@ async function typewriterFill(textarea, text, speed = 12) {
   textarea.value = text;
 }
 
-/* ── Theme switcher ──────────────────────────────────────── */
 function setCLTheme(theme, btn) {
   clTheme = theme;
   document.querySelectorAll('.cl-tbtn').forEach(b => b.classList.remove('active'));
@@ -3852,7 +3175,6 @@ function setCLTheme(theme, btn) {
   renderCoverLetter();
 }
 
-/* ── Mobile view toggle ──────────────────────────────────── */
 function toggleCLView() {
   clMobileShowPreview = !clMobileShowPreview;
   const layout    = document.getElementById('cl-layout');
@@ -3866,12 +3188,10 @@ function toggleCLView() {
   }
 }
 
-/* ── Persist / restore ───────────────────────────────────── */
 function saveCoverLetterData() {
   const dot   = document.getElementById('cl-autosave-dot');
   const label = document.getElementById('cl-autosave-label');
   const raw   = collectCLData();
-  /* Sanitize all CL fields before persisting */
   const data  = {
     fullname:     sanitizeText(raw.fullname,     100),
     myTitle:      sanitizeText(raw.myTitle,      100),
@@ -3904,7 +3224,6 @@ function saveCoverLetterData() {
 function loadCoverLetterData() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(CL_STORAGE_KEY)); } catch(e) {}
-
   if (!saved) return;
 
   const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
@@ -3940,44 +3259,22 @@ function loadCoverLetterData() {
   }
 }
 
-/* ── PDF Download ─────────────────────────────────────────
-   downloadCoverLetter() is now defined above alongside
-   downloadPDF() in the unified payment gateway section.
-   Both use the same paymentIntents.create flow via
-   executePDFDownload('coverletter').
-   ──────────────────────────────────────────────────────── */
 function printCoverLetter() {
   window.print();
 }
 
 /* ============================================================
-   SUPABASE AUTH MODULE
-   ============================================================
-   Uses Supabase Magic Link (passwordless email login).
-   Flow:
-     1. User clicks Download PDF or Save CV without being logged in
-     2. Auth modal appears asking for email
-     3. User enters email → sendMagicLink() called
-     4. Supabase sends a magic link to that email
-     5. User clicks the link → redirected back to the app
-     6. Supabase SDK detects the session from the URL hash
-     7. onAuthStateChange fires → updateAuthUI() shows user email
-     8. Original action (download/save) resumes automatically
+   SUPABASE AUTH
    ============================================================ */
-
-/* ── Supabase client init — credentials from APP_CONFIG ───── */
 const supabaseClient = window.supabase.createClient(
-  APP_CONFIG.SUPABASE_URL,       // Project URL from Settings → API
-  APP_CONFIG.SUPABASE_ANON_KEY   // Anon public key from Settings → API
+  APP_CONFIG.SUPABASE_URL,
+  APP_CONFIG.SUPABASE_ANON_KEY
 );
 
-/* ── Auth state ───────────────────────────────────────────── */
-let currentUser = null;          // null = logged out, object = logged in
-let pendingAuthAction = null;    // action to run after login completes
+let currentUser = null;
+let pendingAuthAction = null;
 
-/* ── Bootstrap: listen for session changes ───────────────── */
 function initAuth() {
-  /* Listen for login / logout events */
   supabaseClient.auth.onAuthStateChange(function(event, session) {
     currentUser = session ? session.user : null;
     updateAuthUI();
@@ -3985,7 +3282,6 @@ function initAuth() {
     if (event === 'SIGNED_IN') {
       toast('Signed in as ' + (currentUser.email || 'user') + ' ✦', 'success', 4000);
       closeAuthModal();
-      /* Resume any action that was waiting for login */
       if (pendingAuthAction) {
         var action = pendingAuthAction;
         pendingAuthAction = null;
@@ -3998,73 +3294,61 @@ function initAuth() {
     }
   });
 
-  /* Restore existing session on page load (handles magic link return too) */
   supabaseClient.auth.getSession().then(function(result) {
     var session = result.data.session;
     if (session) {
       currentUser = session.user;
       updateAuthUI();
     } else {
-      /* Show login button in navbar */
       updateAuthUI();
     }
   });
 }
 
-/* ── Update navbar UI based on auth state ─────────────────── */
 function updateAuthUI() {
   var pill         = document.getElementById('nav-user-pill');
   var loginBtn     = document.getElementById('nav-login-btn');
   var avatar       = document.getElementById('nav-user-avatar');
   var emailEl      = document.getElementById('nav-user-email');
-  /* Drawer elements */
   var drawerRow    = document.getElementById('drawer-auth-row');
   var drawerEmail  = document.getElementById('drawer-auth-email');
   var drawerLogin  = document.getElementById('drawer-login-btn');
   var drawerDl     = document.getElementById('drawer-download-btn');
 
   if (currentUser) {
-    /* Desktop: show pill, hide login button */
     if (pill)     { pill.style.display = 'flex'; }
     if (loginBtn) { loginBtn.style.display = 'none'; }
     if (emailEl)  { emailEl.textContent = currentUser.email || 'Signed in'; }
     if (avatar)   { avatar.textContent  = (currentUser.email || 'U')[0].toUpperCase(); }
-    /* Drawer: show auth row + download btn, hide login btn */
     if (drawerRow)   { drawerRow.style.display = 'flex'; }
     if (drawerEmail) { drawerEmail.textContent = currentUser.email || 'Signed in'; }
     if (drawerLogin) { drawerLogin.style.display = 'none'; }
     if (drawerDl)    { drawerDl.style.display = ''; }
   } else {
-    /* Desktop: hide pill, show login button */
     if (pill)     { pill.style.display = 'none'; }
     if (loginBtn) { loginBtn.style.display = ''; }
-    /* Drawer: hide auth row + download btn, show login btn */
     if (drawerRow)   { drawerRow.style.display = 'none'; }
     if (drawerLogin) { drawerLogin.style.display = ''; }
     if (drawerDl)    { drawerDl.style.display = 'none'; }
   }
 }
 
-/* ── Show auth modal ──────────────────────────────────────── */
 function showAuthModal(afterLoginAction) {
-  /* Store what to do after login (optional) */
   if (typeof afterLoginAction === 'function') {
     pendingAuthAction = afterLoginAction;
   }
 
-  var overlay = document.getElementById('auth-overlay');
+  var overlay   = document.getElementById('auth-overlay');
   var stepEmail = document.getElementById('auth-step-email');
   var stepSent  = document.getElementById('auth-step-sent');
   var input     = document.getElementById('auth-email-input');
   var errEl     = document.getElementById('auth-error-msg');
 
-  /* Reset to email entry step */
   if (stepEmail) stepEmail.style.display = '';
   if (stepSent)  stepSent.style.display  = 'none';
   if (errEl)     { errEl.style.display = 'none'; errEl.textContent = ''; }
   if (input)     { input.value = ''; }
 
-  /* Prefill email from CV data if available */
   var cvData = loadData('cvData');
   if (cvData && cvData.email && input) {
     input.value = cvData.email;
@@ -4074,20 +3358,17 @@ function showAuthModal(afterLoginAction) {
   setTimeout(function() { if (input) input.focus(); }, 100);
 }
 
-/* ── Close auth modal ─────────────────────────────────────── */
 function closeAuthModal() {
   var overlay = document.getElementById('auth-overlay');
   if (overlay) overlay.style.display = 'none';
 }
 
-/* Close when clicking outside the modal box */
 function handleAuthOverlayClick(event) {
   if (event.target === document.getElementById('auth-overlay')) {
     closeAuthModal();
   }
 }
 
-/* ── Send magic link ──────────────────────────────────────── */
 async function sendMagicLink() {
   if (!rateLimiter.check('auth')) {
     const wait = rateLimiter.waitSeconds('auth');
@@ -4101,35 +3382,29 @@ async function sendMagicLink() {
   var errEl   = document.getElementById('auth-error-msg');
   var email   = (input ? input.value : '').trim();
 
-  /* Validate email */
   if (!email || !email.includes('@') || !email.includes('.')) {
     if (errEl) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display = 'block'; }
     if (input) input.focus();
     return;
   }
 
-  /* Show loading state */
   if (errEl) errEl.style.display = 'none';
   if (sendBtn) sendBtn.disabled = true;
   if (label)   label.textContent = '⏳ Sending…';
 
   try {
-    /* The redirect URL must match the site URL exactly */
     var redirectTo = window.location.href.split('?')[0].split('#')[0];
 
     var result = await supabaseClient.auth.signInWithOtp({
       email: email,
       options: {
         emailRedirectTo: redirectTo,
-        shouldCreateUser: true,   /* create account if first time */
+        shouldCreateUser: true,
       }
     });
 
-    if (result.error) {
-      throw new Error(result.error.message);
-    }
+    if (result.error) throw new Error(result.error.message);
 
-    /* Show confirmation step */
     var stepEmail = document.getElementById('auth-step-email');
     var stepSent  = document.getElementById('auth-step-sent');
     var sentEmail = document.getElementById('auth-sent-email');
@@ -4145,19 +3420,12 @@ async function sendMagicLink() {
   }
 }
 
-/* ── Sign out ─────────────────────────────────────────────── */
 async function authSignOut() {
   await supabaseClient.auth.signOut();
   currentUser = null;
   updateAuthUI();
 }
 
-/* ── Auth guard: wrap download actions ────────────────────── */
-/*
- * Call requireAuth(fn) instead of fn() directly.
- * If logged in  → runs fn() immediately.
- * If logged out → shows login modal, fn() runs after login.
- */
 function requireAuth(action) {
   if (currentUser) {
     action();
@@ -4167,12 +3435,11 @@ function requireAuth(action) {
 }
 
 /* ============================================================
-   COOKIE CONSENT BANNER
+   COOKIE CONSENT
    ============================================================ */
 const COOKIE_CONSENT_KEY = 'folio_cookie_consent';
 
 function initCookieBanner() {
-  /* Only show if user hasn't accepted yet */
   const accepted = localStorage.getItem(COOKIE_CONSENT_KEY);
   if (!accepted) {
     setTimeout(() => {
@@ -4195,25 +3462,11 @@ function acceptCookies() {
   }
 }
 
-
 /* ============================================================
-   TOUR POPOVER — Onboarding hint system
-   ============================================================
-   Shows contextual popovers pointing at key UI elements on
-   first visit. Each popover is independently dismissible.
-   State stored in localStorage under 'folio_tour_v1'.
-
-   Two tours:
-     hamburger  — shown on landing page, points at ☰ button
-     gear       — shown on CV preview page, points at ⚙ button
-
-   The popover is positioned dynamically relative to the
-   target element's bounding rect so it always stays on screen.
+   TOUR POPOVER
    ============================================================ */
-
 const TOUR_STORAGE_KEY = 'folio_tour_v1';
 
-/* ── Load/save which popovers have been dismissed ─────────── */
 function tourGetState() {
   try { return JSON.parse(localStorage.getItem(TOUR_STORAGE_KEY)) || {}; }
   catch { return {}; }
@@ -4227,7 +3480,6 @@ function tourIsDismissed(id) {
   return !!tourGetState()[id];
 }
 
-/* ── Position a popover relative to its target element ───── */
 function tourPosition(popoverId, targetId, preferredSide) {
   const popover = document.getElementById(popoverId);
   const target  = document.getElementById(targetId);
@@ -4238,11 +3490,10 @@ function tourPosition(popoverId, targetId, preferredSide) {
   const ph   = popover.offsetHeight || 90;
   const vw   = window.innerWidth;
   const vh   = window.innerHeight;
-  const gap  = 14; // gap between popover and target
+  const gap  = 14;
 
   let top, left, arrowDir;
 
-  /* Auto-detect best side if not specified */
   const side = preferredSide || (() => {
     if (tr.left > pw + gap + 20)  return 'left';
     if (vw - tr.right > pw + gap) return 'right';
@@ -4254,26 +3505,25 @@ function tourPosition(popoverId, targetId, preferredSide) {
     case 'left':
       left     = tr.left - pw - gap;
       top      = tr.top + tr.height / 2 - ph / 2;
-      arrowDir = 'right';  /* arrow points RIGHT toward target */
+      arrowDir = 'right';
       break;
     case 'right':
       left     = tr.right + gap;
       top      = tr.top + tr.height / 2 - ph / 2;
-      arrowDir = 'left';   /* arrow points LEFT toward target */
+      arrowDir = 'left';
       break;
     case 'top':
       left     = tr.left + tr.width / 2 - pw / 2;
       top      = tr.top - ph - gap;
-      arrowDir = 'bottom'; /* arrow points DOWN toward target */
+      arrowDir = 'bottom';
       break;
     case 'bottom':
     default:
       left     = tr.left + tr.width / 2 - pw / 2;
       top      = tr.bottom + gap;
-      arrowDir = 'top';    /* arrow points UP toward target */
+      arrowDir = 'top';
   }
 
-  /* Clamp to viewport with 12px margin */
   const M = 12;
   left = Math.max(M, Math.min(left, vw - pw - M));
   top  = Math.max(M, Math.min(top,  vh - ph - M));
@@ -4283,7 +3533,6 @@ function tourPosition(popoverId, targetId, preferredSide) {
   popover.setAttribute('data-arrow', arrowDir);
 }
 
-/* ── Position a highlight ring around the target ─────────── */
 function tourPositionRing(ringId, targetId) {
   const ring   = document.getElementById(ringId);
   const target = document.getElementById(targetId);
@@ -4298,24 +3547,20 @@ function tourPositionRing(ringId, targetId) {
   ring.style.display = '';
 }
 
-/* ── Show a single popover ────────────────────────────────── */
 function tourShow(id, targetId, side) {
   if (tourIsDismissed(id)) return;
 
   const popover = document.getElementById('tour-' + id);
   if (!popover) return;
 
-  /* Measure after a tick so layout is settled */
   requestAnimationFrame(() => {
     tourPosition('tour-' + id, targetId, side);
     tourPositionRing('tour-ring-' + id, targetId);
     popover.style.display = '';
-    /* Trigger animation */
     requestAnimationFrame(() => popover.classList.add('visible'));
   });
 }
 
-/* ── Dismiss a single popover ─────────────────────────────── */
 function tourDismiss(id) {
   tourSetDismissed(id);
 
@@ -4331,7 +3576,6 @@ function tourDismiss(id) {
     setTimeout(() => { ring.style.display = 'none'; ring.style.opacity = ''; }, 300);
   }
 
-  /* Hide overlay if no more active popovers */
   const anyVisible = ['hamburger','gear'].some(k => {
     const p = document.getElementById('tour-' + k);
     return p && p.classList.contains('visible');
@@ -4341,12 +3585,10 @@ function tourDismiss(id) {
   }
 }
 
-/* ── Dismiss all popovers ─────────────────────────────────── */
 function tourDismissAll() {
   ['hamburger', 'gear'].forEach(id => tourDismiss(id));
 }
 
-/* ── Reposition on scroll/resize ─────────────────────────── */
 function tourReposition() {
   if (!tourIsDismissed('hamburger')) {
     tourPosition('tour-hamburger', 'hamburger', 'left');
@@ -4361,24 +3603,18 @@ function tourReposition() {
 }
 window.addEventListener('resize', tourReposition, { passive: true });
 
-/* ── Main init — decide which popovers to show ────────────── */
 function initTour() {
-  /* Popover 1: Hamburger — show on landing page if not dismissed */
   if (!tourIsDismissed('hamburger')) {
-    /* Wait for navbar to render */
     setTimeout(() => {
       tourShow('hamburger', 'hamburger', 'left');
-      /* Show dim overlay to draw focus */
       document.getElementById('tour-overlay')?.classList.add('active');
     }, 1600);
   }
 }
 
-/* ── Show gear popover when user arrives on CV preview ───── */
 function initGearTour() {
   if (tourIsDismissed('gear')) return;
 
-  /* Assign a stable id to the gear button if it doesn't have one */
   const gearBtn = document.querySelector('.cust-gear-btn');
   if (!gearBtn) return;
   if (!gearBtn.id) gearBtn.id = 'cust-gear-btn-target';
@@ -4390,27 +3626,18 @@ function initGearTour() {
 
 /* ============================================================
    WHATSAPP CHANNEL OVERLAY
-   ============================================================
-   - Fires after 60 seconds on first visit
-   - Shows once per browser session (sessionStorage key)
-   - Full-screen click → opens channel URL
-   - X button or "No thanks" dismisses without redirect
-   - CTA button opens channel + dismisses
    ============================================================ */
 const WAC_SESSION_KEY = 'gamhubjobs_wac_shown';
 const WAC_CHANNEL_URL = 'https://whatsapp.com/channel/0029Vb7G5Zp8vd1XBVtBlt13';
 let _wacTimer = null;
 
 function initWACOverlay() {
-  /* Only show once per session */
   if (sessionStorage.getItem(WAC_SESSION_KEY)) return;
 
-  /* Schedule for 60 seconds */
   _wacTimer = setTimeout(function() {
     var overlay = document.getElementById('wa-channel-overlay');
     if (!overlay) return;
     overlay.style.display = 'flex';
-    /* Tick needed so the transition fires after display:flex */
     requestAnimationFrame(function() {
       requestAnimationFrame(function() {
         overlay.classList.add('visible');
@@ -4419,13 +3646,11 @@ function initWACOverlay() {
   }, 60000);
 }
 
-/* Full-screen background click → open channel + dismiss */
 function wacJoin() {
   wacDismiss();
   window.open(WAC_CHANNEL_URL, '_blank', 'noopener,noreferrer');
 }
 
-/* Dismiss: fade out and mark session so it won't show again */
 function wacDismiss() {
   sessionStorage.setItem(WAC_SESSION_KEY, '1');
   if (_wacTimer) { clearTimeout(_wacTimer); _wacTimer = null; }
@@ -4435,7 +3660,41 @@ function wacDismiss() {
   setTimeout(function() { overlay.style.display = 'none'; }, 600);
 }
 
-/* Also dismiss if user presses Escape */
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') wacDismiss();
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  initAuth();
+  initCookieBanner();
+  initTour();
+  initWACOverlay();
+  initWizard();
+  setupScrollReveals();
+
+  const savedTheme = loadData('theme');
+  if (savedTheme) currentTheme = savedTheme;
+
+  const wiz = loadData('wizard');
+  if (wiz) {
+    if (wiz.palette) {
+      const p = PALETTES.find(x => x.id === wiz.palette);
+      if (p) {
+        document.documentElement.style.setProperty('--dw-primary', p.primary);
+        document.documentElement.style.setProperty('--dw-accent', p.accent);
+      }
+    }
+    if (wiz.font) {
+      const f = FONTS.find(x => x.id === wiz.font);
+      if (f) {
+        document.documentElement.style.setProperty('--dw-font-display', f.display);
+        document.documentElement.style.setProperty('--dw-font-body', f.body);
+      }
+    }
+  }
+
+  console.log('%c✦ GamHub Jobs — Gambia\'s Professional Job Platform', 'color:#d4a853;font-size:14px;font-weight:bold');
 });
