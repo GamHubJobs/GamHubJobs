@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GamHub Jobs — Build Your Professional CV in Minutes</title>
+<title>GamHub Jobs — Gambia's #1 Career Platform</title>
+<meta name="description" content="GamHub Jobs — Build professional CVs, search jobs, write cover letters and post job listings in The Gambia. Free to start.">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,13 +16,6 @@
 
 <!-- Supabase JS v2 — for authentication -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-<!-- ModemPay SDK — loaded as a global via CDN -->
-<!-- We use a thin fetch wrapper instead since the SDK uses ES modules.
-     The createPaymentIntent function below handles everything natively. -->
-
-<!-- EmailJS SDK — for sending job notification emails to admin -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <link rel="icon" type="image/png" href="favicon.png">
 
@@ -35,23 +29,14 @@
 <div id="toast-container"></div>
 
 <!-- ============================================================
-     TOUR POPOVERS — Onboarding hint system
-     Two independent TourPopover instances:
-       #tour-hamburger  → points at the hamburger menu button
-       #tour-gear       → points at the ⚙ customise button
-     Both are rendered/positioned by JS on first visit.
+     TOUR POPOVERS
      ============================================================ -->
-
-<!-- Dim overlay (shared) -->
 <div id="tour-overlay" class="tour-overlay" onclick="tourDismissAll()"></div>
-
-<!-- Highlight rings (positioned by JS) -->
 <div id="tour-ring-hamburger" class="tour-highlight-ring" style="display:none"></div>
 <div id="tour-ring-gear"      class="tour-highlight-ring" style="display:none"></div>
 
 <!-- Popover 1 — Hamburger Menu -->
 <div id="tour-hamburger" class="tour-popover" role="tooltip" aria-live="polite" data-arrow="right" style="display:none">
-  <!-- Arrow SVG pointing RIGHT toward the hamburger -->
   <svg class="tour-arrow" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M4 14 L22 14 M22 14 L14 6 M22 14 L14 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
@@ -68,7 +53,6 @@
 
 <!-- Popover 2 — Gear / Customise button -->
 <div id="tour-gear" class="tour-popover" role="tooltip" aria-live="polite" data-arrow="bottom" style="display:none">
-  <!-- Arrow SVG pointing DOWN toward the gear -->
   <svg class="tour-arrow" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M14 4 L14 22 M14 22 L6 14 M14 22 L22 14" stroke="#d4a853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
@@ -100,13 +84,11 @@
     <a href="#" onclick="showView('employer')" style="color:var(--gold)">For Employers</a>
   </div>
   <div class="nav-actions">
-    <!-- Auth user pill — shown when logged in -->
     <div class="nav-user-pill" id="nav-user-pill">
       <div class="nav-user-avatar" id="nav-user-avatar">U</div>
-      <span class="nav-user-email" id="nav-user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7d080e180f3d18101c1411531e1210">[email&#160;protected]</a></span>
+      <span class="nav-user-email" id="nav-user-email"></span>
       <button class="nav-logout-btn" onclick="authSignOut()">Log out</button>
     </div>
-    <!-- Login button — shown when logged out -->
     <button class="btn btn-ghost btn-sm" id="nav-login-btn" onclick="showAuthModal()" style="display:none">Log in</button>
     <button class="btn btn-outline btn-sm" onclick="showView('employer')">Post a Job</button>
     <button class="btn btn-gold btn-sm" onclick="showView('wizard')">Build CV</button>
@@ -117,24 +99,18 @@
   </button>
 </nav>
 
-<!-- Mobile drawer — contains ALL actions so navbar stays clean -->
+<!-- Mobile drawer -->
 <div id="mobile-drawer">
-
-  <!-- Auth status row — shown/hidden by JS -->
   <div class="drawer-auth-row" id="drawer-auth-row" style="display:none">
     <div class="drawer-auth-email" id="drawer-auth-email"></div>
     <button class="btn btn-ghost btn-sm" onclick="authSignOut();closeMobileNav()" style="font-size:12px;color:#f87171;">Log out</button>
   </div>
-
-  <!-- Nav links -->
   <a href="#" onclick="scrollToFeatures();closeMobileNav()">📋 Features</a>
   <a href="#" onclick="scrollToHow();closeMobileNav()">ℹ How It Works</a>
   <a href="#" onclick="scrollToTemplates();closeMobileNav()">🖼 Templates</a>
   <a href="#" onclick="showView('coverletter');closeMobileNav()">✉ Cover Letter</a>
   <a href="#" onclick="showView('job-search');closeMobileNav()">🔍 Job Search</a>
   <a href="#" onclick="showView('employer');closeMobileNav()">🏢 Post a Job</a>
-
-  <!-- Primary actions -->
   <div class="drawer-actions">
     <button class="btn btn-gold btn-full" onclick="showView('wizard');closeMobileNav()">
       ✦ Build My CV
@@ -164,24 +140,23 @@
       <div class="orb orb-3"></div>
     </div>
     <div class="hero-inner">
-      <div class="hero-eyebrow">Gambia's #1 CV Platform</div>
+      <div class="hero-eyebrow">Gambia's #1 Career Platform</div>
       <h1 class="hero-title">
         <span class="line">
-          <span class="word">Build</span>
-          <span class="word"> Your</span>
+          <span class="word">Build CVs,</span>
         </span>
         <span class="line">
-          <span class="word"><em>Professional</em></span>
+          <span class="word"><em>Find Jobs</em></span>
         </span>
         <span class="line">
-          <span class="word">CV in</span>
-          <span class="word"> Minutes</span>
+          <span class="word">&amp; Hire</span>
+          <span class="word"> Talent</span>
         </span>
       </h1>
-      <p class="hero-sub">Design stunning CVs, get AI-matched to jobs in The Gambia, and browse listings in a clear, scannable job feed.</p>
+      <p class="hero-sub">Create professional CVs, write cover letters, search jobs across The Gambia, and connect with top employers — all in one place. Free to start.</p>
       <div class="hero-ctas">
-        <button class="btn btn-gold btn-lg" onclick="showView('wizard')">Start Building Free →</button>
-        <button class="btn btn-outline btn-lg" onclick="scrollToTemplates()">Explore Templates</button>
+        <button class="btn btn-gold btn-lg" onclick="showView('wizard')">Build My CV Free →</button>
+        <button class="btn btn-outline btn-lg" onclick="showView('job-search')">Browse Jobs →</button>
       </div>
       <div class="hero-stats">
         <div class="stat">
@@ -189,16 +164,16 @@
           <span class="stat-label">Average build time</span>
         </div>
         <div class="stat">
-          <span class="stat-num" data-target="9" data-suffix=" steps">9 steps</span>
-          <span class="stat-label">Guided process</span>
-        </div>
-        <div class="stat">
           <span class="stat-num" data-target="21" data-suffix="+">21+</span>
           <span class="stat-label">Professions supported</span>
         </div>
         <div class="stat">
-          <span class="stat-num" data-target="100" data-suffix="% free">100% free</span>
-          <span class="stat-label">Always & forever</span>
+          <span class="stat-num" data-target="12" data-suffix="+">12+</span>
+          <span class="stat-label">Jobs listed</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" data-target="100" data-suffix="% free">Free</span>
+          <span class="stat-label">to start, always</span>
         </div>
       </div>
     </div>
@@ -207,34 +182,34 @@
   <!-- Bento Features -->
   <section class="section-bento" id="features">
     <div class="section-header">
-      <div class="section-label">What's Included</div>
-      <h2>Everything you need to<br>land your dream job</h2>
+      <div class="section-label">Everything You Need</div>
+      <h2>Built for job seekers<br>and employers in The Gambia</h2>
     </div>
     <div class="bento-grid">
       <div class="bento-card col-5 featured">
         <div class="bento-icon">🎨</div>
-        <h3>Design Wizard</h3>
-        <p>Choose your profession, color palette, and typography in three guided steps. Your CV's visual identity is crafted before you type a word.</p>
+        <h3>CV Design Wizard</h3>
+        <p>Choose your profession, colour palette, and typography in three guided steps. Your CV's visual identity is crafted before you type a word.</p>
       </div>
       <div class="bento-card col-7">
         <div class="bento-icon">📄</div>
-        <h3>Smart CV Generator</h3>
+        <h3>Professional CV Builder</h3>
         <p>6-step builder with profession-specific tips at every stage. From personal info to achievements, we guide you through each section with context-aware prompts.</p>
       </div>
       <div class="bento-card col-4">
-        <div class="bento-icon">⬇️</div>
-        <h3>PDF Export</h3>
-        <p>Download your CV as a pixel-perfect PDF ready to send to any employer.</p>
+        <div class="bento-icon">✉️</div>
+        <h3>Cover Letter Generator</h3>
+        <p>Write a tailored cover letter in minutes using your CV data. Five tone options, AI-assisted writing, and PDF download.</p>
       </div>
       <div class="bento-card col-4">
-        <div class="bento-icon">🎭</div>
-        <h3>Theme Customizer</h3>
-        <p>Switch between Classic, Minimal, Bold, and Elegant themes in one click.</p>
+        <div class="bento-icon">🔍</div>
+        <h3>Job Search</h3>
+        <p>Browse verified job listings across every industry in The Gambia. Filter by type, category, and location.</p>
       </div>
       <div class="bento-card col-6 featured" style="cursor:pointer" onclick="showView('employer')">
         <div class="bento-icon">🏢</div>
         <h3>Employer Job Portal</h3>
-        <p>Businesses can post jobs directly on GamHub Jobs — free basic listing, AI-matched to qualified candidates, live on the job board within 24 hours.</p>
+        <p>Businesses can post jobs directly on GamHub Jobs — free basic listing, reviewed within 24 hours, and live on the job board for thousands of Gambian professionals to see.</p>
         <div style="margin-top:16px">
           <button class="btn btn-gold btn-sm" onclick="showView('employer')">Post a Job Free →</button>
         </div>
@@ -246,7 +221,7 @@
   <section class="section-how" id="how">
     <div class="section-header">
       <div class="section-label">Process</div>
-      <h2>From blank page<br>to job interviews</h2>
+      <h2>From signup<br>to hired</h2>
     </div>
     <div class="how-steps">
       <div class="how-step">
@@ -270,9 +245,9 @@
         <p>Fill in Personal, Skills, Experience, Education, Achievements, and Contact.</p>
       </div>
       <div class="how-step" style="background: rgba(100,200,100,0.04); border-color: rgba(100,200,100,0.2);">
-        <div class="how-step-num" style="color: #4ade80">✦ — AI</div>
-        <h3>Get Matched to Jobs</h3>
-        <p>AI analyzes your CV and surfaces matching jobs from GamHubJobs instantly.</p>
+        <div class="how-step-num" style="color: #4ade80">✦ — APPLY</div>
+        <h3>Search & Apply to Jobs</h3>
+        <p>Browse listings, write a cover letter, and apply to jobs across The Gambia — all from one platform.</p>
       </div>
     </div>
   </section>
@@ -280,7 +255,7 @@
   <!-- Template Previews -->
   <section class="section-templates" id="templates">
     <div class="section-header">
-      <div class="section-label">Templates</div>
+      <div class="section-label">CV Templates</div>
       <h2>Polished designs for<br>every profession</h2>
     </div>
     <div class="template-grid">
@@ -350,11 +325,11 @@
   <!-- CTA Banner -->
   <div class="section-cta">
     <div class="cta-orb"></div>
-    <h2>Ready to land your<br><em>dream job in The Gambia?</em></h2>
-    <p>Join thousands of professionals who've built their CV with GamHub Jobs.</p>
+    <h2>Ready to build, apply<br><em>&amp; get hired in The Gambia?</em></h2>
+    <p>Join thousands of Gambians building careers, finding jobs, and hiring talent on GamHub Jobs.</p>
     <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btn-gold btn-lg" onclick="showView('wizard')">Build My CV Now</button>
-
+      <button class="btn btn-gold btn-lg" onclick="showView('wizard')">Build My CV Free</button>
+      <button class="btn btn-outline btn-lg" onclick="showView('job-search')">Browse Jobs →</button>
     </div>
   </div>
 
@@ -368,7 +343,7 @@
       <a href="#" onclick="showView('privacy');return false">Privacy</a>
       <a href="#" onclick="showView('terms');return false">Terms</a>
       <a href="https://gamhubjobs.com" target="_blank" rel="noopener">GamHubJobs</a>
-      <a href="/cdn-cgi/l/email-protection#afc7cac3c3c0efc8cec2c7dacdc5c0cddc81c8c2">Contact</a>
+      <a href="mailto:gamhubjobs@gmail.com">Contact</a>
     </div>
     <div class="footer-copy">© 2026 GamHub Jobs · Made for The Gambia 🇬🇲</div>
   </footer>
@@ -451,7 +426,7 @@
 
   <div class="builder-header">
     <div class="builder-header-row1">
-      <div class="builder-logo">✦ GamHub Jobs — Builder</div>
+      <div class="builder-logo">✦ GamHub Jobs — CV Builder</div>
       <div class="builder-autosave">
         <div class="autosave-dot" id="autosave-dot"></div>
         <span id="autosave-label">Auto saving...</span>
@@ -558,11 +533,9 @@
      ============================================================ -->
 <div id="view-preview" class="view">
 
-  <!-- Top bar — horizontally scrollable on mobile, grouped on desktop -->
   <div class="preview-topbar">
     <div class="preview-topbar-title">✦ CV</div>
 
-    <!-- Download group — most important, leftmost -->
     <div class="preview-topbar-group">
       <button class="btn btn-gold btn-sm" onclick="downloadPDF()" title="Download CV as PDF">
         ⬇ Download CV
@@ -575,7 +548,6 @@
 
     <div class="preview-topbar-divider"></div>
 
-    <!-- Theme group -->
     <div class="preview-topbar-group">
       <div class="theme-switcher">
         <button class="theme-btn active" style="background:#1a3a5c" title="Classic"  onclick="setTheme('classic')"  id="tbtn-classic"></button>
@@ -587,7 +559,6 @@
 
     <div class="preview-topbar-divider"></div>
 
-    <!-- Navigation group -->
     <div class="preview-topbar-group">
       <button class="btn btn-ghost btn-sm" onclick="showView('builder')">✏ Edit</button>
       <button class="btn btn-ghost btn-sm" onclick="showView('coverletter')">✉ Cover Letter</button>
@@ -598,14 +569,10 @@
     </div>
   </div>
 
-  <!-- CV Paper -->
   <div class="cv-wrapper">
-    <div class="cv-paper theme-classic" id="cv-paper">
-      <!-- Rendered by JS -->
-    </div>
+    <div class="cv-paper theme-classic" id="cv-paper"></div>
   </div>
 
-  <!-- Customizer overlay + panel -->
   <div class="customizer-overlay" id="customizer-overlay" onclick="toggleCustomizer()"></div>
   <div class="customizer-panel" id="customizer-panel">
     <div class="customizer-header">
@@ -640,14 +607,10 @@
 </div><!-- /view-preview -->
 
 <!-- ============================================================
-     VIEW 5 — JOB DISCOVERY
-     ============================================================ -->
-<!-- ============================================================
      VIEW 5b — JOB SEARCH
      ============================================================ -->
 <div id="view-job-search" class="view">
 
-  <!-- Top bar -->
   <div class="js-topbar">
     <div class="js-topbar-inner">
       <div class="js-topbar-left">
@@ -661,7 +624,6 @@
     </div>
   </div>
 
-  <!-- Search section -->
   <div class="js-search-section">
     <div class="js-search-card">
       <div class="js-search-row">
@@ -705,17 +667,12 @@
         </div>
         <button class="btn btn-gold js-search-btn" onclick="filterJobs()">Search Jobs</button>
       </div>
-      <!-- Result count pill -->
       <div class="js-result-meta" id="js-result-meta"></div>
     </div>
   </div>
 
-  <!-- Job list -->
   <div class="js-list-wrap">
-    <div class="js-job-grid" id="js-job-grid">
-      <!-- Rendered by JS -->
-    </div>
-    <!-- Empty state -->
+    <div class="js-job-grid" id="js-job-grid"></div>
     <div class="js-empty" id="js-empty" style="display:none">
       <div class="js-empty-icon">🗂️</div>
       <h3>No jobs match your search</h3>
@@ -724,18 +681,9 @@
     </div>
   </div>
 
-  <!-- ── Job Detail Modal ── -->
-  <div
-    class="jd-backdrop"
-    id="jd-backdrop"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="jd-title"
-    style="display:none"
-  >
+  <!-- Job Detail Modal -->
+  <div class="jd-backdrop" id="jd-backdrop" role="dialog" aria-modal="true" aria-labelledby="jd-title" style="display:none">
     <div class="jd-modal" id="jd-modal">
-
-      <!-- Modal header -->
       <div class="jd-modal-head">
         <div class="jd-modal-head-left">
           <div class="jd-modal-logo-wrap" id="jd-logo-wrap"></div>
@@ -744,71 +692,38 @@
             <p class="jd-modal-company" id="jd-company"></p>
           </div>
         </div>
-        <button
-          class="jd-close"
-          id="jd-close"
-          aria-label="Close job details"
-        >✕</button>
+        <button class="jd-close" id="jd-close" aria-label="Close job details">✕</button>
       </div>
-
-      <!-- Highlight chips row -->
       <div class="jd-chips-row" id="jd-chips-row"></div>
-
-      <!-- Scrollable body -->
       <div class="jd-modal-body" id="jd-modal-body">
-
-        <!-- SECTION 1: Company Details -->
         <section class="jd-section" id="jd-sec-company">
-          <h3 class="jd-section-title">
-            <span class="jd-section-icon">🏢</span> Company Details
-          </h3>
+          <h3 class="jd-section-title"><span class="jd-section-icon">🏢</span> Company Details</h3>
           <div class="jd-detail-grid" id="jd-company-grid"></div>
         </section>
-
-        <!-- SECTION 2: Job Details -->
         <section class="jd-section" id="jd-sec-details">
-          <h3 class="jd-section-title">
-            <span class="jd-section-icon">📋</span> Job Details
-          </h3>
+          <h3 class="jd-section-title"><span class="jd-section-icon">📋</span> Job Details</h3>
           <div class="jd-detail-grid" id="jd-details-grid"></div>
         </section>
-
-        <!-- SECTION 3: Description -->
         <section class="jd-section" id="jd-sec-desc">
-          <h3 class="jd-section-title">
-            <span class="jd-section-icon">📝</span> About the Role
-          </h3>
+          <h3 class="jd-section-title"><span class="jd-section-icon">📝</span> About the Role</h3>
           <p class="jd-body-text" id="jd-description"></p>
         </section>
-
-        <!-- SECTION 4: Requirements -->
         <section class="jd-section" id="jd-sec-req">
-          <h3 class="jd-section-title">
-            <span class="jd-section-icon">✅</span> Requirements
-          </h3>
+          <h3 class="jd-section-title"><span class="jd-section-icon">✅</span> Requirements</h3>
           <div class="jd-list-text" id="jd-requirements"></div>
         </section>
-
-        <!-- SECTION 5: Perks & Benefits -->
         <section class="jd-section" id="jd-sec-perks">
-          <h3 class="jd-section-title">
-            <span class="jd-section-icon">🎁</span> Perks &amp; Benefits
-          </h3>
+          <h3 class="jd-section-title"><span class="jd-section-icon">🎁</span> Perks &amp; Benefits</h3>
           <div class="jd-list-text" id="jd-perks"></div>
         </section>
-
-        <!-- SECTION 6: How to Apply -->
         <section class="jd-section jd-section-apply" id="jd-sec-apply">
-          <h3 class="jd-section-title">
-            <span class="jd-section-icon">🚀</span> How to Apply
-          </h3>
+          <h3 class="jd-section-title"><span class="jd-section-icon">🚀</span> How to Apply</h3>
           <p class="jd-body-text" id="jd-apply-info"></p>
           <div class="jd-apply-actions" id="jd-apply-actions"></div>
         </section>
-
-      </div><!-- /jd-modal-body -->
-    </div><!-- /jd-modal -->
-  </div><!-- /jd-backdrop -->
+      </div>
+    </div>
+  </div>
 
 </div><!-- /view-job-search -->
 
@@ -863,7 +778,6 @@
      ============================================================ -->
 <div id="view-employer" class="view">
 
-  <!-- Top bar -->
   <div class="employer-topbar">
     <h2>🏢 Employer Portal <span class="employer-topbar-badge">For Businesses</span></h2>
     <div style="display:flex;gap:10px;align-items:center;">
@@ -873,7 +787,6 @@
 
   <div class="employer-body">
 
-    <!-- Stats bar -->
     <div class="employer-stats-bar">
       <div class="employer-stat">
         <div class="employer-stat-num" id="stat-total">0</div>
@@ -893,20 +806,16 @@
       </div>
     </div>
 
-    <!-- Tabs -->
     <div class="portal-tabs">
       <button class="portal-tab active" onclick="switchPortalTab('post', this)">📝 Post a Job</button>
       <button class="portal-tab" onclick="switchPortalTab('manage', this)">📋 My Listings</button>
-
     </div>
 
-    <!-- ── TAB 1: Post a Job ── -->
+    <!-- TAB 1: Post a Job -->
     <div class="portal-panel active" id="panel-post">
       <div class="post-job-layout">
-
-        <!-- Main form -->
         <div>
-          <!-- Success state (hidden until submit) -->
+          <!-- Success state -->
           <div class="submission-success" id="submission-success">
             <div class="success-icon">🎉</div>
             <h3>Job Posted Successfully!</h3>
@@ -925,13 +834,11 @@
             <h3>Post a Job</h3>
             <p class="form-subtitle">Reach thousands of qualified Gambian professionals. Free basic listing, no credit card required.</p>
 
-            <!-- Company info -->
             <div class="section-label" style="margin-bottom:20px">Company Details</div>
             <div class="form-row">
               <div class="form-group">
                 <label>Company Name *</label>
-                <input type="text" class="form-control" id="pj-company" placeholder="e.g. Trust Bank Gambia"
-                  oninput="updateJobPreview()">
+                <input type="text" class="form-control" id="pj-company" placeholder="e.g. Trust Bank Gambia" oninput="updateJobPreview()">
               </div>
               <div class="form-group">
                 <label>Industry</label>
@@ -965,9 +872,7 @@
             </div>
             <div class="form-group">
               <label>Company Logo URL <span style="color:var(--muted);font-weight:400">(optional — shown on job card for Premium listings)</span></label>
-              <input type="url" class="form-control" id="pj-logo-url"
-                placeholder="https://yourcompany.gm/logo.png"
-                oninput="updateJobPreview()">
+              <input type="url" class="form-control" id="pj-logo-url" placeholder="https://yourcompany.gm/logo.png" oninput="updateJobPreview()">
               <div style="font-size:12px;color:var(--muted);margin-top:6px">
                 Upload your logo to a free image host (e.g. <a href="https://imgbb.com" target="_blank" style="color:var(--gold)">imgbb.com</a>) and paste the direct image link here.
               </div>
@@ -975,12 +880,10 @@
 
             <div class="divider"></div>
 
-            <!-- Job details -->
             <div class="section-label" style="margin-bottom:20px">Job Details</div>
             <div class="form-group">
               <label>Job Title *</label>
-              <input type="text" class="form-control" id="pj-title" placeholder="e.g. Marketing Manager"
-                oninput="updateJobPreview()">
+              <input type="text" class="form-control" id="pj-title" placeholder="e.g. Marketing Manager" oninput="updateJobPreview()">
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -1022,8 +925,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Salary / Compensation <span style="color:var(--muted);font-weight:400">(optional)</span></label>
-                <input type="text" class="form-control" id="pj-salary" placeholder="e.g. GMD 25,000/month"
-                  oninput="updateJobPreview()">
+                <input type="text" class="form-control" id="pj-salary" placeholder="e.g. GMD 25,000/month" oninput="updateJobPreview()">
               </div>
               <div class="form-group">
                 <label>Experience Required</label>
@@ -1078,7 +980,6 @@
 
             <div class="divider"></div>
 
-            <!-- Plan selector -->
             <div class="section-label" style="margin-bottom:20px">Choose a Plan</div>
             <div class="plan-cards">
               <div class="plan-card selected" onclick="selectPlan(this,'free')">
@@ -1103,7 +1004,7 @@
                   <li>Listed for 30 days</li>
                   <li>Gold "Featured" badge on card</li>
                   <li>Priority position in job board</li>
-                  <li>Email blast to 2,000+ registered job seekers</li>
+                  <li>Blast to 2,000+ registered job seekers</li>
                 </ul>
               </div>
               <div class="plan-card" onclick="selectPlan(this,'premium')">
@@ -1138,8 +1039,6 @@
 
         <!-- Sidebar -->
         <div class="post-job-sidebar" id="post-job-sidebar">
-
-          <!-- Live preview -->
           <div class="sidebar-card">
             <h4>👁 Live Preview</h4>
             <div class="job-preview-card">
@@ -1160,8 +1059,6 @@
               <div class="preview-job-desc" id="prev-desc">Your job description will appear here…</div>
             </div>
           </div>
-
-          <!-- Why GamHub Jobs -->
           <div class="sidebar-card">
             <h4>📊 Why Post Here?</h4>
             <div class="sidebar-stat"><span>Monthly visitors</span><span class="sidebar-stat-val">2,400+</span></div>
@@ -1170,8 +1067,6 @@
             <div class="sidebar-stat"><span>Avg. apply time</span><span class="sidebar-stat-val">&lt; 2 min</span></div>
             <div class="sidebar-stat"><span>Free listing cost</span><span class="sidebar-stat-val">GMD 0</span></div>
           </div>
-
-          <!-- Tips -->
           <div class="sidebar-card">
             <h4>💡 Tips for a Great Listing</h4>
             <p>
@@ -1185,17 +1080,14 @@
       </div><!-- /post-job-layout -->
     </div><!-- /panel-post -->
 
-    <!-- ── TAB 2: My Listings ── -->
+    <!-- TAB 2: My Listings -->
     <div class="portal-panel" id="panel-manage">
       <div class="manage-jobs-header">
         <h3>My Job Listings</h3>
         <button class="btn btn-gold btn-sm" onclick="switchPortalTab('post', document.querySelector('.portal-tab'))">+ Post New Job</button>
       </div>
-      <div id="manage-jobs-list">
-        <!-- Rendered by JS -->
-      </div>
+      <div id="manage-jobs-list"></div>
     </div>
-
 
   </div><!-- /employer-body -->
 </div><!-- /view-employer -->
@@ -1205,36 +1097,27 @@
      ============================================================ -->
 <div id="view-coverletter" class="view">
 
-  <!-- Top bar -->
   <div class="cl-topbar">
     <div class="cl-topbar-title">✉ Cover Letter</div>
     <div class="cl-autosave">
       <div class="autosave-dot" id="cl-autosave-dot"></div>
       <span id="cl-autosave-label" class="cl-autosave-label-text">Auto saving…</span>
     </div>
-    <!-- Mobile preview toggle — shown by JS on small screens -->
-    <button class="btn btn-ghost btn-sm" id="cl-toggle-btn"
-      onclick="toggleCLView()" style="display:none">👁 Preview</button>
-    <!-- Always-visible download button — most important action -->
-    <button class="btn btn-gold btn-sm" onclick="downloadCoverLetter()" style="flex-shrink:0">
-      ⬇ Download
-    </button>
+    <button class="btn btn-ghost btn-sm" id="cl-toggle-btn" onclick="toggleCLView()" style="display:none">👁 Preview</button>
+    <button class="btn btn-gold btn-sm" onclick="downloadCoverLetter()" style="flex-shrink:0">⬇ Download</button>
     <button class="btn btn-outline btn-sm" onclick="showView('preview')" style="flex-shrink:0">CV</button>
     <button class="btn btn-ghost btn-sm" onclick="showView('landing')" style="flex-shrink:0">← Home</button>
   </div>
 
   <div class="cl-layout" id="cl-layout">
 
-    <!-- ── LEFT: Builder ── -->
     <div class="cl-builder">
 
-      <!-- Import from CV -->
       <div class="import-cv-bar">
         <span>Auto-fill from your CV? <strong id="cl-cv-name">No CV found</strong></span>
         <button class="btn btn-gold btn-sm" onclick="importFromCV()">Import CV ↓</button>
       </div>
 
-      <!-- SECTION: Your Details -->
       <div class="cl-section">
         <div class="cl-section-title">Your Details</div>
         <div class="form-group">
@@ -1263,7 +1146,6 @@
         </div>
       </div>
 
-      <!-- SECTION: Job You're Applying For -->
       <div class="cl-section">
         <div class="cl-section-title">Job You're Applying For</div>
         <div class="form-group">
@@ -1290,7 +1172,6 @@
         </div>
       </div>
 
-      <!-- SECTION: Tone -->
       <div class="cl-section">
         <div class="cl-section-title">Letter Tone</div>
         <div class="tone-grid" id="cl-tone-grid">
@@ -1321,17 +1202,13 @@
         </div>
       </div>
 
-      <!-- SECTION: Letter Content -->
       <div class="cl-section">
         <div class="cl-section-title">Letter Content</div>
         <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
           Write each paragraph below, or use the <strong style="color:var(--gold)">✦ AI Write</strong> button
           to generate it based on your CV and the job you're applying for.
         </p>
-
         <div class="cl-para-list">
-
-          <!-- Opening -->
           <div class="cl-para-item">
             <div class="cl-para-label">
               <span>Opening — Why You're Writing</span>
@@ -1339,8 +1216,6 @@
             </div>
             <textarea id="cl-para-opening" placeholder="Introduce yourself and state the specific role you are applying for. Mention where you found the listing and a one-line hook about why you're a strong fit…" oninput="renderCoverLetter()"></textarea>
           </div>
-
-          <!-- Skills Match -->
           <div class="cl-para-item">
             <div class="cl-para-label">
               <span>Why You're the Right Fit</span>
@@ -1348,8 +1223,6 @@
             </div>
             <textarea id="cl-para-skills" placeholder="Highlight 2-3 key skills or experiences that directly match the role. Be specific — use numbers or outcomes where possible…" oninput="renderCoverLetter()"></textarea>
           </div>
-
-          <!-- Achievements -->
           <div class="cl-para-item">
             <div class="cl-para-label">
               <span>Your Key Achievement</span>
@@ -1357,8 +1230,6 @@
             </div>
             <textarea id="cl-para-achievement" placeholder="Share one specific achievement or project that proves your value. What problem did you solve? What was the measurable result?…" oninput="renderCoverLetter()"></textarea>
           </div>
-
-          <!-- Why This Company -->
           <div class="cl-para-item">
             <div class="cl-para-label">
               <span>Why This Organisation</span>
@@ -1366,8 +1237,6 @@
             </div>
             <textarea id="cl-para-company" placeholder="Show genuine interest in this specific organisation. What do you admire about their mission, culture, or impact in The Gambia?…" oninput="renderCoverLetter()"></textarea>
           </div>
-
-          <!-- Closing -->
           <div class="cl-para-item">
             <div class="cl-para-label">
               <span>Closing — Call to Action</span>
@@ -1375,10 +1244,7 @@
             </div>
             <textarea id="cl-para-closing" placeholder="Thank the reader for their time. Express enthusiasm for an interview. State your availability and how they can reach you…" oninput="renderCoverLetter()"></textarea>
           </div>
-
         </div>
-
-        <!-- AI Write All -->
         <div style="margin-top:16px">
           <button class="btn btn-gold btn-full" id="ai-write-all-btn" onclick="aiWriteAll()">
             ✦ AI Write Entire Letter
@@ -1389,7 +1255,6 @@
         </div>
       </div>
 
-      <!-- SECTION: Custom Closing -->
       <div class="cl-section">
         <div class="cl-section-title">Sign-off</div>
         <div class="form-row">
@@ -1406,18 +1271,14 @@
           </div>
           <div class="form-group">
             <label>Date</label>
-            <input type="text" class="form-control" id="cl-date"
-              placeholder="e.g. 16 March 2026" oninput="renderCoverLetter()">
+            <input type="text" class="form-control" id="cl-date" placeholder="e.g. 16 March 2026" oninput="renderCoverLetter()">
           </div>
         </div>
       </div>
 
     </div><!-- /cl-builder -->
 
-    <!-- ── RIGHT: Live Preview ── -->
     <div class="cl-preview-panel" id="cl-preview-panel">
-
-      <!-- Theme switcher -->
       <div class="cl-theme-switcher">
         <span>Theme:</span>
         <button class="cl-tbtn active" style="background:#1a3a5c" title="Classic"   onclick="setCLTheme('clt-classic',this)"></button>
@@ -1427,45 +1288,33 @@
         <button class="cl-tbtn"        style="background:#2d6a4f" title="Sage"      onclick="setCLTheme('clt-sage',this)"></button>
         <button class="cl-tbtn"        style="background:#1a2744" title="Navy Gold" onclick="setCLTheme('clt-navy-gold',this)"></button>
       </div>
-
-      <!-- Action buttons -->
       <div class="cl-preview-actions">
         <button class="btn btn-gold" onclick="downloadCoverLetter()">⬇ Download PDF</button>
         <button class="btn btn-ghost" onclick="printCoverLetter()">🖨 Print</button>
         <button class="btn btn-outline" onclick="showView('preview')">View CV →</button>
       </div>
-
-      <!-- The letter itself -->
-      <div class="cl-paper clt-classic" id="cl-paper">
-        <!-- Rendered by JS -->
-      </div>
-
-    </div><!-- /cl-preview-panel -->
+      <div class="cl-paper clt-classic" id="cl-paper"></div>
+    </div>
 
   </div><!-- /cl-layout -->
 
 </div><!-- /view-coverletter -->
 
-
 <!-- ============================================================
      VIEW 8 — PRIVACY POLICY
      ============================================================ -->
 <div id="view-privacy" class="view">
-
   <div class="legal-topbar">
     <div class="legal-topbar-title">Privacy Policy</div>
     <span class="legal-topbar-date">Last updated: 18 March 2026</span>
     <button class="btn btn-ghost btn-sm" onclick="history.back();showView('landing')">← Back</button>
   </div>
-
   <div class="legal-body">
-
     <div class="legal-hero">
       <div class="legal-last-updated">📅 Last updated: 18 March 2026</div>
       <h1>Privacy Policy</h1>
       <p>GamHub Jobs is committed to protecting your personal information. This policy explains what data we collect, why we collect it, how it is stored, and your rights as a user operating in The Gambia and beyond.</p>
     </div>
-
     <div class="legal-toc">
       <h3>Contents</h3>
       <ol>
@@ -1482,21 +1331,19 @@
         <li><a href="#priv-11">Contact Us</a></li>
       </ol>
     </div>
-
     <div class="legal-section" id="priv-1">
       <div class="legal-section-num">Section 01</div>
       <h2>Who We Are</h2>
-      <p><strong>GamHub Jobs</strong> is a CV generation and job matching platform designed for professionals in The Gambia. Our platform helps job seekers build professional CVs and cover letters, and connects them with employers across all industries in The Gambia.</p>
+      <p><strong>GamHub Jobs</strong> is a career platform designed for professionals in The Gambia. We help job seekers build professional CVs and cover letters, search and apply for jobs, and connect with employers across all industries in The Gambia.</p>
       <p>We operate under Gambian law. Our data infrastructure uses Supabase, with servers located in the European Union (West EU region), subject to GDPR-equivalent data protection standards.</p>
       <div class="legal-contact-card">
         <div class="legal-contact-icon">✉</div>
         <div>
           <h4>Data Controller</h4>
-          <a href="/cdn-cgi/l/email-protection#bdd5d8d1d1d2fddadcd0d5c8dfd7d2dfce93dad0"><span class="__cf_email__" data-cfemail="f8909d949497b89f9995908d9a92979a8bd69f95">[email&#160;protected]</span></a>
+          <a href="mailto:gamhubjobs@gmail.com">gamhubjobs@gmail.com</a>
         </div>
       </div>
     </div>
-
     <div class="legal-section" id="priv-2">
       <div class="legal-section-num">Section 02</div>
       <h2>What Data We Collect</h2>
@@ -1532,7 +1379,6 @@
         <li>We do not store your payment card or mobile money details. All payment processing is handled entirely by ModemPay. We receive only a confirmation of payment success or failure.</li>
       </ul>
     </div>
-
     <div class="legal-section" id="priv-3">
       <div class="legal-section-num">Section 03</div>
       <h2>How We Use Your Data</h2>
@@ -1548,55 +1394,46 @@
         <strong>We do not sell your personal data.</strong> We do not share your CV content, email address, or any personal information with third parties for marketing purposes.
       </div>
     </div>
-
     <div class="legal-section" id="priv-4">
       <div class="legal-section-num">Section 04</div>
       <h2>Data Storage and Security</h2>
       <p>Your data is stored in two places:</p>
       <ul>
         <li><strong>Supabase (cloud database):</strong> Your account profile, email address, free download count, and submitted job listings are stored in a PostgreSQL database hosted by Supabase in the European Union (West EU region). Supabase applies industry-standard encryption at rest and in transit.</li>
-        <li><strong>Your browser (local storage):</strong> Your CV content, design choices, saved jobs, and wizard settings are stored in your browser's local storage on your device. This data does not leave your device unless you explicitly use a feature that sends it to our servers (such as submitting a job post or logging in).</li>
+        <li><strong>Your browser (local storage):</strong> Your CV content, design choices, saved jobs, and wizard settings are stored in your browser's local storage on your device. This data does not leave your device unless you explicitly use a feature that sends it to our servers.</li>
       </ul>
       <p>We take reasonable technical measures to protect your data, including HTTPS encryption for all connections, Row Level Security (RLS) on our database so users can only access their own records, and no storage of payment credentials on our servers.</p>
-      <p>As our servers are located in the European Union, your data may be processed outside The Gambia. We ensure this is done in compliance with applicable data protection principles.</p>
     </div>
-
     <div class="legal-section" id="priv-5">
       <div class="legal-section-num">Section 05</div>
       <h2>Payments and Financial Data</h2>
       <p>Payments on GamHub Jobs are processed by <strong>ModemPay</strong>, a Gambian payment gateway that supports mobile money and local payment methods in GMD (Gambian Dalasi).</p>
       <ul>
         <li>We do not collect, process, or store your payment card numbers, mobile money PIN, or wallet credentials at any point.</li>
-        <li>When you initiate a payment, you are redirected to ModemPay's secure hosted checkout page. Your payment is processed entirely on their infrastructure.</li>
-        <li>After payment is confirmed, ModemPay notifies us of the transaction result only. We store a record that payment was made (amount, plan, timestamp) for service fulfilment purposes.</li>
+        <li>When you initiate a payment, you are redirected to ModemPay's secure hosted checkout page.</li>
+        <li>After payment is confirmed, ModemPay notifies us of the transaction result only.</li>
         <li>ModemPay's own privacy policy governs how your financial data is handled during checkout.</li>
       </ul>
       <div class="legal-highlight">
         All transactions are denominated in <strong>Gambian Dalasi (GMD)</strong>. GamHub Jobs does not process payments in any foreign currency.
       </div>
     </div>
-
     <div class="legal-section" id="priv-6">
       <div class="legal-section-num">Section 06</div>
       <h2>Cookies and Local Storage</h2>
-      <p>GamHub Jobs uses your browser's <strong>local storage</strong> (not traditional cookies) to save your work between sessions. This is essential for the platform to function — without it, your CV data would be lost every time you closed the browser tab.</p>
-      <p>The data stored locally on your device includes:</p>
+      <p>GamHub Jobs uses your browser's <strong>local storage</strong> (not traditional cookies) to save your work between sessions.</p>
       <ul>
-        <li><strong>gamhubjobs_cv_data</strong> — your CV content (name, experience, skills, etc.)</li>
-        <li><strong>gamhubjobs_cv_wizard</strong> — your design choices (palette, font, profession)</li>
+        <li><strong>gamhubjobs_cv_data</strong> — your CV content</li>
+        <li><strong>gamhubjobs_cv_wizard</strong> — your design choices</li>
         <li><strong>gamhubjobs_cv_theme</strong> — your selected CV theme</li>
-        <li><strong>folio_saved_jobs</strong> — jobs you have swiped right on</li>
-        <li><strong>folio_gamhubjobs_cache</strong> — a 2-hour cache of job listings to reduce network requests</li>
+        <li><strong>folio_saved_jobs</strong> — jobs you have saved</li>
         <li><strong>folio_cookie_consent</strong> — records whether you have accepted this notice</li>
       </ul>
-      <p>Supabase Auth also stores a session token in local storage to keep you logged in between visits. This token is encrypted and tied to your account only.</p>
-      <p>You can clear all locally stored data at any time through your browser's developer tools or settings. This will not affect your Supabase account data.</p>
+      <p>You can clear all locally stored data at any time through your browser's developer tools or settings.</p>
     </div>
-
     <div class="legal-section" id="priv-7">
       <div class="legal-section-num">Section 07</div>
       <h2>Third-Party Services</h2>
-      <p>GamHub Jobs uses the following third-party services. Each has its own privacy policy:</p>
       <ul>
         <li><strong>Supabase</strong> (supabase.com) — Database, authentication, and Edge Functions hosting. EU-based servers.</li>
         <li><strong>ModemPay</strong> (modem-pay.com) — Payment processing in GMD. Gambia-based payment provider.</li>
@@ -1605,72 +1442,58 @@
         <li><strong>html2pdf.js / Cloudflare CDN</strong> — PDF generation library loaded from Cloudflare's CDN.</li>
       </ul>
     </div>
-
     <div class="legal-section" id="priv-8">
       <div class="legal-section-num">Section 08</div>
       <h2>Your Rights</h2>
-      <p>You have the following rights regarding your personal data:</p>
       <ul>
         <li><strong>Right to access:</strong> You can request a copy of all personal data we hold about you.</li>
         <li><strong>Right to rectification:</strong> You can update or correct your information at any time by editing your CV or profile.</li>
-        <li><strong>Right to erasure:</strong> You can request that we delete your account and all associated data. Email us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3dbd6dfdfdcf3d4d2dedbc6d1d9dcd1c09dd4de">[email&#160;protected]</a> to make this request.</li>
+        <li><strong>Right to erasure:</strong> You can request that we delete your account and all associated data. Email us at <a href="mailto:gamhubjobs@gmail.com" style="color:var(--gold)">gamhubjobs@gmail.com</a>.</li>
         <li><strong>Right to data portability:</strong> Your CV data is yours. You can download it as a PDF at any time.</li>
         <li><strong>Right to withdraw consent:</strong> You can delete your locally stored data through your browser settings at any time.</li>
-        <li><strong>Right to object:</strong> If you believe your data is being processed unlawfully, you may contact us or lodge a complaint with the relevant authority in The Gambia.</li>
       </ul>
-      <p>To exercise any of these rights, contact us at <a href="/cdn-cgi/l/email-protection#f79f929b9b98b790969a9f82959d989584d9909a" style="color:var(--gold)"><span class="__cf_email__" data-cfemail="076f626b6b684760666a6f72656d68657429606a">[email&#160;protected]</span></a>. We will respond within 14 business days.</p>
+      <p>To exercise any of these rights, contact us at <a href="mailto:gamhubjobs@gmail.com" style="color:var(--gold)">gamhubjobs@gmail.com</a>. We will respond within 14 business days.</p>
     </div>
-
     <div class="legal-section" id="priv-9">
       <div class="legal-section-num">Section 09</div>
       <h2>Children's Privacy</h2>
-      <p>GamHub Jobs is intended for users aged 16 and above. We do not knowingly collect personal information from children under the age of 16. If you believe a child has provided us with personal data, please contact us at <a href="/cdn-cgi/l/email-protection#d5bdb0b9b9ba95b2b4b8bda0b7bfbab7a6fbb2b8" style="color:var(--gold)"><span class="__cf_email__" data-cfemail="eb838e878784ab8c8a86839e8981848998c58c86">[email&#160;protected]</span></a> and we will delete the information promptly.</p>
+      <p>GamHub Jobs is intended for users aged 16 and above. We do not knowingly collect personal information from children under the age of 16. If you believe a child has provided us with personal data, please contact us at <a href="mailto:gamhubjobs@gmail.com" style="color:var(--gold)">gamhubjobs@gmail.com</a> and we will delete the information promptly.</p>
     </div>
-
     <div class="legal-section" id="priv-10">
       <div class="legal-section-num">Section 10</div>
       <h2>Changes to This Policy</h2>
-      <p>We may update this Privacy Policy from time to time to reflect changes in our practices, technology, or applicable laws. When we make material changes, we will update the "Last updated" date at the top of this page. We encourage you to review this policy periodically.</p>
-      <p>Continued use of GamHub Jobs after any changes constitutes your acceptance of the updated policy.</p>
+      <p>We may update this Privacy Policy from time to time. When we make material changes, we will update the "Last updated" date at the top of this page. Continued use of GamHub Jobs after any changes constitutes your acceptance of the updated policy.</p>
     </div>
-
     <div class="legal-section" id="priv-11">
       <div class="legal-section-num">Section 11</div>
       <h2>Contact Us</h2>
-      <p>If you have any questions, concerns, or requests regarding your privacy or this policy, please reach out to us:</p>
       <div class="legal-contact-card">
         <div class="legal-contact-icon">✉</div>
         <div>
           <h4>GamHub Jobs — Privacy Team</h4>
-          <a href="/cdn-cgi/l/email-protection#96fef3fafaf9d6f1f7fbfee3f4fcf9f4e5b8f1fb"><span class="__cf_email__" data-cfemail="650d0009090a250204080d10070f0a07164b0208">[email&#160;protected]</span></a>
+          <a href="mailto:gamhubjobs@gmail.com">gamhubjobs@gmail.com</a>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">We respond within 14 business days</div>
         </div>
       </div>
     </div>
-
-  </div><!-- /legal-body -->
+  </div>
 </div><!-- /view-privacy -->
-
 
 <!-- ============================================================
      VIEW 9 — TERMS OF SERVICE
      ============================================================ -->
 <div id="view-terms" class="view">
-
   <div class="legal-topbar">
     <div class="legal-topbar-title">Terms of Service</div>
     <span class="legal-topbar-date">Last updated: 18 March 2026</span>
     <button class="btn btn-ghost btn-sm" onclick="history.back();showView('landing')">← Back</button>
   </div>
-
   <div class="legal-body">
-
     <div class="legal-hero">
       <div class="legal-last-updated">📅 Last updated: 18 March 2026</div>
       <h1>Terms of Service</h1>
-      <p>These terms govern your use of GamHub Jobs, including the CV builder, cover letter generator, job discovery, and employer job posting features. By using GamHub Jobs you agree to these terms.</p>
+      <p>These terms govern your use of GamHub Jobs, including the CV builder, cover letter generator, job search, and employer job posting features. By using GamHub Jobs you agree to these terms.</p>
     </div>
-
     <div class="legal-toc">
       <h3>Contents</h3>
       <ol>
@@ -1690,14 +1513,12 @@
         <li><a href="#terms-14">Contact</a></li>
       </ol>
     </div>
-
     <div class="legal-section" id="terms-1">
       <div class="legal-section-num">Section 01</div>
       <h2>Acceptance of Terms</h2>
       <p>By accessing or using GamHub Jobs ("the Platform", "we", "us"), you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree to these terms, please do not use the platform.</p>
       <p>These terms apply to all users of GamHub Jobs, including job seekers who build CVs and cover letters, and employers who post job listings.</p>
     </div>
-
     <div class="legal-section" id="terms-2">
       <div class="legal-section-num">Section 02</div>
       <h2>Description of Service</h2>
@@ -1705,184 +1526,112 @@
       <ul>
         <li><strong>CV Builder:</strong> A guided tool to create a professional CV in multiple themes, exportable as a PDF.</li>
         <li><strong>Cover Letter Generator:</strong> An AI-assisted tool to write tailored cover letters based on your CV and target job.</li>
-        <li><strong>Job Discovery:</strong> A swipe-based interface showing job listings sourced from GamHubJobs.com and employers who post directly on GamHub Jobs.</li>
+        <li><strong>Job Search:</strong> Browse and search verified job listings across every industry in The Gambia.</li>
         <li><strong>Employer Portal:</strong> A dedicated area for businesses to post job listings, reviewed and approved by GamHub Jobs before going live.</li>
       </ul>
       <p>We reserve the right to modify, suspend, or discontinue any part of the service at any time, with or without notice.</p>
     </div>
-
     <div class="legal-section" id="terms-3">
       <div class="legal-section-num">Section 03</div>
       <h2>Free vs Paid Features</h2>
-      <div class="legal-highlight">
-        <strong>Free features</strong> are available to all users without payment or registration.
-      </div>
+      <div class="legal-highlight"><strong>Free features</strong> are available to all users without payment or registration.</div>
       <p><strong>Free features include:</strong></p>
       <ul>
         <li>Building a complete CV using the Design Wizard and CV Builder</li>
         <li>Building a cover letter using the Cover Letter Generator</li>
         <li>Previewing your CV in all four themes (Classic, Minimal, Bold, Elegant)</li>
-        <li>Browsing job listings in the Job Discovery view</li>
-        <li>Saving jobs to your saved list</li>
-        <li>Your <strong>first PDF download</strong> (CV or Cover Letter) is always free, no payment or account required</li>
+        <li>Browsing and searching job listings</li>
+        <li>Your <strong>first PDF download</strong> (CV or Cover Letter) is always free</li>
       </ul>
-      <div class="legal-highlight">
-        <strong>Paid features</strong> require payment in GMD via ModemPay.
-      </div>
+      <div class="legal-highlight"><strong>Paid features</strong> require payment in GMD via ModemPay.</div>
       <p><strong>Paid features include:</strong></p>
       <ul>
         <li><strong>CV PDF download</strong> after the free allowance — GMD 25 per download</li>
         <li><strong>Cover Letter PDF download</strong> after the free allowance — GMD 15 per download</li>
         <li><strong>Bundle download</strong> (CV + Cover Letter together) — GMD 35</li>
         <li><strong>Featured Job Listing</strong> (employers) — GMD 10 for a 30-day listing with priority placement</li>
-        <li><strong>Premium Job Listing</strong> (employers) — GMD 10 for a 60-day listing with top placement, company logo, and AI-matched candidate shortlist</li>
+        <li><strong>Premium Job Listing</strong> (employers) — GMD 10 for a 60-day listing with top placement and AI-matched candidate shortlist</li>
       </ul>
-      <p>Prices are denominated in Gambian Dalasi (GMD) and are inclusive of all applicable fees. We reserve the right to change pricing with 14 days' notice posted on the platform.</p>
     </div>
-
     <div class="legal-section" id="terms-4">
       <div class="legal-section-num">Section 04</div>
       <h2>Payment Terms</h2>
       <ul>
-        <li>All payments are processed in <strong>Gambian Dalasi (GMD)</strong> via <strong>ModemPay</strong>, a licensed Gambian payment provider.</li>
+        <li>All payments are processed in <strong>Gambian Dalasi (GMD)</strong> via <strong>ModemPay</strong>.</li>
         <li>Payment must be completed before the paid feature is activated or the file is delivered.</li>
-        <li>By initiating a payment, you authorise GamHub Jobs and ModemPay to charge the stated amount to your chosen payment method (mobile money, wallet, etc.).</li>
-        <li>A payment confirmation is issued by ModemPay upon successful transaction. GamHub Jobs does not issue paper invoices by default; contact <a href="/cdn-cgi/l/email-protection#e28a878e8e8da285838f8a9780888d8091cc858f" style="color:var(--gold)"><span class="__cf_email__" data-cfemail="69010c050506290e0804011c0b03060b1a470e04">[email&#160;protected]</span></a> if you require a receipt for accounting purposes.</li>
-        <li>For employer job listings, payment confirms the listing submission. The listing will go live only after GamHub Jobs admin review, typically within 24 hours.</li>
+        <li>For employer job listings, payment confirms submission. The listing will go live only after GamHub Jobs admin review, typically within 24 hours.</li>
       </ul>
     </div>
-
     <div class="legal-section" id="terms-5">
       <div class="legal-section-num">Section 05</div>
       <h2>Refund Policy</h2>
-      <div class="legal-highlight">
-        <strong>PDF downloads are non-refundable.</strong> Because the file is delivered immediately upon payment confirmation, we are unable to offer refunds for completed PDF download transactions.
-      </div>
-      <p><strong>Job listing refunds:</strong></p>
-      <ul>
-        <li>If a job listing is rejected by our admin review process, you will receive a full refund within 5–10 business days to the original payment method.</li>
-        <li>If a job listing is removed by GamHub Jobs due to a violation of our content standards after it has gone live, no refund will be issued.</li>
-        <li>If you request cancellation of an active listing before it has received any applications, a partial refund (50%) may be considered at our sole discretion. Contact <a href="/cdn-cgi/l/email-protection#eb838e878784ab8c8a86839e8981848998c58c86" style="color:var(--gold)"><span class="__cf_email__" data-cfemail="9af2fff6f6f5dafdfbf7f2eff8f0f5f8e9b4fdf7">[email&#160;protected]</span></a> within 48 hours of posting.</li>
-      </ul>
-      <p>For technical payment errors (e.g. you were charged but the feature was not delivered), please contact us within 7 days and we will investigate and resolve promptly.</p>
+      <div class="legal-highlight"><strong>PDF downloads are non-refundable.</strong> Because the file is delivered immediately upon payment confirmation, we are unable to offer refunds for completed PDF download transactions.</div>
+      <p>If a job listing is rejected by our admin review process, you will receive a full refund within 5–10 business days. For technical payment errors, please contact us within 7 days.</p>
     </div>
-
     <div class="legal-section" id="terms-6">
       <div class="legal-section-num">Section 06</div>
       <h2>Employer Job Posting Rules</h2>
-      <p>Employers who post job listings on GamHub Jobs agree to the following rules:</p>
       <ul>
-        <li><strong>Accuracy:</strong> All job information (title, company, salary, responsibilities, requirements) must be accurate and not misleading.</li>
-        <li><strong>Real vacancies only:</strong> You may only post listings for genuine, current vacancies. Speculative or phantom listings are prohibited.</li>
-        <li><strong>Legal compliance:</strong> Job listings must comply with Gambian employment law, including the Labour Act 2007 and Equal Opportunities Act. Listings that discriminate on the basis of gender, ethnicity, religion, disability, or other protected characteristics are prohibited.</li>
-        <li><strong>Contact details:</strong> You must provide a valid contact email that is actively monitored. We will use this email for admin communications regarding your listing.</li>
-        <li><strong>No third-party recruitment spam:</strong> Recruitment agencies may post on behalf of clients but must clearly identify the end employer in the listing description.</li>
-        <li><strong>Review period:</strong> All listings are reviewed by GamHub Jobs before going live. We aim to review within 24 hours of submission. We reserve the right to request edits before approval.</li>
+        <li><strong>Accuracy:</strong> All job information must be accurate and not misleading.</li>
+        <li><strong>Real vacancies only:</strong> You may only post listings for genuine, current vacancies.</li>
+        <li><strong>Legal compliance:</strong> Job listings must comply with Gambian employment law, including the Labour Act 2007 and Equal Opportunities Act.</li>
+        <li><strong>Contact details:</strong> You must provide a valid contact email that is actively monitored.</li>
+        <li><strong>Review period:</strong> All listings are reviewed by GamHub Jobs before going live, typically within 24 hours.</li>
       </ul>
-      <p>GamHub Jobs reserves the right to reject or remove any job listing at any time, without notice, if it violates these rules or our content standards.</p>
     </div>
-
     <div class="legal-section" id="terms-7">
       <div class="legal-section-num">Section 07</div>
       <h2>Content Standards</h2>
-      <p>All content submitted to GamHub Jobs — including CV data, cover letters, and job listings — must comply with the following standards. Content that violates these standards will be removed:</p>
-      <ul>
-        <li>Must not contain false, misleading, or fraudulent information</li>
-        <li>Must not be defamatory, offensive, abusive, threatening, or harassing</li>
-        <li>Must not violate any applicable Gambian law or regulation</li>
-        <li>Must not infringe third-party intellectual property rights</li>
-        <li>Must not contain malware, phishing links, or harmful code</li>
-        <li>Must not promote illegal activities, discrimination, or hate speech</li>
-        <li>Job listings must not request payment from applicants as a condition of applying</li>
-      </ul>
-      <p>GamHub Jobs is not responsible for the accuracy of user-submitted content, including job listing descriptions or CV information. We act as a platform, not as an endorser of any employer or job seeker.</p>
+      <p>All content submitted must not contain false or misleading information, be defamatory or harassing, violate Gambian law, infringe intellectual property rights, contain malware or phishing links, or request payment from applicants as a condition of applying.</p>
     </div>
-
     <div class="legal-section" id="terms-8">
       <div class="legal-section-num">Section 08</div>
       <h2>User Accounts</h2>
       <ul>
-        <li>Accounts are created via email magic link (passwordless login). You are responsible for keeping your email account secure.</li>
+        <li>Accounts are created via email magic link (passwordless login).</li>
         <li>You must be at least 16 years old to create an account.</li>
-        <li>You may not share your account with others or use another person's account without their explicit permission.</li>
         <li>One free download allowance applies per account. Creating multiple accounts to obtain additional free downloads is a violation of these terms.</li>
-        <li>We reserve the right to suspend or terminate accounts that violate these terms.</li>
       </ul>
     </div>
-
     <div class="legal-section" id="terms-9">
       <div class="legal-section-num">Section 09</div>
       <h2>Intellectual Property</h2>
-      <p><strong>Your content:</strong> You retain full ownership of all CV content, cover letters, and other personal data you create on GamHub Jobs. By using the platform, you grant us a limited, non-exclusive licence to store and display your content solely for the purpose of providing the service to you.</p>
-      <p><strong>Our platform:</strong> The GamHub Jobs design, code, branding, and features are the intellectual property of GamHub Jobs. You may not copy, reproduce, or redistribute any part of the platform without our written permission.</p>
-      <p><strong>Job listings:</strong> Employers retain ownership of their job listing content. By submitting a listing, you grant GamHub Jobs a licence to display it on the platform and in our job discovery features.</p>
+      <p>You retain full ownership of all CV content, cover letters, and other personal data you create on GamHub Jobs. The GamHub Jobs design, code, and branding are our intellectual property. You may not copy or redistribute any part of the platform without our written permission.</p>
     </div>
-
     <div class="legal-section" id="terms-10">
       <div class="legal-section-num">Section 10</div>
       <h2>No Employment Guarantee</h2>
-      <div class="legal-highlight">
-        <strong>GamHub Jobs does not guarantee employment.</strong> We are a tools and discovery platform, not a recruitment agency.
-      </div>
-      <ul>
-        <li>We do not guarantee that building a CV or cover letter on GamHub Jobs will result in job interviews or offers.</li>
-        <li>We do not guarantee the accuracy, availability, or legitimacy of third-party job listings sourced from GamHubJobs.com. Always verify a job listing independently before applying.</li>
-        <li>We do not act as an intermediary between job seekers and employers. Any employment relationship formed as a result of using GamHub Jobs is entirely between the job seeker and the employer.</li>
-        <li>Job listings on GamHub Jobs are provided for informational purposes only. The inclusion of a listing does not constitute an endorsement of the employer.</li>
-      </ul>
+      <div class="legal-highlight"><strong>GamHub Jobs does not guarantee employment.</strong> We are a tools and discovery platform, not a recruitment agency.</div>
     </div>
-
     <div class="legal-section" id="terms-11">
       <div class="legal-section-num">Section 11</div>
       <h2>Limitation of Liability</h2>
-      <p>To the maximum extent permitted by applicable Gambian law, GamHub Jobs shall not be liable for:</p>
-      <ul>
-        <li>Any indirect, incidental, or consequential loss arising from your use of the platform</li>
-        <li>Loss of data resulting from browser clearing, device failure, or local storage limitations</li>
-        <li>Errors in AI-generated cover letter content — always review before submitting to employers</li>
-        <li>Technical failures of third-party services (Supabase, ModemPay, GamHubJobs, CORS proxies)</li>
-        <li>The outcome of any job application made using content created on GamHub Jobs</li>
-      </ul>
-      <p>The platform is provided "as is" without warranties of any kind. We do not guarantee that the platform will be available without interruption or free from errors at all times.</p>
+      <p>To the maximum extent permitted by applicable Gambian law, GamHub Jobs shall not be liable for any indirect, incidental, or consequential loss arising from your use of the platform. The platform is provided "as is" without warranties of any kind.</p>
     </div>
-
     <div class="legal-section" id="terms-12">
       <div class="legal-section-num">Section 12</div>
       <h2>Termination</h2>
-      <p>You may stop using GamHub Jobs at any time. To delete your account and all associated server-side data, email <a href="/cdn-cgi/l/email-protection#2d45484141426d4a4c4045584f47424f5e034a40" style="color:var(--gold)"><span class="__cf_email__" data-cfemail="0c64696060634c6b6d6164796e66636e7f226b61">[email&#160;protected]</span></a>.</p>
-      <p>We reserve the right to suspend or terminate your access to GamHub Jobs immediately and without notice if:</p>
-      <ul>
-        <li>You violate any of these Terms of Service</li>
-        <li>You attempt to manipulate the platform, including bypassing the paid download system</li>
-        <li>You submit fraudulent, harmful, or illegal content</li>
-        <li>We are required to do so by law</li>
-      </ul>
-      <p>Upon termination, your right to use the platform ceases immediately. Data stored locally on your device will remain until you clear it manually.</p>
+      <p>You may stop using GamHub Jobs at any time. To delete your account and all associated server-side data, email <a href="mailto:gamhubjobs@gmail.com" style="color:var(--gold)">gamhubjobs@gmail.com</a>.</p>
     </div>
-
     <div class="legal-section" id="terms-13">
       <div class="legal-section-num">Section 13</div>
       <h2>Governing Law</h2>
-      <p>These Terms of Service are governed by and construed in accordance with the laws of <strong>The Gambia</strong>. Any dispute arising from these terms shall first be attempted to be resolved through good-faith negotiation. If unresolved, disputes shall be subject to the jurisdiction of the courts of The Gambia.</p>
+      <p>These Terms of Service are governed by the laws of <strong>The Gambia</strong>. Any disputes shall be subject to the jurisdiction of the courts of The Gambia.</p>
     </div>
-
     <div class="legal-section" id="terms-14">
       <div class="legal-section-num">Section 14</div>
       <h2>Contact</h2>
-      <p>For any questions about these Terms of Service, payment disputes, or content removal requests:</p>
       <div class="legal-contact-card">
         <div class="legal-contact-icon">✉</div>
         <div>
           <h4>GamHub Jobs — Legal & Support</h4>
-          <a href="/cdn-cgi/l/email-protection#2b434e4747446b4c4a46435e4941444958054c46"><span class="__cf_email__" data-cfemail="8ae2efe6e6e5caedebe7e2ffe8e0e5e8f9a4ede7">[email&#160;protected]</span></a>
+          <a href="mailto:gamhubjobs@gmail.com">gamhubjobs@gmail.com</a>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">We respond within 14 business days</div>
         </div>
       </div>
     </div>
-
-  </div><!-- /legal-body -->
+  </div>
 </div><!-- /view-terms -->
-
 
 <!-- ============================================================
      COOKIE CONSENT BANNER
@@ -1899,13 +1648,11 @@
 </div>
 
 <!-- ============================================================
-     AUTH MODAL — Supabase Magic Link Login
+     AUTH MODAL
      ============================================================ -->
 <div id="auth-overlay" class="auth-overlay" style="display:none" onclick="handleAuthOverlayClick(event)">
   <div class="auth-modal" id="auth-modal">
     <button class="auth-modal-close" onclick="closeAuthModal()">✕</button>
-
-    <!-- Step 1: Enter email -->
     <div id="auth-step-email">
       <div class="auth-icon">✦</div>
       <h3>Sign in to GamHub Jobs</h3>
@@ -1921,8 +1668,6 @@
       </div>
       <p class="auth-note">Free to use · No password · No spam</p>
     </div>
-
-    <!-- Step 2: Email sent confirmation -->
     <div class="auth-sent" id="auth-step-sent">
       <div class="auth-sent-icon">📬</div>
       <h4>Check your inbox!</h4>
@@ -1935,48 +1680,28 @@
 </div>
 
 <!-- ============================================================
-     JAVASCRIPT
-     ============================================================ -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
-
-<!-- ============================================================
      WHATSAPP CHANNEL OVERLAY
-     Appears after 60 seconds — once per session.
-     Full-screen click → opens WhatsApp channel.
      ============================================================ -->
 <div id="wa-channel-overlay" onclick="wacJoin()" role="dialog" aria-modal="true" aria-label="Join GamHub Jobs WhatsApp Channel">
-
   <div class="wac-card" onclick="event.stopPropagation()">
     <div class="wac-shimmer"></div>
-
-    <!-- Dismiss X -->
     <button class="wac-close" onclick="wacDismiss()" aria-label="Close">✕</button>
-
-    <!-- Pulsing WhatsApp logo -->
     <div class="wac-logo-wrap">
       <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
         <path d="M16 2C8.28 2 2 8.28 2 16c0 2.46.66 4.77 1.8 6.77L2 30l7.43-1.75A13.93 13.93 0 0 0 16 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm0 25.5a11.44 11.44 0 0 1-5.83-1.6l-.42-.25-4.3 1.01 1.04-4.2-.28-.44A11.5 11.5 0 1 1 16 27.5zm6.35-8.6c-.35-.17-2.06-1.02-2.38-1.13-.32-.12-.55-.17-.78.17-.23.35-.9 1.13-1.1 1.36-.2.23-.4.26-.75.09-.35-.17-1.48-.55-2.82-1.74-1.04-.93-1.75-2.08-1.95-2.43-.2-.35-.02-.54.15-.71.16-.16.35-.4.52-.6.17-.2.23-.35.35-.58.12-.23.06-.43-.03-.6-.09-.17-.78-1.88-1.07-2.57-.28-.67-.57-.58-.78-.59h-.67c-.23 0-.6.09-.91.43-.32.35-1.2 1.17-1.2 2.85s1.23 3.3 1.4 3.53c.17.23 2.42 3.7 5.86 5.19.82.35 1.46.56 1.96.72.82.26 1.57.22 2.16.13.66-.1 2.06-.84 2.35-1.66.29-.81.29-1.51.2-1.66-.08-.14-.31-.23-.66-.4z"/>
       </svg>
     </div>
-
-    <!-- Urgency badge -->
     <div class="wac-badge">
       <span class="wac-badge-dot"></span>
       Live Channel · Free to Join
     </div>
-
-    <!-- Headline -->
     <div class="wac-headline">
       🚀 Get Instant Job Alerts<br><span>Before Anyone Else!</span>
     </div>
-
-    <!-- Sub -->
     <p class="wac-sub">
       Thousands of Gambians are already getting hired faster.<br>
       Join the <strong style="color:#fff">GamHub Jobs WhatsApp Channel</strong> and never miss an opportunity.
     </p>
-
-    <!-- Benefits -->
     <ul class="wac-benefits">
       <li>
         <div class="wac-benefit-icon">✅</div>
@@ -1991,8 +1716,6 @@
         <span>Stay <strong>ahead of other applicants</strong> and apply while positions are fresh</span>
       </li>
     </ul>
-
-    <!-- CTA button -->
     <a href="https://whatsapp.com/channel/0029Vb7G5Zp8vd1XBVtBlt13"
        target="_blank" rel="noopener noreferrer"
        class="wac-cta"
@@ -2002,17 +1725,8 @@
       </svg>
       Join WhatsApp Channel Now
     </a>
-
-    <!-- Social proof -->
-    <p class="wac-proof">
-      🇬🇲 <strong>Free forever</strong> · No spam · Unsubscribe anytime
-    </p>
-
-    <!-- Dismiss -->
-    <span class="wac-dismiss-link" onclick="wacDismiss()">
-      No thanks, I'll miss out
-    </span>
-
+    <p class="wac-proof">🇬🇲 <strong>Free forever</strong> · No spam · Unsubscribe anytime</p>
+    <span class="wac-dismiss-link" onclick="wacDismiss()">No thanks, I'll miss out</span>
   </div>
 </div>
 
@@ -2020,8 +1734,8 @@
      WHATSAPP FLOATING CHAT WIDGET
      ============================================================ -->
 <div class="wa-widget">
-  <span class="wa-label" onclick="window.open('https://wa.me/2207000000','_blank','noopener,noreferrer')">Chat with us</span>
-  <a class="wa-btn" href="https://wa.me/2207000000" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
+  <span class="wa-label" onclick="window.open('https://wa.me/2206371941','_blank','noopener,noreferrer')">Chat with us</span>
+  <a class="wa-btn" href="https://wa.me/2206371941" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
     <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
       <path d="M16 2C8.28 2 2 8.28 2 16c0 2.46.66 4.77 1.8 6.77L2 30l7.43-1.75A13.93 13.93 0 0 0 16 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm0 25.5a11.44 11.44 0 0 1-5.83-1.6l-.42-.25-4.3 1.01 1.04-4.2-.28-.44A11.5 11.5 0 1 1 16 27.5zm6.35-8.6c-.35-.17-2.06-1.02-2.38-1.13-.32-.12-.55-.17-.78.17-.23.35-.9 1.13-1.1 1.36-.2.23-.4.26-.75.09-.35-.17-1.48-.55-2.82-1.74-1.04-.93-1.75-2.08-1.95-2.43-.2-.35-.02-.54.15-.71.16-.16.35-.4.52-.6.17-.2.23-.35.35-.58.12-.23.06-.43-.03-.6-.09-.17-.78-1.88-1.07-2.57-.28-.67-.57-.58-.78-.59h-.67c-.23 0-.6.09-.91.43-.32.35-1.2 1.17-1.2 2.85s1.23 3.3 1.4 3.53c.17.23 2.42 3.7 5.86 5.19.82.35 1.46.56 1.96.72.82.26 1.57.22 2.16.13.66-.1 2.06-.84 2.35-1.66.29-.81.29-1.51.2-1.66-.08-.14-.31-.23-.66-.4z"/>
     </svg>
