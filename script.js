@@ -1653,8 +1653,6 @@ async function finaliseDownload(token) {
 
 /* ============================================================
    WHATSAPP JOB NOTIFICATION
-   Replaces EmailJS for both free and paid job submissions.
-   Opens WhatsApp with full job details pre-filled.
    ============================================================ */
 function sendJobNotificationWhatsApp(jobPayload, plan) {
   try {
@@ -1702,7 +1700,6 @@ function sendJobNotificationWhatsApp(jobPayload, plan) {
     const encoded = encodeURIComponent(msg);
     const waUrl = 'https://wa.me/2206371941?text=' + encoded;
 
-    /* Use location.href on mobile — never blocked, opens WhatsApp directly */
     window.location.href = waUrl;
 
   } catch(err) {
@@ -1733,7 +1730,6 @@ async function saveJobDirectly(jobPayload) {
   document.getElementById('post-job-form').style.display = 'none';
   document.getElementById('submission-success').classList.add('show');
 
-  /* Notify via WhatsApp */
   await sendJobNotificationWhatsApp(jobPayload, jobPayload.plan || 'free');
 
   toast(
@@ -1744,7 +1740,7 @@ async function saveJobDirectly(jobPayload) {
 }
 
 /* ============================================================
-   FINALISE PAID JOB (featured / premium listings)
+   FINALISE PAID JOB
    ============================================================ */
 async function finalisePaidJob(jobId) {
   showView('employer');
@@ -1769,7 +1765,6 @@ async function finalisePaidJob(jobId) {
     localJobs.unshift({ ...pending, id: jobId, paid: true, _pendingId: undefined });
     saveData_raw(EMPLOYER_STORAGE.myJobs, localJobs);
 
-    /* Notify via WhatsApp */
     await sendJobNotificationWhatsApp(pending, pending.plan || 'free');
 
     localStorage.removeItem('folio_pending_job');
@@ -1822,7 +1817,6 @@ async function submitJobPost() {
   const jobPayload = sanitizeJobPayload(rawPayload);
 
   const btn = document.getElementById('submit-job-btn');
-  const spinnerEl = document.getElementById('submit-spinner');
   btn.classList.add('btn-submitting');
   btn.disabled = true;
 
@@ -2416,6 +2410,44 @@ function getJobUrl(job) {
   return window.location.origin + window.location.pathname + '#job-' + slug;
 }
 
+/* ============================================================
+   APPLY NOW — EMAIL EXTRACTION + MAILTO FLOW
+   ============================================================ */
+function extractApplyEmail(job) {
+  // Search applyInfo, applyLink, then email field in priority order
+  const sources = [job.applyInfo || '', job.applyLink || '', job.email || ''];
+  const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/;
+  for (const src of sources) {
+    const match = src.match(emailRegex);
+    if (match) return match[0];
+  }
+  return null;
+}
+
+function applyNowEmail(jobId) {
+  const job = JOB_LISTINGS.find(j => j.id === jobId);
+  if (!job) return;
+
+  const email = extractApplyEmail(job);
+
+  if (!email) {
+    toast('No valid application email found for this job. Please check the job details for instructions.', 'error', 6000);
+    return;
+  }
+
+  // Show CV reminder before opening email client
+  toast('📎 Make sure you have downloaded your CV and attach it before sending.', 'gold', 6000);
+
+  const subject = encodeURIComponent('Job Application for ' + job.title);
+  const body = encodeURIComponent(
+    'Hello,\n\nI am applying for the position of ' + job.title + '.\n\nPlease find my CV attached.\n\nThank you.'
+  );
+
+  setTimeout(() => {
+    window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
+  }, 800);
+}
+
 function createJobCard(job, idx) {
   const card = document.createElement('div');
   card.className = 'js-card';
@@ -2437,7 +2469,6 @@ function createJobCard(job, idx) {
   const vmBtnId    = `js-vmbtn-${idx}`;
   const shareBtnId = `js-sharebtn-${idx}`;
   const dropId     = `js-drop-${idx}`;
-  const copyItemId = `js-copy-${idx}`;
 
   card.innerHTML = `
     <div class="js-card-head">
@@ -2455,8 +2486,7 @@ function createJobCard(job, idx) {
     <p class="js-card-desc" id="${descId}" aria-expanded="false">${escHtml(job.description)}</p>
     <div class="js-card-actions">
       <button class="js-btn-view" id="${vmBtnId}" aria-controls="${descId}" aria-expanded="false">View Details →</button>
-      <a class="js-btn-apply" href="${escHtml(job.applyLink || '#')}" target="_blank" rel="noopener noreferrer"
-        aria-label="Apply for ${escHtml(job.title)} at ${escHtml(job.company)}">Apply Now →</a>
+      <button class="js-btn-apply" aria-label="Apply for ${escHtml(job.title)} at ${escHtml(job.company)}">Apply Now →</button>
       <div class="js-share-wrap">
         <button class="js-btn-share" id="${shareBtnId}" aria-haspopup="true" aria-expanded="false" aria-controls="${dropId}">
           <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -2474,7 +2504,7 @@ function createJobCard(job, idx) {
             <span class="js-share-item-icon">💬</span>
             <span class="js-share-item-label">WhatsApp</span>
           </button>
-          <button class="js-share-item" role="menuitem" data-action="copy" id="${copyItemId}">
+          <button class="js-share-item" role="menuitem" data-action="copy">
             <span class="js-share-item-icon">🔗</span>
             <span class="js-share-item-label">Copy Link</span>
           </button>
@@ -2502,8 +2532,9 @@ function createJobCard(job, idx) {
   const vmBtn = card.querySelector(`#${vmBtnId}`);
   vmBtn.addEventListener('click', e => { e.stopPropagation(); openJobPage(job); });
 
-  const applyLink = card.querySelector('.js-btn-apply');
-  if (applyLink) applyLink.addEventListener('click', e => e.stopPropagation());
+  // Apply Now button — email flow
+  const applyBtn = card.querySelector('.js-btn-apply');
+  applyBtn.addEventListener('click', e => { e.stopPropagation(); applyNowEmail(job.id); });
 
   const shareBtn = card.querySelector(`#${shareBtnId}`);
   const drop     = card.querySelector(`#${dropId}`);
@@ -2633,15 +2664,14 @@ function openJobModal(job) {
 
   const applyActionsEl = document.getElementById('jd-apply-actions');
   applyActionsEl.innerHTML = '';
-  if (job.applyLink) {
-    const applyBtn = document.createElement('a');
-    applyBtn.className = 'jd-apply-btn jd-apply-btn-primary';
-    applyBtn.href = job.applyLink;
-    applyBtn.target = '_blank';
-    applyBtn.rel = 'noopener noreferrer';
-    applyBtn.textContent = 'Apply Now →';
-    applyActionsEl.appendChild(applyBtn);
-  }
+
+  // Apply Now button — email flow
+  const applyBtnEl = document.createElement('button');
+  applyBtnEl.className = 'jd-apply-btn jd-apply-btn-primary';
+  applyBtnEl.textContent = 'Apply Now →';
+  applyBtnEl.addEventListener('click', () => applyNowEmail(job.id));
+  applyActionsEl.appendChild(applyBtnEl);
+
   const backBtn = document.createElement('button');
   backBtn.className = 'jd-apply-btn jd-apply-btn-ghost';
   backBtn.textContent = '← Back to Jobs';
@@ -2759,12 +2789,23 @@ function openJobPage(job) {
   document.getElementById('jd-page-sec-perks').style.display=job.perks?'':'none';
   document.getElementById('jd-page-apply-info').textContent=job.applyInfo||'';
   document.getElementById('jd-page-sec-apply').style.display=(job.applyInfo||job.applyLink)?'':'none';
+
   const ae=document.getElementById('jd-page-actions');
   ae.innerHTML='';
-  if(job.applyLink){const a=document.createElement('a');a.className='jd-apply-btn jd-apply-btn-primary';a.href=job.applyLink;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Apply Now →';ae.appendChild(a);}
-  const sb=document.createElement('button');sb.className='jd-apply-btn jd-apply-btn-ghost';sb.textContent='Share Job';
+
+  // Apply Now button — email flow
+  const applyBtn=document.createElement('button');
+  applyBtn.className='jd-apply-btn jd-apply-btn-primary';
+  applyBtn.textContent='Apply Now →';
+  applyBtn.addEventListener('click',()=>applyNowEmail(job.id));
+  ae.appendChild(applyBtn);
+
+  const sb=document.createElement('button');
+  sb.className='jd-apply-btn jd-apply-btn-ghost';
+  sb.textContent='Share Job';
   sb.addEventListener('click',()=>shareWhatsApp(job,window.location.origin+'/job/'+job.id,job.title+' at '+job.company));
   ae.appendChild(sb);
+
   showView('job-details');
 }
 
@@ -2908,7 +2949,7 @@ const CL_PLACEHOLDERS = {
   skills:      'With over [X] years of experience in [field], I have developed expertise in [skill 1], [skill 2], and [skill 3]. My background has equipped me with a practical understanding of what it takes to succeed in this type of role.',
   achievement: 'In my most recent position at [Company], I led a project that resulted in [outcome]. This experience demonstrated my ability to [key skill] while delivering measurable results under tight deadlines.',
   company:     'I am particularly drawn to [Company] because of [specific reason — their mission, impact, reputation in Gambia]. I believe your commitment to [value] aligns closely with my own professional values.',
-  closing:     'I would welcome the opportunity to discuss how my background can contribute to your team\'s goals. Thank you sincerely for your time and consideration. I look forward to hearing from you.',
+  closing:     'Thank you sincerely for your time and consideration. I would welcome the opportunity to discuss how my background can contribute to your team\'s goals. I look forward to hearing from you.',
 };
 
 function generateParagraph(type, data) {
