@@ -3716,16 +3716,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initWACOverlay();
   initWizard();
   setupScrollReveals();
-   // Handle direct job URLs like /job/digital-marketing-atlantic
-  const pathMatch = window.location.pathname.match(/^\/job\/(.+)/);
+   const pathMatch = window.location.pathname.match(/^\/job\/(.+)/);
   if (pathMatch) {
-    const jobId = pathMatch[1];
+    const jobId = pathMatch[1].replace(/\/$/, ''); // trim trailing slash
     const job = JOB_LISTINGS.find(j => j.id === jobId);
     if (job) {
       showView('job-search');
-      setTimeout(() => openJobPage(job), 100);
+      setTimeout(() => openJobPage(job), 200);
     } else {
+      // Job ID not found — go to job search
       showView('job-search');
+      toast('Job not found — showing all available jobs.', 'default', 4000);
     }
   }
 
