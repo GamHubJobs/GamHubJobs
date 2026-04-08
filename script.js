@@ -2803,7 +2803,7 @@ function openJobPage(job) {
   const sb=document.createElement('button');
   sb.className='jd-apply-btn jd-apply-btn-ghost';
   sb.textContent='Share Job';
-  sb.addEventListener('click',()=>shareWhatsApp(job,window.location.origin+'/job/'+job.id,job.title+' at '+job.company));
+  sb.addEventListener('click',()=>shareWhatsApp(job, window.location.origin + window.location.pathname + '?job=' + job.id, job.title+' at '+job.company));
   ae.appendChild(sb);
 
   showView('job-details');
@@ -3716,6 +3716,18 @@ document.addEventListener('DOMContentLoaded', () => {
   initWACOverlay();
   initWizard();
   setupScrollReveals();
+   // Handle direct job URLs like /job/digital-marketing-atlantic
+  const pathMatch = window.location.pathname.match(/^\/job\/(.+)/);
+  if (pathMatch) {
+    const jobId = pathMatch[1];
+    const job = JOB_LISTINGS.find(j => j.id === jobId);
+    if (job) {
+      showView('job-search');
+      setTimeout(() => openJobPage(job), 100);
+    } else {
+      showView('job-search');
+    }
+  }
 
   const savedTheme = loadData('theme');
   if (savedTheme) currentTheme = savedTheme;
