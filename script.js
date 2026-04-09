@@ -389,57 +389,12 @@ function wizardNext() {
   if (wizardStep === 2 && !wizardData.palette)    { toast('Please choose a color palette', 'error'); return; }
   if (wizardStep === 3 && !wizardData.font)       { toast('Please select a font style', 'error'); return; }
   if (wizardStep < 3) { goToWizardStep(wizardStep + 1); return; }
-  prefillSampleData();
   showView('builder');
   toast('Design saved! Now fill in your details.', 'gold');
 }
 
 function wizardPrev() {
   if (wizardStep > 1) goToWizardStep(wizardStep - 1);
-}
-
-/* ============================================================
-   SAMPLE DATA
-   ============================================================ */
-function prefillSampleData() {
-  const existing = loadData('cvData');
-  if (existing && existing._filled) return;
-
-  const data = {
-    _filled: true,
-    fullname: 'Fatou Jallow',
-    title: 'Senior Marketing Manager',
-    location: 'Banjul, The Gambia',
-    summary: 'Results-driven Marketing Manager with 8 years of experience building brand awareness and driving growth for consumer and B2B brands across West Africa. Skilled in digital strategy, content creation, and team leadership.',
-    photo: null,
-    skills: [
-      { name:'Digital Marketing', level:88 },
-      { name:'Brand Strategy', level:82 },
-      { name:'Content Creation', level:75 },
-      { name:'Google Analytics', level:70 },
-      { name:'Campaign Management', level:85 },
-      { name:'Social Media', level:90 },
-    ],
-    experience: [
-      { title:'Senior Marketing Manager', org:'Gambia National Brewery', duration:'2021 – Present', desc:'Led a team of 5 to deliver a 35% increase in brand awareness across digital channels. Managed annual marketing budget of GMD 2.5M and drove a 20% uplift in sales.' },
-      { title:'Marketing Executive', org:'Trust Bank Gambia', duration:'2017 – 2021', desc:'Developed and executed multi-channel campaigns for retail banking products. Produced quarterly reports and monitored KPIs for senior leadership.' },
-    ],
-    education: [
-      { institution:'University of The Gambia', qualification:'BSc Business Administration', year:'2016' },
-      { institution:'HubSpot Academy', qualification:'Content Marketing Certification', year:'2022' },
-    ],
-    achievements: [
-      { title:'Brand Refresh Campaign 2023', tools:'Adobe Creative Suite, Hootsuite', desc:'Led a complete brand refresh including new visual identity and messaging framework. Resulted in a 42% increase in social media engagement within 3 months.', link:'', link2:'' },
-      { title:'Digital Growth Initiative', tools:'Google Ads, Meta Business Suite', desc:'Designed and executed a 6-month digital growth campaign for Trust Bank\'s mobile app launch, achieving 12,000 downloads in the first 60 days.', link:'', link2:'' },
-    ],
-    email: 'fatou.jallow@email.gm',
-    phone: '+220 765 4321',
-    linkedin: 'linkedin.com/in/fatoujallow',
-    languages: 'English, Wolof, Mandinka',
-    certs: 'HubSpot Content Marketing Certification\nGoogle Analytics Individual Qualification',
-    refs: 'Ousman Ceesay – Director of Marketing – Gambia National Brewery\nMariama Bah – Head of Communications – Trust Bank Gambia',
-  };
-  saveData('cvData', data);
 }
 
 /* ============================================================
@@ -511,33 +466,61 @@ function setupBuilderContext() {
 
 function loadBuilderData() {
   const d = loadData('cvData') || {};
-  if (d.fullname)   document.getElementById('b-fullname').value  = d.fullname;
-  if (d.title)      document.getElementById('b-title').value     = d.title;
-  if (d.location)   document.getElementById('b-location').value  = d.location;
-  if (d.summary)    document.getElementById('b-summary').value   = d.summary;
-  if (d.email)      document.getElementById('b-email').value     = d.email;
-  if (d.phone)      document.getElementById('b-phone').value     = d.phone;
-  if (d.linkedin)   document.getElementById('b-linkedin').value  = d.linkedin;
-  if (d.languages)  document.getElementById('b-languages').value = d.languages;
-  if (d.certs)      document.getElementById('b-certs').value     = d.certs;
-  if (d.refs)       document.getElementById('b-refs').value      = d.refs;
-  if (d.photo)      { photoDataURL = d.photo; updatePhotoPreview(d.photo); }
+  if (d.fullname)  document.getElementById('b-fullname').value  = d.fullname;
+  if (d.title)     document.getElementById('b-title').value     = d.title;
+  if (d.location)  document.getElementById('b-location').value  = d.location;
+  if (d.summary)   document.getElementById('b-summary').value   = d.summary;
+  if (d.email)     document.getElementById('b-email').value     = d.email;
+  if (d.phone)     document.getElementById('b-phone').value     = d.phone;
+  if (d.linkedin)  document.getElementById('b-linkedin').value  = d.linkedin;
+  if (d.photo)     { photoDataURL = d.photo; updatePhotoPreview(d.photo); }
 
+  // Languages blocks
+  const langList = document.getElementById('languages-list');
+  langList.innerHTML = '';
+  if (d.languages && d.languages.length) {
+    d.languages.forEach(l => addLanguage(l));
+  } else {
+    addLanguage();
+  }
+
+  // Certifications blocks
+  const certList = document.getElementById('certs-list');
+  certList.innerHTML = '';
+  if (d.certifications && d.certifications.length) {
+    d.certifications.forEach(c => addCertification(c));
+  } else {
+    addCertification();
+  }
+
+  // References blocks
+  const refList = document.getElementById('refs-list');
+  refList.innerHTML = '';
+  if (d.references && d.references.length) {
+    d.references.forEach(r => addReference(r));
+  } else {
+    addReference();
+  }
+
+  // Skills
   const skillsList = document.getElementById('skills-list');
   skillsList.innerHTML = '';
   if (d.skills && d.skills.length) d.skills.forEach(s => addSkill(s.name, s.level));
-  else { addSkill('Communication'); addSkill('Problem Solving'); }
+  else { addSkill(); addSkill(); }
 
+  // Experience
   const expList = document.getElementById('experience-list');
   expList.innerHTML = '';
   if (d.experience && d.experience.length) d.experience.forEach(e => addExperience(e));
   else addExperience();
 
+  // Education
   const eduList = document.getElementById('education-list');
   eduList.innerHTML = '';
   if (d.education && d.education.length) d.education.forEach(e => addEducation(e));
   else addEducation();
 
+  // Achievements
   const achList = document.getElementById('achievements-list');
   achList.innerHTML = '';
   if (d.achievements && d.achievements.length) d.achievements.forEach(a => addAchievement(a));
@@ -547,7 +530,7 @@ function loadBuilderData() {
 function collectBuilderData() {
   const skills = [];
   document.querySelectorAll('.skill-entry').forEach(el => {
-    const name  = el.querySelector('.skill-name-input')?.value || '';
+    const name = el.querySelector('.skill-name-input')?.value || '';
     if (name.trim()) skills.push({ name });
   });
 
@@ -564,9 +547,9 @@ function collectBuilderData() {
   const education = [];
   document.querySelectorAll('.edu-entry').forEach(el => {
     education.push({
-      institution: el.querySelector('.edu-inst')?.value  || '',
-      qualification: el.querySelector('.edu-qual')?.value || '',
-      year:        el.querySelector('.edu-year')?.value  || '',
+      institution:   el.querySelector('.edu-inst')?.value  || '',
+      qualification: el.querySelector('.edu-qual')?.value  || '',
+      year:          el.querySelector('.edu-year')?.value  || '',
     });
   });
 
@@ -581,6 +564,33 @@ function collectBuilderData() {
     });
   });
 
+  // Languages blocks
+  const languages = [];
+  document.querySelectorAll('.lang-entry').forEach(el => {
+    const lang  = el.querySelector('.lang-name')?.value  || '';
+    const level = el.querySelector('.lang-level')?.value || '';
+    if (lang.trim()) languages.push({ lang, level });
+  });
+
+  // Certifications blocks
+  const certifications = [];
+  document.querySelectorAll('.cert-entry').forEach(el => {
+    const name  = el.querySelector('.cert-name')?.value  || '';
+    const org   = el.querySelector('.cert-org')?.value   || '';
+    const year  = el.querySelector('.cert-year')?.value  || '';
+    if (name.trim()) certifications.push({ name, org, year });
+  });
+
+  // References blocks
+  const references = [];
+  document.querySelectorAll('.ref-entry').forEach(el => {
+    const name    = el.querySelector('.ref-name')?.value    || '';
+    const pos     = el.querySelector('.ref-pos')?.value     || '';
+    const company = el.querySelector('.ref-company')?.value || '';
+    const contact = el.querySelector('.ref-contact')?.value || '';
+    if (name.trim()) references.push({ name, pos, company, contact });
+  });
+
   return {
     _filled: true,
     fullname:  document.getElementById('b-fullname')?.value  || '',
@@ -591,9 +601,9 @@ function collectBuilderData() {
     email:     document.getElementById('b-email')?.value     || '',
     phone:     document.getElementById('b-phone')?.value     || '',
     linkedin:  document.getElementById('b-linkedin')?.value  || '',
-    languages: document.getElementById('b-languages')?.value || '',
-    certs:     document.getElementById('b-certs')?.value     || '',
-    refs:      document.getElementById('b-refs')?.value      || '',
+    languages,
+    certifications,
+    references,
     skills, experience, education, achievements,
   };
 }
@@ -619,9 +629,21 @@ function sanitizeCVData(d) {
     location:  sanitizeText(d.location,   100),
     linkedin:  sanitizeUrl(d.linkedin),
     summary:   sanitizeText(d.summary,   1000),
-    languages: sanitizeText(d.languages,  200),
-    certs:     sanitizeText(d.certs,      500),
-    refs:      sanitizeText(d.refs,       500),
+    languages: (d.languages || []).map(l => ({
+      lang:  sanitizeText(l.lang,  80),
+      level: sanitizeText(l.level, 40),
+    })),
+    certifications: (d.certifications || []).map(c => ({
+      name: sanitizeText(c.name, 120),
+      org:  sanitizeText(c.org,  100),
+      year: sanitizeText(c.year,  20),
+    })),
+    references: (d.references || []).map(r => ({
+      name:    sanitizeText(r.name,    100),
+      pos:     sanitizeText(r.pos,     100),
+      company: sanitizeText(r.company, 100),
+      contact: sanitizeText(r.contact, 100),
+    })),
     skills: (d.skills || []).map(s => ({
       name: sanitizeText(s.name, 60),
     })),
@@ -735,6 +757,69 @@ function addAchievement(d={}) {
   list.appendChild(div);
 }
 
+/* ============================================================
+   LANGUAGE BLOCKS
+   ============================================================ */
+function addLanguage(d={}) {
+  const list = document.getElementById('languages-list');
+  const div  = document.createElement('div');
+  div.className = 'dynamic-item lang-entry';
+  div.innerHTML = `
+    <div class="skill-row">
+      <input type="text" class="form-control lang-name" value="${h(d.lang||'')}"
+        placeholder="e.g. English, Wolof, French, Mandinka">
+      <select class="form-control lang-level" style="flex:0 0 160px">
+        <option value="">Proficiency</option>
+        <option value="Basic"        ${d.level==='Basic'         ? 'selected':''}>Basic</option>
+        <option value="Intermediate" ${d.level==='Intermediate'  ? 'selected':''}>Intermediate</option>
+        <option value="Fluent"       ${d.level==='Fluent'        ? 'selected':''}>Fluent</option>
+        <option value="Native"       ${d.level==='Native'        ? 'selected':''}>Native</option>
+      </select>
+      <button class="btn-remove" onclick="this.closest('.lang-entry').remove()">✕</button>
+    </div>
+  `;
+  list.appendChild(div);
+}
+
+/* ============================================================
+   CERTIFICATION BLOCKS
+   ============================================================ */
+function addCertification(d={}) {
+  const list = document.getElementById('certs-list');
+  const div  = document.createElement('div');
+  div.className = 'dynamic-item cert-entry';
+  div.innerHTML = `
+    <div class="dynamic-item-header">
+      <span class="dynamic-item-title">Certification</span>
+      <button class="btn-remove" onclick="this.closest('.cert-entry').remove()">✕ Remove</button>
+    </div>
+    <div class="form-group"><label>Certification Name</label><input type="text" class="form-control cert-name" value="${h(d.name||'')}" placeholder="e.g. Google Analytics Individual Qualification"></div>
+    <div class="form-group"><label>Issuing Organisation</label><input type="text" class="form-control cert-org" value="${h(d.org||'')}" placeholder="e.g. Google, HubSpot, Coursera"></div>
+    <div class="form-group"><label>Year</label><input type="text" class="form-control cert-year" value="${h(d.year||'')}" placeholder="e.g. 2023"></div>
+  `;
+  list.appendChild(div);
+}
+
+/* ============================================================
+   REFERENCE BLOCKS
+   ============================================================ */
+function addReference(d={}) {
+  const list = document.getElementById('refs-list');
+  const div  = document.createElement('div');
+  div.className = 'dynamic-item ref-entry';
+  div.innerHTML = `
+    <div class="dynamic-item-header">
+      <span class="dynamic-item-title">Reference</span>
+      <button class="btn-remove" onclick="this.closest('.ref-entry').remove()">✕ Remove</button>
+    </div>
+    <div class="form-group"><label>Full Name</label><input type="text" class="form-control ref-name" value="${h(d.name||'')}" placeholder="e.g. Omar Touray"></div>
+    <div class="form-group"><label>Position / Title</label><input type="text" class="form-control ref-pos" value="${h(d.pos||'')}" placeholder="e.g. Head of Marketing"></div>
+    <div class="form-group"><label>Organisation</label><input type="text" class="form-control ref-company" value="${h(d.company||'')}" placeholder="e.g. Gambia National Brewery"></div>
+    <div class="form-group"><label>Contact Info</label><input type="text" class="form-control ref-contact" value="${h(d.contact||'')}" placeholder="e.g. omar@gnb.gm or +220 XXX XXXX"></div>
+  `;
+  list.appendChild(div);
+}
+
 function handlePhotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -793,9 +878,14 @@ function buildCVHTML(d) {
     ? '<img src="' + safePhoto + '" class="cv-photo" alt="Profile photo" crossorigin="anonymous">'
     : '<div class="cv-photo">👤</div>';
 
-  const langs = (d.languages||'').split(',').map(l=>l.trim()).filter(Boolean);
-  const certs = (d.certs||'').split('\n').map(c=>c.trim()).filter(Boolean);
-  const refs  = (d.refs||'').split('\n').map(r=>r.trim()).filter(Boolean);
+  // Languages — now array of objects
+  const langs = (d.languages || []).filter(l => l.lang && l.lang.trim());
+
+  // Certifications — now array of objects
+  const certs = (d.certifications || []).filter(c => c.name && c.name.trim());
+
+  // References — now array of objects
+  const refs = (d.references || []).filter(r => r.name && r.name.trim());
 
   const contactItems = [
     d.email    && `<span class="cv-contact-item">✉ ${h(d.email)}</span>`,
@@ -839,10 +929,31 @@ function buildCVHTML(d) {
     </div>
   `).join('');
 
-  const refHTML = refs.map(r => {
-    const parts = r.split('–').map(p=>p.trim());
-    return `<div class="cv-ref"><div class="cv-ref-name">${h(parts[0]||r)}</div><div>${h(parts.slice(1).join(' · '))}</div></div>`;
-  }).join('');
+  // Languages render
+  const langsHTML = langs.length ? langs.map(l => `
+    <div class="cv-tag" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">
+      <span>${h(l.lang)}</span>
+      ${l.level ? `<span style="font-size:10px;opacity:0.65">${h(l.level)}</span>` : ''}
+    </div>
+  `).join('') : '';
+
+  // Certifications render
+  const certsHTML = certs.length ? certs.map(c => `
+    <div class="cv-edu-item">
+      <div class="cv-edu-inst">${h(c.name)}</div>
+      ${c.org  ? `<div class="cv-edu-qual">${h(c.org)}</div>`  : ''}
+      ${c.year ? `<div class="cv-edu-year">${h(c.year)}</div>` : ''}
+    </div>
+  `).join('') : '';
+
+  // References render
+  const refHTML = refs.map(r => `
+    <div class="cv-ref">
+      <div class="cv-ref-name">${h(r.name)}</div>
+      <div>${[r.pos, r.company].filter(Boolean).map(v=>h(v)).join(' · ')}</div>
+      ${r.contact ? `<div style="font-size:11px;opacity:0.7">${h(r.contact)}</div>` : ''}
+    </div>
+  `).join('');
 
   return `
     <div class="cv-header">
@@ -862,11 +973,11 @@ function buildCVHTML(d) {
         ${achHTML    ? `<div class="cv-section"><div class="cv-section-title">${h(achLabel)}</div>${achHTML}</div>` : ''}
       </div>
       <div class="cv-side">
-        ${skillsHTML ? `<div class="cv-section"><div class="cv-section-title">Skills</div>${skillsHTML}</div>` : ''}
-        ${eduHTML    ? `<div class="cv-section"><div class="cv-section-title">Education</div>${eduHTML}</div>` : ''}
-        ${langs.length ? `<div class="cv-section"><div class="cv-section-title">Languages</div><div class="cv-tag-list">${langs.map(l=>`<div class="cv-tag">${h(l)}</div>`).join('')}</div></div>` : ''}
-        ${certs.length ? `<div class="cv-section"><div class="cv-section-title">Certifications</div>${certs.map(c=>`<div class="cv-tag-list"><div class="cv-tag" style="margin-bottom:5px">${h(c)}</div></div>`).join('')}</div>` : ''}
-        ${refs.length  ? `<div class="cv-section"><div class="cv-section-title">References</div>${refHTML}</div>` : ''}
+        ${skillsHTML  ? `<div class="cv-section"><div class="cv-section-title">Skills</div>${skillsHTML}</div>` : ''}
+        ${eduHTML     ? `<div class="cv-section"><div class="cv-section-title">Education</div>${eduHTML}</div>` : ''}
+        ${langsHTML   ? `<div class="cv-section"><div class="cv-section-title">Languages</div>${langsHTML}</div>` : ''}
+        ${certsHTML   ? `<div class="cv-section"><div class="cv-section-title">Certifications</div>${certsHTML}</div>` : ''}
+        ${refHTML     ? `<div class="cv-section"><div class="cv-section-title">References</div>${refHTML}</div>` : ''}
       </div>
     </div>
   `;
@@ -1971,9 +2082,7 @@ async function checkAdminAccess() {
   if (btn) { btn.disabled = false; btn.textContent = 'Check Admin Access →'; }
 }
 
-function adminLogin() {
-  checkAdminAccess();
-}
+function adminLogin() { checkAdminAccess(); }
 
 function adminLogout() {
   adminLoggedIn = false;
@@ -1996,8 +2105,7 @@ async function renderAdminPanel() {
   let jobs = [];
 
   try {
-    const { data, error } = await supabaseClient
-      .rpc('get_all_jobs_admin');
+    const { data, error } = await supabaseClient.rpc('get_all_jobs_admin');
 
     if (error) {
       if (error.message.includes('Access denied')) {
@@ -2037,22 +2145,14 @@ async function renderAdminPanel() {
   container.innerHTML = pending.map(job => `
     <div class="admin-job-row" id="admin-row-${job.id}">
       <div>
-        <h4>
-          ${h(job.title)}
-          <span style="font-weight:400;color:var(--muted)">— ${h(job.company)}</span>
-        </h4>
-        <p>
-          📍 ${h(job.location)} · 💼 ${h(job.type)} ·
-          ⏰ ${h(job.deadline)} · 📋 ${h(job.plan || 'free')}
-        </p>
+        <h4>${h(job.title)}<span style="font-weight:400;color:var(--muted)">— ${h(job.company)}</span></h4>
+        <p>📍 ${h(job.location)} · 💼 ${h(job.type)} · ⏰ ${h(job.deadline)} · 📋 ${h(job.plan || 'free')}</p>
         <p style="margin-top:6px;color:var(--text2);font-size:12px;max-width:600px;line-height:1.5">
           ${h((job.description || '').slice(0, 200))}…
         </p>
         <p style="margin-top:6px;font-size:11px;color:var(--muted)">
           Contact: ${h(job.email)}
-          ${job._local
-            ? '· <span style="color:var(--gold)">Local only</span>'
-            : '· <span style="color:#4ade80">In database</span>'}
+          ${job._local ? '· <span style="color:var(--gold)">Local only</span>' : '· <span style="color:#4ade80">In database</span>'}
         </p>
       </div>
       <div class="admin-approve-btns">
@@ -2106,9 +2206,7 @@ async function adminReject(id, isLocal) {
 
 function adminRefresh() { renderAdminPanel(); }
 
-document.addEventListener('DOMContentLoaded', () => {
-  sbLoad();
-});
+document.addEventListener('DOMContentLoaded', () => { sbLoad(); });
 
 /* ============================================================
    JOB SEARCH
@@ -2410,11 +2508,7 @@ function getJobUrl(job) {
   return window.location.origin + window.location.pathname + '#job-' + slug;
 }
 
-/* ============================================================
-   APPLY NOW — EMAIL EXTRACTION + MAILTO FLOW
-   ============================================================ */
 function extractApplyEmail(job) {
-  // Search applyInfo, applyLink, then email field in priority order
   const sources = [job.applyInfo || '', job.applyLink || '', job.email || ''];
   const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/;
   for (const src of sources) {
@@ -2435,7 +2529,6 @@ function applyNowEmail(jobId) {
     return;
   }
 
-  // Show CV reminder before opening email client
   toast('📎 Make sure you have downloaded your CV and attach it before sending.', 'gold', 6000);
 
   const subject = encodeURIComponent('Job Application for ' + job.title);
@@ -2532,7 +2625,6 @@ function createJobCard(job, idx) {
   const vmBtn = card.querySelector(`#${vmBtnId}`);
   vmBtn.addEventListener('click', e => { e.stopPropagation(); openJobPage(job); });
 
-  // Apply Now button — email flow
   const applyBtn = card.querySelector('.js-btn-apply');
   applyBtn.addEventListener('click', e => { e.stopPropagation(); applyNowEmail(job.id); });
 
@@ -2590,14 +2682,33 @@ function closeAllShareDropdowns() {
 
 document.addEventListener('click', () => closeAllShareDropdowns());
 
-function toggleJobDesc(descId, btnId) {
-  const desc = document.getElementById(descId);
-  const btn  = document.getElementById(btnId);
-  if (!desc || !btn) return;
-  const expanded = desc.classList.toggle('expanded');
-  btn.textContent = expanded ? 'View Less ▲' : 'View More';
-  btn.setAttribute('aria-expanded', String(expanded));
+function renderListText(str) {
+  if (!str) return '';
+  return str.split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const text = line.replace(/^[•\-\*]\s*/, '');
+      return `<div class="jd-list-item">
+        <span class="jd-list-bullet">✦</span>
+        <span>${escHtml(text)}</span>
+      </div>`;
+    })
+    .join('');
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = document.getElementById('jd-close');
+  const backdrop = document.getElementById('jd-backdrop');
+  if (closeBtn) closeBtn.addEventListener('click', closeJobModal);
+  if (backdrop) backdrop.addEventListener('click', e => {
+    if (e.target === backdrop) closeJobModal();
+  });
+  document.addEventListener('keydown', e => {
+    const b = document.getElementById('jd-backdrop');
+    if (e.key === 'Escape' && b && b.classList.contains('jd-open')) closeJobModal();
+  });
+});
 
 /* ============================================================
    JOB DETAIL MODAL
@@ -2665,7 +2776,6 @@ function openJobModal(job) {
   const applyActionsEl = document.getElementById('jd-apply-actions');
   applyActionsEl.innerHTML = '';
 
-  // Apply Now button — email flow
   const applyBtnEl = document.createElement('button');
   applyBtnEl.className = 'jd-apply-btn jd-apply-btn-primary';
   applyBtnEl.textContent = 'Apply Now →';
@@ -2719,34 +2829,6 @@ function closeJobModal() {
   }, { once: true });
 }
 
-function renderListText(str) {
-  if (!str) return '';
-  return str.split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
-    .map(line => {
-      const text = line.replace(/^[•\-\*]\s*/, '');
-      return `<div class="jd-list-item">
-        <span class="jd-list-bullet">✦</span>
-        <span>${escHtml(text)}</span>
-      </div>`;
-    })
-    .join('');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const closeBtn = document.getElementById('jd-close');
-  const backdrop = document.getElementById('jd-backdrop');
-  if (closeBtn) closeBtn.addEventListener('click', closeJobModal);
-  if (backdrop) backdrop.addEventListener('click', e => {
-    if (e.target === backdrop) closeJobModal();
-  });
-  document.addEventListener('keydown', e => {
-    const b = document.getElementById('jd-backdrop');
-    if (e.key === 'Escape' && b && b.classList.contains('jd-open')) closeJobModal();
-  });
-});
-
 /* ============================================================
    JOB DETAILS — FULL PAGE VIEW
    ============================================================ */
@@ -2793,7 +2875,6 @@ function openJobPage(job) {
   const ae=document.getElementById('jd-page-actions');
   ae.innerHTML='';
 
-  // Apply Now button — email flow
   const applyBtn=document.createElement('button');
   applyBtn.className='jd-apply-btn jd-apply-btn-primary';
   applyBtn.textContent='Apply Now →';
@@ -2945,11 +3026,11 @@ const CL_TONES = {
 };
 
 const CL_PLACEHOLDERS = {
-  opening:     'I am writing to express my strong interest in this position at your organisation. Having followed your work for some time, I am excited by the opportunity to contribute my experience to your team.',
-  skills:      'With over [X] years of experience in [field], I have developed expertise in [skill 1], [skill 2], and [skill 3]. My background has equipped me with a practical understanding of what it takes to succeed in this type of role.',
-  achievement: 'In my most recent position at [Company], I led a project that resulted in [outcome]. This experience demonstrated my ability to [key skill] while delivering measurable results under tight deadlines.',
-  company:     'I am particularly drawn to [Company] because of [specific reason — their mission, impact, reputation in Gambia]. I believe your commitment to [value] aligns closely with my own professional values.',
-  closing:     'Thank you sincerely for your time and consideration. I would welcome the opportunity to discuss how my background can contribute to your team\'s goals. I look forward to hearing from you.',
+  opening:     'I am writing to express my strong interest in this position at your organisation.',
+  skills:      'With over [X] years of experience in [field], I have developed expertise in [skill 1], [skill 2], and [skill 3].',
+  achievement: 'In my most recent position at [Company], I led a project that resulted in [outcome].',
+  company:     'I am particularly drawn to [Company] because of [specific reason].',
+  closing:     'Thank you sincerely for your time and consideration. I would welcome the opportunity to discuss how my background can contribute to your team.',
 };
 
 function generateParagraph(type, data) {
@@ -2974,7 +3055,7 @@ function generateParagraph(type, data) {
       }
       return `Throughout my career, I have consistently delivered results that exceed expectations. I am recognised for my ability to identify opportunities, mobilise resources, and execute with precision — an approach I will bring with me to ${company}.`;
     case 'company':
-      return `I am especially drawn to ${company} because of the meaningful impact your work has in The Gambia and the wider region. I admire your commitment to excellence and believe that joining your team would allow me to grow while contributing to goals I genuinely care about. I am looking for more than a job — I want to be part of an organisation whose mission inspires me, and ${company} represents exactly that.`;
+      return `I am especially drawn to ${company} because of the meaningful impact your work has in The Gambia and the wider region. I admire your commitment to excellence and believe that joining your team would allow me to grow while contributing to goals I genuinely care about.`;
     case 'closing':
       return `Thank you sincerely for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to ${company}'s continued success. I am available for an interview at your earliest convenience and can be reached at ${data.email || 'the contact details above'}. I look forward to the possibility of joining your team.`;
     default: return '';
@@ -3391,11 +3472,6 @@ function showAuthModal(afterLoginAction) {
   if (errEl)     { errEl.style.display = 'none'; errEl.textContent = ''; }
   if (input)     { input.value = ''; }
 
-  var cvData = loadData('cvData');
-  if (cvData && cvData.email && input) {
-    input.value = cvData.email;
-  }
-
   if (overlay) overlay.style.display = 'flex';
   setTimeout(function() { if (input) input.focus(); }, 100);
 }
@@ -3518,9 +3594,7 @@ function tourSetDismissed(id) {
   state[id] = true;
   try { localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
 }
-function tourIsDismissed(id) {
-  return !!tourGetState()[id];
-}
+function tourIsDismissed(id) { return !!tourGetState()[id]; }
 
 function tourPosition(popoverId, targetId, preferredSide) {
   const popover = document.getElementById(popoverId);
@@ -3544,26 +3618,10 @@ function tourPosition(popoverId, targetId, preferredSide) {
   })();
 
   switch (side) {
-    case 'left':
-      left     = tr.left - pw - gap;
-      top      = tr.top + tr.height / 2 - ph / 2;
-      arrowDir = 'right';
-      break;
-    case 'right':
-      left     = tr.right + gap;
-      top      = tr.top + tr.height / 2 - ph / 2;
-      arrowDir = 'left';
-      break;
-    case 'top':
-      left     = tr.left + tr.width / 2 - pw / 2;
-      top      = tr.top - ph - gap;
-      arrowDir = 'bottom';
-      break;
-    case 'bottom':
-    default:
-      left     = tr.left + tr.width / 2 - pw / 2;
-      top      = tr.bottom + gap;
-      arrowDir = 'top';
+    case 'left':   left = tr.left - pw - gap;   top = tr.top + tr.height/2 - ph/2; arrowDir = 'right'; break;
+    case 'right':  left = tr.right + gap;        top = tr.top + tr.height/2 - ph/2; arrowDir = 'left';  break;
+    case 'top':    left = tr.left + tr.width/2 - pw/2; top = tr.top - ph - gap;    arrowDir = 'bottom'; break;
+    default:       left = tr.left + tr.width/2 - pw/2; top = tr.bottom + gap;      arrowDir = 'top';    break;
   }
 
   const M = 12;
@@ -3580,8 +3638,8 @@ function tourPositionRing(ringId, targetId) {
   const target = document.getElementById(targetId);
   if (!ring || !target) return;
 
-  const tr   = target.getBoundingClientRect();
-  const pad  = 4;
+  const tr  = target.getBoundingClientRect();
+  const pad = 4;
   ring.style.left   = (tr.left   - pad) + 'px';
   ring.style.top    = (tr.top    - pad) + 'px';
   ring.style.width  = (tr.width  + pad * 2) + 'px';
@@ -3591,10 +3649,8 @@ function tourPositionRing(ringId, targetId) {
 
 function tourShow(id, targetId, side) {
   if (tourIsDismissed(id)) return;
-
   const popover = document.getElementById('tour-' + id);
   if (!popover) return;
-
   requestAnimationFrame(() => {
     tourPosition('tour-' + id, targetId, side);
     tourPositionRing('tour-ring-' + id, targetId);
@@ -3605,31 +3661,18 @@ function tourShow(id, targetId, side) {
 
 function tourDismiss(id) {
   tourSetDismissed(id);
-
   const popover = document.getElementById('tour-' + id);
   const ring    = document.getElementById('tour-ring-' + id);
-
-  if (popover) {
-    popover.classList.remove('visible');
-    setTimeout(() => { popover.style.display = 'none'; }, 300);
-  }
-  if (ring) {
-    ring.style.opacity = '0';
-    setTimeout(() => { ring.style.display = 'none'; ring.style.opacity = ''; }, 300);
-  }
-
+  if (popover) { popover.classList.remove('visible'); setTimeout(() => { popover.style.display = 'none'; }, 300); }
+  if (ring)    { ring.style.opacity = '0'; setTimeout(() => { ring.style.display = 'none'; ring.style.opacity = ''; }, 300); }
   const anyVisible = ['hamburger','gear'].some(k => {
     const p = document.getElementById('tour-' + k);
     return p && p.classList.contains('visible');
   });
-  if (!anyVisible) {
-    document.getElementById('tour-overlay')?.classList.remove('active');
-  }
+  if (!anyVisible) document.getElementById('tour-overlay')?.classList.remove('active');
 }
 
-function tourDismissAll() {
-  ['hamburger', 'gear'].forEach(id => tourDismiss(id));
-}
+function tourDismissAll() { ['hamburger', 'gear'].forEach(id => tourDismiss(id)); }
 
 function tourReposition() {
   if (!tourIsDismissed('hamburger')) {
@@ -3656,14 +3699,10 @@ function initTour() {
 
 function initGearTour() {
   if (tourIsDismissed('gear')) return;
-
   const gearBtn = document.querySelector('.cust-gear-btn');
   if (!gearBtn) return;
   if (!gearBtn.id) gearBtn.id = 'cust-gear-btn-target';
-
-  setTimeout(() => {
-    tourShow('gear', 'cust-gear-btn-target', 'bottom');
-  }, 800);
+  setTimeout(() => { tourShow('gear', 'cust-gear-btn-target', 'bottom'); }, 800);
 }
 
 /* ============================================================
@@ -3675,15 +3714,12 @@ let _wacTimer = null;
 
 function initWACOverlay() {
   if (sessionStorage.getItem(WAC_SESSION_KEY)) return;
-
   _wacTimer = setTimeout(function() {
     var overlay = document.getElementById('wa-channel-overlay');
     if (!overlay) return;
     overlay.style.display = 'flex';
     requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        overlay.classList.add('visible');
-      });
+      requestAnimationFrame(function() { overlay.classList.add('visible'); });
     });
   }, 60000);
 }
@@ -3716,15 +3752,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initWACOverlay();
   initWizard();
   setupScrollReveals();
-   const pathMatch = window.location.pathname.match(/^\/job\/(.+)/);
+
+  const pathMatch = window.location.pathname.match(/^\/job\/(.+)/);
   if (pathMatch) {
-    const jobId = pathMatch[1].replace(/\/$/, ''); // trim trailing slash
+    const jobId = pathMatch[1].replace(/\/$/, '');
     const job = JOB_LISTINGS.find(j => j.id === jobId);
     if (job) {
       showView('job-search');
       setTimeout(() => openJobPage(job), 200);
     } else {
-      // Job ID not found — go to job search
       showView('job-search');
       toast('Job not found — showing all available jobs.', 'default', 4000);
     }
