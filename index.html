@@ -503,20 +503,35 @@
       <button class="btn btn-ghost btn-sm" style="margin-top:16px" onclick="addAchievement()">+ Add Entry</button>
     </div>
 
-    <!-- Step 6: Contact -->
-    <div class="builder-step" id="builder-step-6">
-      <h2 class="builder-step-title">Contact & More</h2>
-      <p class="builder-step-desc">Final details to make you reachable and stand out.</p>
-      <div class="form-group"><label>Email *</label><input type="email" class="form-control" id="b-email" placeholder="fatou@example.com"></div>
-      <div class="form-group"><label>Phone</label><input type="text" class="form-control" id="b-phone" placeholder="+220 XXX XXXX"></div>
-      <div class="form-group"><label>LinkedIn URL</label><input type="text" class="form-control" id="b-linkedin" placeholder="linkedin.com/in/yourname"></div>
-      <div class="divider"></div>
-      <div class="form-group"><label>Languages (comma-separated)</label><input type="text" class="form-control" id="b-languages" placeholder="e.g. English, Wolof, French"></div>
-      <div class="form-group"><label>Certifications (one per line)</label><textarea class="form-control" id="b-certs" rows="3" placeholder="e.g. Google Analytics Certified&#10;HubSpot Content Marketing"></textarea></div>
-      <div class="form-group"><label>References (one per line, Name – Title – Organisation)</label><textarea class="form-control" id="b-refs" rows="3" placeholder="e.g. Omar Touray – Head of Marketing – Gambia National Brewery"></textarea></div>
-      <div class="divider"></div>
-      <button class="btn btn-gold btn-lg btn-full" onclick="generateCV()">✦ Generate My CV</button>
-    </div>
+    <!-- Step 6: Contact & More -->
+<div class="builder-step" id="builder-step-6">
+  <h2 class="builder-step-title">Contact &amp; More</h2>
+  <p class="builder-step-desc">Final details to make you reachable and stand out.</p>
+  <div class="form-group"><label>Email *</label><input type="email" class="form-control" id="b-email" placeholder="e.g. fatou@example.com"></div>
+  <div class="form-group"><label>Phone</label><input type="text" class="form-control" id="b-phone" placeholder="e.g. +220 XXX XXXX"></div>
+  <div class="form-group"><label>LinkedIn URL</label><input type="text" class="form-control" id="b-linkedin" placeholder="e.g. linkedin.com/in/yourname"></div>
+  <div class="divider"></div>
+
+  <!-- LANGUAGES -->
+  <div class="form-group" style="margin-bottom:8px"><label>Languages</label></div>
+  <div class="dynamic-list" id="languages-list"></div>
+  <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addLanguage()">+ Add Language</button>
+  <div class="divider"></div>
+
+  <!-- CERTIFICATIONS -->
+  <div class="form-group" style="margin-bottom:8px"><label>Certifications</label></div>
+  <div class="dynamic-list" id="certs-list"></div>
+  <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addCertification()">+ Add Certification</button>
+  <div class="divider"></div>
+
+  <!-- REFERENCES -->
+  <div class="form-group" style="margin-bottom:8px"><label>References</label></div>
+  <div class="dynamic-list" id="refs-list"></div>
+  <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addReference()">+ Add Reference</button>
+  <div class="divider"></div>
+
+  <button class="btn btn-gold btn-lg btn-full" onclick="generateCV()">✦ Generate My CV</button>
+</div>
 
   </div><!-- /builder-body -->
 
