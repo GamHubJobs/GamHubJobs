@@ -768,13 +768,7 @@ function addLanguage(d={}) {
     <div class="skill-row">
       <input type="text" class="form-control lang-name" value="${h(d.lang||'')}"
         placeholder="e.g. English, Wolof, French, Mandinka">
-      <select class="form-control lang-level" style="flex:0 0 160px">
-        <option value="">Proficiency</option>
-        <option value="Basic"        ${d.level==='Basic'         ? 'selected':''}>Basic</option>
-        <option value="Intermediate" ${d.level==='Intermediate'  ? 'selected':''}>Intermediate</option>
-        <option value="Fluent"       ${d.level==='Fluent'        ? 'selected':''}>Fluent</option>
-        <option value="Native"       ${d.level==='Native'        ? 'selected':''}>Native</option>
-      </select>
+      
       <button class="btn-remove" onclick="this.closest('.lang-entry').remove()">✕</button>
     </div>
   `;
@@ -931,9 +925,8 @@ function buildCVHTML(d) {
 
   // Languages render
   const langsHTML = langs.length ? langs.map(l => `
-    <div class="cv-tag" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">
+    <div class="cv-tag" style="margin-bottom:5px">
       <span>${h(l.lang)}</span>
-      ${l.level ? `<span style="font-size:10px;opacity:0.65">${h(l.level)}</span>` : ''}
     </div>
   `).join('') : '';
 
