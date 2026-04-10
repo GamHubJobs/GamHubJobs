@@ -475,7 +475,6 @@ function loadBuilderData() {
   if (d.linkedin)  document.getElementById('b-linkedin').value  = d.linkedin;
   if (d.photo)     { photoDataURL = d.photo; updatePhotoPreview(d.photo); }
 
-  // Languages blocks
   const langList = document.getElementById('languages-list');
   langList.innerHTML = '';
   if (d.languages && d.languages.length) {
@@ -484,7 +483,6 @@ function loadBuilderData() {
     addLanguage();
   }
 
-  // Certifications blocks
   const certList = document.getElementById('certs-list');
   certList.innerHTML = '';
   if (d.certifications && d.certifications.length) {
@@ -493,7 +491,6 @@ function loadBuilderData() {
     addCertification();
   }
 
-  // References blocks
   const refList = document.getElementById('refs-list');
   refList.innerHTML = '';
   if (d.references && d.references.length) {
@@ -502,25 +499,21 @@ function loadBuilderData() {
     addReference();
   }
 
-  // Skills
   const skillsList = document.getElementById('skills-list');
   skillsList.innerHTML = '';
   if (d.skills && d.skills.length) d.skills.forEach(s => addSkill(s.name, s.level));
   else { addSkill(); addSkill(); }
 
-  // Experience
   const expList = document.getElementById('experience-list');
   expList.innerHTML = '';
   if (d.experience && d.experience.length) d.experience.forEach(e => addExperience(e));
   else addExperience();
 
-  // Education
   const eduList = document.getElementById('education-list');
   eduList.innerHTML = '';
   if (d.education && d.education.length) d.education.forEach(e => addEducation(e));
   else addEducation();
 
-  // Achievements
   const achList = document.getElementById('achievements-list');
   achList.innerHTML = '';
   if (d.achievements && d.achievements.length) d.achievements.forEach(a => addAchievement(a));
@@ -564,7 +557,6 @@ function collectBuilderData() {
     });
   });
 
-  // Languages blocks
   const languages = [];
   document.querySelectorAll('.lang-entry').forEach(el => {
     const lang  = el.querySelector('.lang-name')?.value  || '';
@@ -572,7 +564,6 @@ function collectBuilderData() {
     if (lang.trim()) languages.push({ lang, level });
   });
 
-  // Certifications blocks
   const certifications = [];
   document.querySelectorAll('.cert-entry').forEach(el => {
     const name  = el.querySelector('.cert-name')?.value  || '';
@@ -581,7 +572,6 @@ function collectBuilderData() {
     if (name.trim()) certifications.push({ name, org, year });
   });
 
-  // References blocks
   const references = [];
   document.querySelectorAll('.ref-entry').forEach(el => {
     const name    = el.querySelector('.ref-name')?.value    || '';
@@ -768,7 +758,6 @@ function addLanguage(d={}) {
     <div class="skill-row">
       <input type="text" class="form-control lang-name" value="${h(d.lang||'')}"
         placeholder="e.g. English, Wolof, French, Mandinka">
-      
       <button class="btn-remove" onclick="this.closest('.lang-entry').remove()">✕</button>
     </div>
   `;
@@ -872,14 +861,9 @@ function buildCVHTML(d) {
     ? '<img src="' + safePhoto + '" class="cv-photo" alt="Profile photo" crossorigin="anonymous">'
     : '<div class="cv-photo">👤</div>';
 
-  // Languages — now array of objects
   const langs = (d.languages || []).filter(l => l.lang && l.lang.trim());
-
-  // Certifications — now array of objects
   const certs = (d.certifications || []).filter(c => c.name && c.name.trim());
-
-  // References — now array of objects
-  const refs = (d.references || []).filter(r => r.name && r.name.trim());
+  const refs  = (d.references || []).filter(r => r.name && r.name.trim());
 
   const contactItems = [
     d.email    && `<span class="cv-contact-item">✉ ${h(d.email)}</span>`,
@@ -923,14 +907,12 @@ function buildCVHTML(d) {
     </div>
   `).join('');
 
-  // Languages render
   const langsHTML = langs.length ? langs.map(l => `
     <div class="cv-tag" style="margin-bottom:5px">
       <span>${h(l.lang)}</span>
     </div>
   `).join('') : '';
 
-  // Certifications render
   const certsHTML = certs.length ? certs.map(c => `
     <div class="cv-edu-item">
       <div class="cv-edu-inst">${h(c.name)}</div>
@@ -939,7 +921,6 @@ function buildCVHTML(d) {
     </div>
   `).join('') : '';
 
-  // References render
   const refHTML = refs.map(r => `
     <div class="cv-ref">
       <div class="cv-ref-name">${h(r.name)}</div>
@@ -1757,6 +1738,9 @@ async function finaliseDownload(token) {
 
 /* ============================================================
    WHATSAPP JOB NOTIFICATION
+   ✅ PATCHED: window.open() instead of window.location.href
+      so the notification fires without navigating away from
+      the success screen after paid job return from ModemPay.
    ============================================================ */
 function sendJobNotificationWhatsApp(jobPayload, plan) {
   try {
@@ -1804,7 +1788,8 @@ function sendJobNotificationWhatsApp(jobPayload, plan) {
     const encoded = encodeURIComponent(msg);
     const waUrl = 'https://wa.me/2206371941?text=' + encoded;
 
-    window.location.href = waUrl;
+    // ✅ FIXED: was window.location.href = waUrl
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
 
   } catch(err) {
     console.error('[WhatsApp notify] Failed:', err);
@@ -3026,32 +3011,91 @@ const CL_PLACEHOLDERS = {
   closing:     'Thank you sincerely for your time and consideration. I would welcome the opportunity to discuss how my background can contribute to your team.',
 };
 
+/* ============================================================
+   COVER LETTER PARAGRAPH GENERATOR
+   ✅ PATCHED: All interpolated fields are now guarded against
+      empty/undefined values so no sentence ends as a fragment
+      like "One achievement I am particularly proud of is ."
+   ============================================================ */
 function generateParagraph(type, data) {
   const tone = CL_TONES[data.tone] || CL_TONES.professional;
   const jobTitle  = data.jobTitle  || 'this position';
   const company   = data.company   || 'your organisation';
   const myTitle   = data.myTitle   || 'professional';
   const source    = data.jobSource ? `which I discovered through ${data.jobSource}` : 'advertised on GamHubJobs.com';
-  const topSkills = data.skills?.slice(0,3).map(s=>s.name).join(', ') || 'communication, organisation, and leadership';
-  const topExp    = data.experience?.[0] || null;
-  const topAch    = data.achievements?.[0] || null;
-  const summary   = data.summary || '';
 
-  switch(type) {
+  // Filter out blank/placeholder skill names
+  const validSkills = (data.skills || [])
+    .map(s => (s.name || '').trim())
+    .filter(Boolean);
+  const topSkills = validSkills.slice(0, 3).join(', ') || 'communication, organisation, and leadership';
+
+  // Only use experience entries that have at least a title
+  const topExp = (data.experience || []).find(e => (e.title || '').trim()) || null;
+
+  // Only use achievement entries that have at least a title
+  const topAch = (data.achievements || []).find(a => (a.title || '').trim()) || null;
+
+  const summary = (data.summary || '').trim();
+
+  switch (type) {
     case 'opening':
-      return `${tone.opener} the role of ${jobTitle} at ${company}, ${source}. As an experienced ${myTitle}, I am confident that my skills and background make me a strong candidate for this opportunity. ${summary ? summary.split('.')[0] + '.' : `I am ${tone.energy} and eager to bring genuine value to your team.`}`;
-    case 'skills':
-      return `${tone.fit} ${topSkills}. ${topExp ? `In my role as ${topExp.title} at ${topExp.org}, I was responsible for ${topExp.desc?.split('.')[0]?.toLowerCase() || 'delivering key outcomes and building strong stakeholder relationships'}.` : 'My professional journey has given me a hands-on understanding of what drives results in fast-paced environments.'} I am adept at working both independently and within teams, and I consistently prioritise quality, accuracy, and timely delivery.`;
+      return (
+        `${tone.opener} the role of ${jobTitle} at ${company}, ${source}. ` +
+        `As an experienced ${myTitle}, I am confident that my skills and background make me a strong candidate for this opportunity. ` +
+        (summary
+          ? summary.split('.')[0].trim() + '.'
+          : `I am ${tone.energy} and eager to bring genuine value to your team.`)
+      );
+
+    case 'skills': {
+      // Only emit the experience sentence when desc is non-empty
+      const expSentence = topExp && (topExp.desc || '').trim()
+        ? `In my role as ${topExp.title} at ${topExp.org}, I was responsible for ${topExp.desc.split('.')[0].toLowerCase().trim()}.`
+        : topExp
+          ? `In my role as ${topExp.title} at ${topExp.org}, I contributed to key organisational goals and delivered results on time.`
+          : 'My professional journey has given me a hands-on understanding of what drives results in fast-paced environments.';
+
+      return (
+        `${tone.fit} ${topSkills}. ` +
+        expSentence + ' ' +
+        'I am adept at working both independently and within teams, and I consistently prioritise quality, accuracy, and timely delivery.'
+      );
+    }
+
     case 'achievement':
-      if (topAch) {
-        return `One achievement I am particularly proud of is ${topAch.title?.toLowerCase()}. ${topAch.desc ? topAch.desc.split('.')[0] + '.' : ''} This experience reinforced my ability to take initiative, manage complexity, and deliver outcomes that matter — skills I am eager to apply at ${company}.`;
+      // Only use the specific achievement if title is non-empty
+      if (topAch && topAch.title.trim()) {
+        const achDesc = (topAch.desc || '').trim();
+        return (
+          `One achievement I am particularly proud of is ${topAch.title.toLowerCase().trim()}. ` +
+          (achDesc ? achDesc.split('.')[0].trim() + '. ' : '') +
+          `This experience reinforced my ability to take initiative, manage complexity, and deliver outcomes that matter — skills I am eager to apply at ${company}.`
+        );
       }
-      return `Throughout my career, I have consistently delivered results that exceed expectations. I am recognised for my ability to identify opportunities, mobilise resources, and execute with precision — an approach I will bring with me to ${company}.`;
+      // Graceful fallback when no achievement data exists
+      return (
+        `Throughout my career, I have consistently delivered results that exceed expectations. ` +
+        `I am recognised for my ability to identify opportunities, mobilise resources, and execute with precision — ` +
+        `an approach I will bring with me to ${company}.`
+      );
+
     case 'company':
-      return `I am especially drawn to ${company} because of the meaningful impact your work has in The Gambia and the wider region. I admire your commitment to excellence and believe that joining your team would allow me to grow while contributing to goals I genuinely care about.`;
+      return (
+        `I am especially drawn to ${company} because of the meaningful impact your work has in The Gambia and the wider region. ` +
+        `I admire your commitment to excellence and believe that joining your team would allow me to grow while contributing to goals I genuinely care about.`
+      );
+
     case 'closing':
-      return `Thank you sincerely for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to ${company}'s continued success. I am available for an interview at your earliest convenience and can be reached at ${data.email || 'the contact details above'}. I look forward to the possibility of joining your team.`;
-    default: return '';
+      return (
+        `Thank you sincerely for taking the time to consider my application. ` +
+        `I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to ${company}'s continued success. ` +
+        `I am available for an interview at your earliest convenience and can be reached at ${data.email || 'the contact details above'}. ` +
+        `I look forward to the possibility of joining your team.`
+      );
+
+    default:
+      return '';
   }
 }
 
