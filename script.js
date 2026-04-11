@@ -475,7 +475,6 @@ function loadBuilderData() {
   if (d.linkedin)  document.getElementById('b-linkedin').value  = d.linkedin;
   if (d.photo)     { photoDataURL = d.photo; updatePhotoPreview(d.photo); }
 
-  // Languages blocks
   const langList = document.getElementById('languages-list');
   langList.innerHTML = '';
   if (d.languages && d.languages.length) {
@@ -484,7 +483,6 @@ function loadBuilderData() {
     addLanguage();
   }
 
-  // Certifications blocks
   const certList = document.getElementById('certs-list');
   certList.innerHTML = '';
   if (d.certifications && d.certifications.length) {
@@ -493,7 +491,6 @@ function loadBuilderData() {
     addCertification();
   }
 
-  // References blocks
   const refList = document.getElementById('refs-list');
   refList.innerHTML = '';
   if (d.references && d.references.length) {
@@ -502,25 +499,21 @@ function loadBuilderData() {
     addReference();
   }
 
-  // Skills
   const skillsList = document.getElementById('skills-list');
   skillsList.innerHTML = '';
   if (d.skills && d.skills.length) d.skills.forEach(s => addSkill(s.name, s.level));
   else { addSkill(); addSkill(); }
 
-  // Experience
   const expList = document.getElementById('experience-list');
   expList.innerHTML = '';
   if (d.experience && d.experience.length) d.experience.forEach(e => addExperience(e));
   else addExperience();
 
-  // Education
   const eduList = document.getElementById('education-list');
   eduList.innerHTML = '';
   if (d.education && d.education.length) d.education.forEach(e => addEducation(e));
   else addEducation();
 
-  // Achievements
   const achList = document.getElementById('achievements-list');
   achList.innerHTML = '';
   if (d.achievements && d.achievements.length) d.achievements.forEach(a => addAchievement(a));
@@ -564,7 +557,6 @@ function collectBuilderData() {
     });
   });
 
-  // Languages blocks
   const languages = [];
   document.querySelectorAll('.lang-entry').forEach(el => {
     const lang  = el.querySelector('.lang-name')?.value  || '';
@@ -572,7 +564,6 @@ function collectBuilderData() {
     if (lang.trim()) languages.push({ lang, level });
   });
 
-  // Certifications blocks
   const certifications = [];
   document.querySelectorAll('.cert-entry').forEach(el => {
     const name  = el.querySelector('.cert-name')?.value  || '';
@@ -581,7 +572,6 @@ function collectBuilderData() {
     if (name.trim()) certifications.push({ name, org, year });
   });
 
-  // References blocks
   const references = [];
   document.querySelectorAll('.ref-entry').forEach(el => {
     const name    = el.querySelector('.ref-name')?.value    || '';
@@ -768,7 +758,6 @@ function addLanguage(d={}) {
     <div class="skill-row">
       <input type="text" class="form-control lang-name" value="${h(d.lang||'')}"
         placeholder="e.g. English, Wolof, French, Mandinka">
-      
       <button class="btn-remove" onclick="this.closest('.lang-entry').remove()">✕</button>
     </div>
   `;
@@ -872,13 +861,8 @@ function buildCVHTML(d) {
     ? '<img src="' + safePhoto + '" class="cv-photo" alt="Profile photo" crossorigin="anonymous">'
     : '<div class="cv-photo">👤</div>';
 
-  // Languages — now array of objects
   const langs = (d.languages || []).filter(l => l.lang && l.lang.trim());
-
-  // Certifications — now array of objects
   const certs = (d.certifications || []).filter(c => c.name && c.name.trim());
-
-  // References — now array of objects
   const refs = (d.references || []).filter(r => r.name && r.name.trim());
 
   const contactItems = [
@@ -923,14 +907,12 @@ function buildCVHTML(d) {
     </div>
   `).join('');
 
-  // Languages render
   const langsHTML = langs.length ? langs.map(l => `
     <div class="cv-tag" style="margin-bottom:5px">
       <span>${h(l.lang)}</span>
     </div>
   `).join('') : '';
 
-  // Certifications render
   const certsHTML = certs.length ? certs.map(c => `
     <div class="cv-edu-item">
       <div class="cv-edu-inst">${h(c.name)}</div>
@@ -939,7 +921,6 @@ function buildCVHTML(d) {
     </div>
   `).join('') : '';
 
-  // References render
   const refHTML = refs.map(r => `
     <div class="cv-ref">
       <div class="cv-ref-name">${h(r.name)}</div>
@@ -1331,7 +1312,9 @@ function executePDFDownload(type) {
     '#ghj-pdf-export-shell .cv-section,' +
     '#ghj-pdf-export-shell .cl-letter-para,' +
     '#ghj-pdf-export-shell p{page-break-inside:avoid!important;break-inside:avoid!important;}' +
-    '#ghj-pdf-export-shell p,#ghj-pdf-export-shell .cl-letter-para{line-height:1.6!important;orphans:3!important;widows:3!important;}';
+    '#ghj-pdf-export-shell p,#ghj-pdf-export-shell .cl-letter-para{line-height:1.6!important;orphans:3!important;widows:3!important;}' +
+    '#ghj-pdf-export-shell .cl-letter-sig{font-family:"Cormorant Garamond",Georgia,serif!important;font-style:italic!important;text-decoration:none!important;}' +
+    '#ghj-pdf-export-shell .cv-name{font-family:"Cormorant Garamond",Georgia,serif!important;text-decoration:none!important;}';
 
   let exportRoot;
   if (isCL) {
