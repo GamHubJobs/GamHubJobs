@@ -710,7 +710,7 @@ function addExperience(d={}) {
   <textarea class="form-control exp-desc" rows="3"
     placeholder="Describe your role, responsibilities, and key achievements...">${h(d.desc||'')}</textarea>
   <button class="btn btn-ghost btn-sm" style="margin-top:8px"
-    onclick="openDescHelper(this)">✦ Answer questions to generate description</button>
+    onclick="openDescHelper(this)">✦ Click Here to Answer questions to generate description</button>
 </div>
   `;
   list.appendChild(div);
@@ -751,7 +751,7 @@ function addAchievement(d={}) {
   <textarea class="form-control ach-desc" rows="3"
     placeholder="Describe the work and its impact...">${h(d.desc||'')}</textarea>
   <button class="btn btn-ghost btn-sm" style="margin-top:8px"
-    onclick="openAchHelper(this)">✦ Answer questions to generate description</button>
+    onclick="openAchHelper(this)">✦ Click Here to Answer questions to generate description</button>
 </div>
     <div class="form-group"><label>Link (optional)</label><input type="text" class="form-control ach-link" value="${h(d.link||'')}" placeholder="https://"></div>
     <div class="form-group"><label>Secondary Link (optional)</label><input type="text" class="form-control ach-link2" value="${h(d.link2||'')}" placeholder="https://"></div>
