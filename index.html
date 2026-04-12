@@ -443,6 +443,10 @@
       <h2 class="builder-step-title">Personal Information</h2>
       <p class="builder-step-desc">Start with the basics. This appears at the top of your CV.</p>
       <div class="builder-tip" id="tip-personal"></div>
+<button class="btn btn-outline btn-sm" style="margin-bottom:24px"
+  onclick="openSummaryHelper()">
+  ✦ Answer questions to generate my summary
+</button>
       <div class="photo-upload-area">
         <div class="photo-circle" id="photo-preview" onclick="document.getElementById('photo-input').click()">📷</div>
         <div>
@@ -1756,7 +1760,195 @@
     </svg>
   </a>
 </div>
+<!-- ============================================================
+     Q&A SUMMARY / DESCRIPTION / ACHIEVEMENT HELPER MODAL
+     ============================================================ -->
+<div id="qa-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);
+  z-index:9500;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);
+    padding:36px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;position:relative;
+    animation:fadeUp 0.3s var(--ease)">
 
+    <button onclick="closeQAModal()" style="position:absolute;top:16px;right:16px;
+      background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--muted);
+      width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;
+      display:flex;align-items:center;justify-content:center">✕</button>
+
+    <!-- Progress bar -->
+    <div style="margin-bottom:24px" id="qa-progress-wrap">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div id="qa-d1" style="height:3px;flex:1;border-radius:2px;background:var(--gold);transition:background 0.3s"></div>
+        <div id="qa-d2" style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,0.1);transition:background 0.3s"></div>
+        <div id="qa-d3" style="height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,0.1);transition:background 0.3s"></div>
+      </div>
+      <div id="qa-step-label" style="font-size:12px;color:var(--muted);font-family:var(--font-mono)">
+        Step 1 of 3 — About you
+      </div>
+    </div>
+
+    <!-- ── STEP 1: About you (summary mode) ── -->
+    <div id="qa-step1">
+      <h3 style="font-size:20px;margin-bottom:20px">About you</h3>
+
+      <div class="form-group">
+        <label>What is your job title or profession?</label>
+        <div class="builder-tip">e.g. Marketing Manager — Software Developer — HR Specialist</div>
+        <input type="text" class="form-control" id="qa-title" placeholder="Your answer…">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="form-group">
+          <label>Years of experience</label>
+          <div class="builder-tip">e.g. 2 years — 5+ years — 10 years</div>
+          <input type="text" class="form-control" id="qa-years" placeholder="e.g. 4 years">
+        </div>
+        <div class="form-group">
+          <label>Industry</label>
+          <div class="builder-tip">e.g. Finance — Healthcare — Tech</div>
+          <input type="text" class="form-control" id="qa-industry" placeholder="e.g. Banking">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Your key skills</label>
+        <div class="builder-tip">e.g. data analysis — project management — client communication</div>
+        <div class="dynamic-list" id="qa-skills-list"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px"
+          onclick="qaAddBlock('qa-skills-list','e.g. Project Management')">+ Add Skill</button>
+      </div>
+
+      <div class="form-group">
+        <label>Types of organisations you have worked for</label>
+        <div class="builder-tip">e.g. NGOs — banks — startups — government — schools</div>
+        <div class="dynamic-list" id="qa-orgs-list"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px"
+          onclick="qaAddBlock('qa-orgs-list','e.g. International NGOs')">+ Add Organisation</button>
+      </div>
+
+      <button class="btn btn-gold btn-full" style="margin-top:8px"
+        onclick="qaGoTo(2)">Continue →</button>
+    </div>
+
+    <!-- ── STEP 2: Strengths (summary mode) ── -->
+    <div id="qa-step2" style="display:none">
+      <h3 style="font-size:20px;margin-bottom:20px">Your strengths</h3>
+
+      <div class="form-group">
+        <label>Your biggest professional strength</label>
+        <div class="builder-tip">e.g. problem-solving — leadership — attention to detail — creativity</div>
+        <input type="text" class="form-control" id="qa-strength"
+          placeholder="e.g. leadership under pressure">
+      </div>
+
+      <div class="form-group">
+        <label>Tone — how do you want employers to feel?</label>
+        <select class="form-control" id="qa-tone">
+          <option value="confident">Confident and accomplished</option>
+          <option value="warm">Approachable and collaborative</option>
+          <option value="precise">Precise and analytical</option>
+          <option value="dynamic">Dynamic and results-driven</option>
+          <option value="seasoned">Experienced and trustworthy</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>One measurable achievement you are proud of</label>
+        <div class="builder-tip">e.g. grew revenue by 30% — managed a team of 12 — cut costs by GMD 50,000</div>
+        <input type="text" class="form-control" id="qa-achieve"
+          placeholder="e.g. increased social media reach by 40%">
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost" onclick="qaGoTo(1)">← Back</button>
+        <button class="btn btn-gold" style="flex:1"
+          onclick="qaGenerate()">✦ Generate My Summary</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Recent role (experience description mode) ── -->
+    <div id="qa-step3" style="display:none">
+      <h3 style="font-size:20px;margin-bottom:20px">Your most recent role</h3>
+
+      <div class="form-group">
+        <label>Job title in that role</label>
+        <div class="builder-tip">e.g. Communications Officer — Senior Accountant — IT Support Technician</div>
+        <input type="text" class="form-control" id="qa-roletitle"
+          placeholder="e.g. Marketing Coordinator">
+      </div>
+
+      <div class="form-group">
+        <label>Main responsibilities</label>
+        <div class="builder-tip">e.g. managing social media — preparing monthly reports — training new staff</div>
+        <div class="dynamic-list" id="qa-resp-list"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px"
+          onclick="qaAddBlock('qa-resp-list','e.g. Managing the company social media accounts')">
+          + Add Responsibility</button>
+      </div>
+
+      <div class="form-group">
+        <label>Most important thing you delivered or improved</label>
+        <div class="builder-tip">e.g. launched a new website — reduced errors by 20% — trained 15 staff</div>
+        <input type="text" class="form-control" id="qa-impact"
+          placeholder="e.g. launched a rebrand campaign that increased traffic by 35%">
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost" onclick="closeQAModal()">Cancel</button>
+        <button class="btn btn-gold" style="flex:1"
+          onclick="qaGenDesc()">✦ Generate Description</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: Achievement (achievement description mode) ── -->
+    <div id="qa-step4" style="display:none">
+      <h3 style="font-size:20px;margin-bottom:20px">Your achievement</h3>
+
+      <div class="form-group">
+        <label>What is the title of this achievement or project?</label>
+        <div class="builder-tip">e.g. Brand Refresh Campaign — Research Publication — Website Redesign</div>
+        <input type="text" class="form-control" id="qa-ach-title"
+          placeholder="e.g. Social Media Growth Campaign 2024">
+      </div>
+
+      <div class="form-group">
+        <label>What was the goal or problem you were solving?</label>
+        <div class="builder-tip">e.g. low brand awareness — outdated system — poor customer retention</div>
+        <input type="text" class="form-control" id="qa-ach-goal"
+          placeholder="e.g. the company had low engagement on social media">
+      </div>
+
+      <div class="form-group">
+        <label>What actions did you personally take?</label>
+        <div class="builder-tip">e.g. designed the strategy — led the team — built the system — wrote the content</div>
+        <div class="dynamic-list" id="qa-ach-actions-list"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px"
+          onclick="qaAddBlock('qa-ach-actions-list','e.g. Designed and executed the content strategy')">
+          + Add Action</button>
+      </div>
+
+      <div class="form-group">
+        <label>What was the measurable result or outcome?</label>
+        <div class="builder-tip">e.g. increased followers by 60% — saved GMD 20,000 — reduced errors by 40%</div>
+        <input type="text" class="form-control" id="qa-ach-result"
+          placeholder="e.g. grew Instagram following by 60% in 3 months">
+      </div>
+
+      <div class="form-group">
+        <label>What did this achievement prove about you?</label>
+        <div class="builder-tip">e.g. ability to work under pressure — creative thinking — strategic leadership</div>
+        <input type="text" class="form-control" id="qa-ach-proof"
+          placeholder="e.g. ability to turn strategy into measurable results">
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost" onclick="closeQAModal()">Cancel</button>
+        <button class="btn btn-gold" style="flex:1"
+          onclick="qaGenAchievement()">✦ Generate Achievement Description</button>
+      </div>
+    </div>
+
+  </div>
+</div>
   <script src="script.js" defer></script>
 </body>
 </html>
