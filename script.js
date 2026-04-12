@@ -705,7 +705,13 @@ function addExperience(d={}) {
     <div class="form-group"><label>Job Title</label><input type="text" class="form-control exp-title" value="${h(d.title||'')}" placeholder="e.g. Marketing Manager"></div>
     <div class="form-group"><label>Organisation</label><input type="text" class="form-control exp-org" value="${h(d.org||'')}" placeholder="e.g. Trust Bank Gambia"></div>
     <div class="form-group"><label>Duration</label><input type="text" class="form-control exp-dur" value="${h(d.duration||'')}" placeholder="e.g. 2021 – Present"></div>
-    <div class="form-group"><label>Description</label><textarea class="form-control exp-desc" rows="3" placeholder="Describe your role, responsibilities, and key achievements...">${h(d.desc||'')}</textarea></div>
+    <div class="form-group">
+  <label>Description</label>
+  <textarea class="form-control exp-desc" rows="3"
+    placeholder="Describe your role, responsibilities, and key achievements...">${h(d.desc||'')}</textarea>
+  <button class="btn btn-ghost btn-sm" style="margin-top:8px"
+    onclick="openDescHelper(this)">✦ Answer questions to generate description</button>
+</div>
   `;
   list.appendChild(div);
 }
@@ -740,7 +746,13 @@ function addAchievement(d={}) {
     </div>
     <div class="form-group"><label>Title</label><input type="text" class="form-control ach-title" value="${h(d.title||'')}" placeholder="e.g. Brand Refresh Campaign 2024"></div>
     <div class="form-group"><label>Tools / Methods</label><input type="text" class="form-control ach-tools" value="${h(d.tools||'')}" placeholder="e.g. Adobe Creative Suite, Canva"></div>
-    <div class="form-group"><label>Description</label><textarea class="form-control ach-desc" rows="3" placeholder="Describe the work and its impact...">${h(d.desc||'')}</textarea></div>
+    <div class="form-group">
+  <label>Description</label>
+  <textarea class="form-control ach-desc" rows="3"
+    placeholder="Describe the work and its impact...">${h(d.desc||'')}</textarea>
+  <button class="btn btn-ghost btn-sm" style="margin-top:8px"
+    onclick="openAchHelper(this)">✦ Answer questions to generate description</button>
+</div>
     <div class="form-group"><label>Link (optional)</label><input type="text" class="form-control ach-link" value="${h(d.link||'')}" placeholder="https://"></div>
     <div class="form-group"><label>Secondary Link (optional)</label><input type="text" class="form-control ach-link2" value="${h(d.link2||'')}" placeholder="https://"></div>
   `;
@@ -3717,7 +3729,226 @@ function wacDismiss() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') wacDismiss();
 });
+/* ============================================================
+   Q&A TEXT GENERATOR — zero API cost, template-based
+   ============================================================ */
+let _qaDescTarget    = null;
+let _qaAchTarget     = null;
 
+const QA_TONES = {
+  confident: ['accomplished', 'results-driven', 'confident'],
+  warm:      ['collaborative', 'people-focused', 'approachable'],
+  precise:   ['detail-oriented', 'methodical', 'analytical'],
+  dynamic:   ['dynamic', 'high-impact', 'proactive'],
+  seasoned:  ['experienced', 'trusted', 'dependable'],
+};
+
+/* ── Block helpers (same pattern as skills section) ── */
+function qaAddBlock(listId, placeholder) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const div = document.createElement('div');
+  div.className = 'dynamic-item skill-entry';
+  div.innerHTML = `
+    <div class="skill-row">
+      <input type="text" class="form-control skill-name-input"
+        placeholder="${h(placeholder)}">
+      <button class="btn-remove"
+        onclick="this.closest('.skill-entry').remove()">✕</button>
+    </div>
+  `;
+  list.appendChild(div);
+}
+
+function qaGetBlocks(listId) {
+  return Array.from(
+    document.querySelectorAll(`#${listId} .skill-name-input`)
+  ).map(i => i.value.trim()).filter(Boolean);
+}
+
+function qaVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+/* ── Step navigation ── */
+function qaGoTo(step) {
+  [1, 2, 3, 4].forEach(n => {
+    const el = document.getElementById('qa-step' + n);
+    if (el) el.style.display = n === step ? '' : 'none';
+  });
+
+  // update progress bar — only shown for steps 1 and 2 (summary mode)
+  const progressWrap = document.getElementById('qa-progress-wrap');
+  if (progressWrap) {
+    progressWrap.style.display = (step === 3 || step === 4) ? 'none' : '';
+  }
+
+  ['qa-d1', 'qa-d2', 'qa-d3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.background = (i + 1) <= step
+      ? 'var(--gold)'
+      : 'rgba(255,255,255,0.1)';
+  });
+
+  const labels = [
+    'Step 1 of 3 — About you',
+    'Step 2 of 3 — Your strengths',
+    'Step 3 of 3 — Your recent role',
+    'Your achievement',
+  ];
+  const labelEl = document.getElementById('qa-step-label');
+  if (labelEl) labelEl.textContent = labels[step - 1] || '';
+}
+
+/* ── Open / close ── */
+function openSummaryHelper() {
+  // seed empty blocks
+  document.getElementById('qa-skills-list').innerHTML = '';
+  qaAddBlock('qa-skills-list', 'e.g. Project Management');
+
+  document.getElementById('qa-orgs-list').innerHTML = '';
+  qaAddBlock('qa-orgs-list', 'e.g. International NGOs');
+
+  qaGoTo(1);
+  document.getElementById('qa-overlay').style.display = 'flex';
+}
+
+function openDescHelper(btn) {
+  // store reference to the textarea we will fill
+  _qaDescTarget = btn.closest('.exp-entry').querySelector('.exp-desc');
+
+  // seed empty responsibility block
+  document.getElementById('qa-resp-list').innerHTML = '';
+  qaAddBlock('qa-resp-list', 'e.g. Managing the company social media accounts');
+
+  qaGoTo(3);
+  document.getElementById('qa-overlay').style.display = 'flex';
+}
+
+function openAchHelper(btn) {
+  // store reference to the textarea we will fill
+  _qaAchTarget = btn.closest('.ach-entry').querySelector('.ach-desc');
+
+  // seed empty action block
+  document.getElementById('qa-ach-actions-list').innerHTML = '';
+  qaAddBlock('qa-ach-actions-list', 'e.g. Designed and executed the content strategy');
+
+  qaGoTo(4);
+  document.getElementById('qa-overlay').style.display = 'flex';
+}
+
+function closeQAModal() {
+  document.getElementById('qa-overlay').style.display = 'none';
+}
+
+/* ── Typewriter fill ── */
+async function qaTypewriter(textarea, text) {
+  textarea.value = '';
+  for (let i = 0; i < text.length; i++) {
+    textarea.value += text[i];
+    if (i % 4 === 0) await new Promise(r => setTimeout(r, 14));
+  }
+  textarea.value = text;
+}
+
+/* ── Summary builder ── */
+function qaBuildSummary() {
+  const title    = qaVal('qa-title')    || 'professional';
+  const years    = qaVal('qa-years')    || 'several years';
+  const industry = qaVal('qa-industry') || 'my field';
+  const skills   = qaGetBlocks('qa-skills-list');
+  const orgs     = qaGetBlocks('qa-orgs-list');
+  const strength = qaVal('qa-strength') || 'commitment to excellence';
+  const tone     = qaVal('qa-tone');
+  const achieve  = qaVal('qa-achieve');
+  const adj      = QA_TONES[tone] || QA_TONES.confident;
+
+  const skillStr = skills.length >= 2
+    ? skills.slice(0, 2).join(' and ')
+    : (skills[0] || 'strong interpersonal skills');
+
+  const orgStr = orgs.length >= 2
+    ? orgs.slice(0, 2).join(' and ')
+    : (orgs[0] || 'a range of organisations');
+
+  const achieveSentence = achieve
+    ? ` Most recently, ${achieve.toLowerCase().replace(/\.$/, '')}.`
+    : '';
+
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const openers = [
+    `A ${adj[0]} ${title} with ${years} of experience in the ${industry} sector.`,
+    `An ${adj[1]} ${title} bringing ${years} of hands-on experience across ${industry}.`,
+    `${cap(years)} ${industry} professional with a strong background as a ${title}.`,
+  ];
+  const opener = openers[Math.floor(Math.random() * openers.length)];
+
+  return `${opener} Specialising in ${skillStr}, with a proven track record of delivering results at ${orgStr}.${achieveSentence} Recognised for ${strength.toLowerCase().replace(/\.$/, '')} and a commitment to continuous professional growth.`;
+}
+
+/* ── Experience description builder ── */
+function qaBuildDesc() {
+  const roleTitle = qaVal('qa-roletitle') || 'this position';
+  const respItems = qaGetBlocks('qa-resp-list');
+  const impact    = qaVal('qa-impact').toLowerCase().replace(/\.$/, '')
+                    || 'contributing to measurable improvements';
+
+  const resp = respItems.length
+    ? respItems.join(', ').toLowerCase().replace(/\.$/, '')
+    : 'supporting key operational functions';
+
+  return `As ${roleTitle}, I was responsible for ${resp}. I worked closely with cross-functional teams to ensure timely and high-quality delivery of all assigned tasks, maintaining clear communication with stakeholders throughout. A key achievement in this role was to ${impact}, demonstrating my ability to take initiative and deliver results under pressure.`;
+}
+
+/* ── Achievement description builder ── */
+function qaBuildAchievement() {
+  const title   = qaVal('qa-ach-title')  || 'this project';
+  const goal    = qaVal('qa-ach-goal').toLowerCase().replace(/\.$/, '')
+                  || 'address a key challenge';
+  const actions = qaGetBlocks('qa-ach-actions-list');
+  const result  = qaVal('qa-ach-result').toLowerCase().replace(/\.$/, '')
+                  || 'delivering a measurable improvement';
+  const proof   = qaVal('qa-ach-proof').toLowerCase().replace(/\.$/, '')
+                  || 'the ability to deliver under pressure';
+
+  const actionStr = actions.length
+    ? actions.join(', ').toLowerCase().replace(/\.$/, '')
+    : 'leading the initiative from planning through to delivery';
+
+  return `${title} was initiated to ${goal}. In this project, I was responsible for ${actionStr}, coordinating with key stakeholders to ensure alignment at every stage. As a direct result of this work, I was able to ${result}, creating tangible value for the organisation. This achievement reflects my ${proof}.`;
+}
+
+/* ── Generate and fill ── */
+async function qaGenerate() {
+  const text = qaBuildSummary();
+  closeQAModal();
+  const ta = document.getElementById('b-summary');
+  if (!ta) return;
+  await qaTypewriter(ta, text);
+  autoSave();
+  toast('Summary generated ✦ Edit it to make it your own.', 'gold', 4000);
+}
+
+async function qaGenDesc() {
+  const text = qaBuildDesc();
+  closeQAModal();
+  if (!_qaDescTarget) return;
+  await qaTypewriter(_qaDescTarget, text);
+  autoSave();
+  toast('Description generated ✦ Personalise the details.', 'gold', 4000);
+}
+
+async function qaGenAchievement() {
+  const text = qaBuildAchievement();
+  closeQAModal();
+  if (!_qaAchTarget) return;
+  await qaTypewriter(_qaAchTarget, text);
+  autoSave();
+  toast('Achievement description generated ✦ Personalise the details.', 'gold', 4000);
+}
 /* ============================================================
    INIT
    ============================================================ */
