@@ -1,0 +1,185 @@
+/* ============================================================
+   GAMHUB JOBS — REUSABLE TOUR / HINT SYSTEM
+   tour-system.css  (add <link rel="stylesheet" href="tour-system.css">
+   in <head>, after styles.css)
+   ============================================================ */
+
+/* ── Dim overlay ────────────────────────────────────────── */
+/* Re-uses the existing #tour-overlay element already in index.html */
+#tour-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 9100;
+  pointer-events: none;
+  transition: background 0.35s ease, opacity 0.35s ease;
+  opacity: 0;
+}
+#tour-overlay.active {
+  pointer-events: all;
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+/* ── Highlight ring ─────────────────────────────────────── */
+.ghj-tour-ring {
+  position: fixed;
+  border-radius: 10px;
+  z-index: 9150;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 2.5px #d4a853,
+    0 0 0 5px rgba(212, 168, 83, 0.22);
+  opacity: 0;
+  transition: opacity 0.3s ease, top 0.2s ease, left 0.2s ease,
+              width 0.2s ease, height 0.2s ease;
+  animation: none;
+}
+.ghj-tour-ring.visible {
+  opacity: 1;
+  animation: ghjRingPulse 2.2s ease-in-out infinite;
+}
+@keyframes ghjRingPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2.5px #d4a853, 0 0 0 5px rgba(212,168,83,0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 2.5px #f0c97a, 0 0 0 11px rgba(212,168,83,0.06);
+  }
+}
+
+/* ── Popover card ───────────────────────────────────────── */
+.ghj-tour-popover {
+  position: fixed;
+  z-index: 9200;
+  max-width: 230px;
+  min-width: 160px;
+  background: #ffffff;
+  color: #111;
+  border-radius: 14px;
+  padding: 14px 16px 13px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  font-family: 'Outfit', sans-serif;
+  pointer-events: all;
+  /* Entrance */
+  opacity: 0;
+  transform: scale(0.86) translateY(8px);
+  transition:
+    opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Stay above everything */
+  isolation: isolate;
+}
+.ghj-tour-popover.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* ── Dismiss button ─────────────────────────────────────── */
+.ghj-tour-dismiss {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 20px; height: 20px;
+  background: rgba(0, 0, 0, 0.07);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 11px;
+  color: #666;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; padding: 0;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+.ghj-tour-dismiss:hover {
+  background: rgba(0, 0, 0, 0.14);
+  color: #111;
+}
+
+/* ── Body text ──────────────────────────────────────────── */
+.ghj-tour-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #1a1a1a;
+  margin-right: 18px; /* space for X */
+  font-weight: 500;
+}
+.ghj-tour-text em {
+  font-style: normal;
+  color: #c08a2a;
+  font-weight: 700;
+}
+
+/* ── Step progress pill ─────────────────────────────────── */
+.ghj-tour-step-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #f0ede8;
+  border-radius: 100px;
+  padding: 3px 9px;
+  font-size: 10px; font-weight: 700;
+  color: #999;
+  margin-top: 10px;
+  letter-spacing: 0.04em;
+  font-family: 'JetBrains Mono', monospace;
+}
+.ghj-tour-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #ccc;
+  transition: background 0.2s;
+}
+.ghj-tour-dot.active { background: #d4a853; }
+
+/* ── Directional arrow SVG ──────────────────────────────── */
+.ghj-tour-arrow {
+  position: absolute;
+  width: 26px; height: 26px;
+  overflow: visible;
+  pointer-events: none;
+  /* Default: hidden — shown by data-arrow variants below */
+  display: none;
+}
+
+/* Show and position arrow based on data-arrow attribute */
+.ghj-tour-popover[data-arrow] .ghj-tour-arrow {
+  display: block;
+}
+
+/* Arrow pointing RIGHT (popover is to the LEFT of target) */
+.ghj-tour-popover[data-arrow="right"] .ghj-tour-arrow {
+  right: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Arrow pointing LEFT (popover is to the RIGHT of target) */
+.ghj-tour-popover[data-arrow="left"] .ghj-tour-arrow {
+  left: -13px;
+  top: 50%;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+/* Arrow pointing DOWN (popover is ABOVE target) */
+.ghj-tour-popover[data-arrow="bottom"] .ghj-tour-arrow {
+  bottom: -13px;
+  left: 50%;
+  transform: translateX(-50%) rotate(90deg);
+}
+
+/* Arrow pointing UP (popover is BELOW target) */
+.ghj-tour-popover[data-arrow="top"] .ghj-tour-arrow {
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
+}
+
+/* ── Mobile adjustments ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .ghj-tour-popover {
+    max-width: 195px;
+    font-size: 12px;
+    padding: 12px 14px 11px;
+  }
+  .ghj-tour-text { font-size: 12px; }
+}
