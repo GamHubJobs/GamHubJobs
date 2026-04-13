@@ -125,10 +125,13 @@ function showView(id) {
   document.body.classList.add('view-' + id);
 
   if (id === 'builder')     setupBuilderContext();
-  if (id === 'preview')   { renderCV(); initGearTour(); }
+  if (id === 'preview')     renderCV();
   if (id === 'employer')    initEmployerPortal();
   if (id === 'coverletter') initCoverLetter();
   if (id === 'job-search')  initJobSearchView();
+
+  /* ── NEW: fire tour hints for every view ── */
+  if (typeof GHJTour !== 'undefined') GHJTour.triggerView(id);
 }
 
 window.addEventListener('scroll', () => {
@@ -706,12 +709,12 @@ function addExperience(d={}) {
     <div class="form-group"><label>Organisation</label><input type="text" class="form-control exp-org" value="${h(d.org||'')}" placeholder="e.g. Trust Bank Gambia"></div>
     <div class="form-group"><label>Duration</label><input type="text" class="form-control exp-dur" value="${h(d.duration||'')}" placeholder="e.g. 2021 – Present"></div>
     <div class="form-group">
-  <label>Description</label>
-  <textarea class="form-control exp-desc" rows="3"
-    placeholder="Describe your role, responsibilities, and key achievements...">${h(d.desc||'')}</textarea>
-  <button class="btn btn-ghost btn-sm" style="margin-top:8px"
-    onclick="openDescHelper(this)">✦ Click Here to Answer questions to generate description</button>
-</div>
+      <label>Description</label>
+      <textarea class="form-control exp-desc" rows="3"
+        placeholder="Describe your role, responsibilities, and key achievements...">${h(d.desc||'')}</textarea>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%;text-align:left"
+        onclick="openDescHelper(this)">✦ Click Here to Answer questions to generate description</button>
+    </div>
   `;
   list.appendChild(div);
 }
@@ -747,12 +750,12 @@ function addAchievement(d={}) {
     <div class="form-group"><label>Title</label><input type="text" class="form-control ach-title" value="${h(d.title||'')}" placeholder="e.g. Brand Refresh Campaign 2024"></div>
     <div class="form-group"><label>Tools / Methods</label><input type="text" class="form-control ach-tools" value="${h(d.tools||'')}" placeholder="e.g. Adobe Creative Suite, Canva"></div>
     <div class="form-group">
-  <label>Description</label>
-  <textarea class="form-control ach-desc" rows="3"
-    placeholder="Describe the work and its impact...">${h(d.desc||'')}</textarea>
-  <button class="btn btn-ghost btn-sm" style="margin-top:8px"
-    onclick="openAchHelper(this)">✦ Click Here to Answer questions to generate description</button>
-</div>
+      <label>Description</label>
+      <textarea class="form-control ach-desc" rows="3"
+        placeholder="Describe the work and its impact...">${h(d.desc||'')}</textarea>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%;text-align:left"
+        onclick="openAchHelper(this)">✦ Click Here to Answer questions to generate description</button>
+    </div>
     <div class="form-group"><label>Link (optional)</label><input type="text" class="form-control ach-link" value="${h(d.link||'')}" placeholder="https://"></div>
     <div class="form-group"><label>Secondary Link (optional)</label><input type="text" class="form-control ach-link2" value="${h(d.link2||'')}" placeholder="https://"></div>
   `;
@@ -3569,131 +3572,6 @@ function acceptCookies() {
 }
 
 /* ============================================================
-   TOUR POPOVER
-   ============================================================ */
-const TOUR_STORAGE_KEY = 'folio_tour_v1';
-
-function tourGetState() {
-  try { return JSON.parse(localStorage.getItem(TOUR_STORAGE_KEY)) || {}; }
-  catch { return {}; }
-}
-function tourSetDismissed(id) {
-  const state = tourGetState();
-  state[id] = true;
-  try { localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-}
-function tourIsDismissed(id) { return !!tourGetState()[id]; }
-
-function tourPosition(popoverId, targetId, preferredSide) {
-  const popover = document.getElementById(popoverId);
-  const target  = document.getElementById(targetId);
-  if (!popover || !target) return;
-
-  const tr   = target.getBoundingClientRect();
-  const pw   = popover.offsetWidth  || 220;
-  const ph   = popover.offsetHeight || 90;
-  const vw   = window.innerWidth;
-  const vh   = window.innerHeight;
-  const gap  = 14;
-
-  let top, left, arrowDir;
-
-  const side = preferredSide || (() => {
-    if (tr.left > pw + gap + 20)  return 'left';
-    if (vw - tr.right > pw + gap) return 'right';
-    if (tr.top > ph + gap + 20)   return 'top';
-    return 'bottom';
-  })();
-
-  switch (side) {
-    case 'left':   left = tr.left - pw - gap;   top = tr.top + tr.height/2 - ph/2; arrowDir = 'right'; break;
-    case 'right':  left = tr.right + gap;        top = tr.top + tr.height/2 - ph/2; arrowDir = 'left';  break;
-    case 'top':    left = tr.left + tr.width/2 - pw/2; top = tr.top - ph - gap;    arrowDir = 'bottom'; break;
-    default:       left = tr.left + tr.width/2 - pw/2; top = tr.bottom + gap;      arrowDir = 'top';    break;
-  }
-
-  const M = 12;
-  left = Math.max(M, Math.min(left, vw - pw - M));
-  top  = Math.max(M, Math.min(top,  vh - ph - M));
-
-  popover.style.left = left + 'px';
-  popover.style.top  = top  + 'px';
-  popover.setAttribute('data-arrow', arrowDir);
-}
-
-function tourPositionRing(ringId, targetId) {
-  const ring   = document.getElementById(ringId);
-  const target = document.getElementById(targetId);
-  if (!ring || !target) return;
-
-  const tr  = target.getBoundingClientRect();
-  const pad = 4;
-  ring.style.left   = (tr.left   - pad) + 'px';
-  ring.style.top    = (tr.top    - pad) + 'px';
-  ring.style.width  = (tr.width  + pad * 2) + 'px';
-  ring.style.height = (tr.height + pad * 2) + 'px';
-  ring.style.display = '';
-}
-
-function tourShow(id, targetId, side) {
-  if (tourIsDismissed(id)) return;
-  const popover = document.getElementById('tour-' + id);
-  if (!popover) return;
-  requestAnimationFrame(() => {
-    tourPosition('tour-' + id, targetId, side);
-    tourPositionRing('tour-ring-' + id, targetId);
-    popover.style.display = '';
-    requestAnimationFrame(() => popover.classList.add('visible'));
-  });
-}
-
-function tourDismiss(id) {
-  tourSetDismissed(id);
-  const popover = document.getElementById('tour-' + id);
-  const ring    = document.getElementById('tour-ring-' + id);
-  if (popover) { popover.classList.remove('visible'); setTimeout(() => { popover.style.display = 'none'; }, 300); }
-  if (ring)    { ring.style.opacity = '0'; setTimeout(() => { ring.style.display = 'none'; ring.style.opacity = ''; }, 300); }
-  const anyVisible = ['hamburger','gear'].some(k => {
-    const p = document.getElementById('tour-' + k);
-    return p && p.classList.contains('visible');
-  });
-  if (!anyVisible) document.getElementById('tour-overlay')?.classList.remove('active');
-}
-
-function tourDismissAll() { ['hamburger', 'gear'].forEach(id => tourDismiss(id)); }
-
-function tourReposition() {
-  if (!tourIsDismissed('hamburger')) {
-    tourPosition('tour-hamburger', 'hamburger', 'left');
-    tourPositionRing('tour-ring-hamburger', 'hamburger');
-  }
-  if (!tourIsDismissed('gear')) {
-    const gearBtn = document.querySelector('.cust-gear-btn');
-    if (gearBtn && !gearBtn.id) gearBtn.id = 'cust-gear-btn-target';
-    tourPosition('tour-gear', 'cust-gear-btn-target', 'bottom');
-    tourPositionRing('tour-ring-gear', 'cust-gear-btn-target');
-  }
-}
-window.addEventListener('resize', tourReposition, { passive: true });
-
-function initTour() {
-  if (!tourIsDismissed('hamburger')) {
-    setTimeout(() => {
-      tourShow('hamburger', 'hamburger', 'left');
-      document.getElementById('tour-overlay')?.classList.add('active');
-    }, 1600);
-  }
-}
-
-function initGearTour() {
-  if (tourIsDismissed('gear')) return;
-  const gearBtn = document.querySelector('.cust-gear-btn');
-  if (!gearBtn) return;
-  if (!gearBtn.id) gearBtn.id = 'cust-gear-btn-target';
-  setTimeout(() => { tourShow('gear', 'cust-gear-btn-target', 'bottom'); }, 800);
-}
-
-/* ============================================================
    WHATSAPP CHANNEL OVERLAY
    ============================================================ */
 const WAC_SESSION_KEY = 'gamhubjobs_wac_shown';
@@ -3729,6 +3607,7 @@ function wacDismiss() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') wacDismiss();
 });
+
 /* ============================================================
    Q&A TEXT GENERATOR — zero API cost, template-based
    ============================================================ */
@@ -3743,7 +3622,6 @@ const QA_TONES = {
   seasoned:  ['experienced', 'trusted', 'dependable'],
 };
 
-/* ── Block helpers (same pattern as skills section) ── */
 function qaAddBlock(listId, placeholder) {
   const list = document.getElementById(listId);
   if (!list) return;
@@ -3771,14 +3649,12 @@ function qaVal(id) {
   return el ? el.value.trim() : '';
 }
 
-/* ── Step navigation ── */
 function qaGoTo(step) {
   [1, 2, 3, 4].forEach(n => {
     const el = document.getElementById('qa-step' + n);
     if (el) el.style.display = n === step ? '' : 'none';
   });
 
-  // update progress bar — only shown for steps 1 and 2 (summary mode)
   const progressWrap = document.getElementById('qa-progress-wrap');
   if (progressWrap) {
     progressWrap.style.display = (step === 3 || step === 4) ? 'none' : '';
@@ -3802,9 +3678,7 @@ function qaGoTo(step) {
   if (labelEl) labelEl.textContent = labels[step - 1] || '';
 }
 
-/* ── Open / close ── */
 function openSummaryHelper() {
-  // seed empty blocks
   document.getElementById('qa-skills-list').innerHTML = '';
   qaAddBlock('qa-skills-list', 'e.g. Project Management');
 
@@ -3816,10 +3690,8 @@ function openSummaryHelper() {
 }
 
 function openDescHelper(btn) {
-  // store reference to the textarea we will fill
   _qaDescTarget = btn.closest('.exp-entry').querySelector('.exp-desc');
 
-  // seed empty responsibility block
   document.getElementById('qa-resp-list').innerHTML = '';
   qaAddBlock('qa-resp-list', 'e.g. Managing the company social media accounts');
 
@@ -3828,10 +3700,8 @@ function openDescHelper(btn) {
 }
 
 function openAchHelper(btn) {
-  // store reference to the textarea we will fill
   _qaAchTarget = btn.closest('.ach-entry').querySelector('.ach-desc');
 
-  // seed empty action block
   document.getElementById('qa-ach-actions-list').innerHTML = '';
   qaAddBlock('qa-ach-actions-list', 'e.g. Designed and executed the content strategy');
 
@@ -3843,7 +3713,6 @@ function closeQAModal() {
   document.getElementById('qa-overlay').style.display = 'none';
 }
 
-/* ── Typewriter fill ── */
 async function qaTypewriter(textarea, text) {
   textarea.value = '';
   for (let i = 0; i < text.length; i++) {
@@ -3853,7 +3722,6 @@ async function qaTypewriter(textarea, text) {
   textarea.value = text;
 }
 
-/* ── Summary builder ── */
 function qaBuildSummary() {
   const title    = qaVal('qa-title')    || 'professional';
   const years    = qaVal('qa-years')    || 'several years';
@@ -3889,7 +3757,6 @@ function qaBuildSummary() {
   return `${opener} Specialising in ${skillStr}, with a proven track record of delivering results at ${orgStr}.${achieveSentence} Recognised for ${strength.toLowerCase().replace(/\.$/, '')} and a commitment to continuous professional growth.`;
 }
 
-/* ── Experience description builder ── */
 function qaBuildDesc() {
   const roleTitle = qaVal('qa-roletitle') || 'this position';
   const respItems = qaGetBlocks('qa-resp-list');
@@ -3903,7 +3770,6 @@ function qaBuildDesc() {
   return `As ${roleTitle}, I was responsible for ${resp}. I worked closely with cross-functional teams to ensure timely and high-quality delivery of all assigned tasks, maintaining clear communication with stakeholders throughout. A key achievement in this role was to ${impact}, demonstrating my ability to take initiative and deliver results under pressure.`;
 }
 
-/* ── Achievement description builder ── */
 function qaBuildAchievement() {
   const title   = qaVal('qa-ach-title')  || 'this project';
   const goal    = qaVal('qa-ach-goal').toLowerCase().replace(/\.$/, '')
@@ -3921,7 +3787,6 @@ function qaBuildAchievement() {
   return `${title} was initiated to ${goal}. In this project, I was responsible for ${actionStr}, coordinating with key stakeholders to ensure alignment at every stage. As a direct result of this work, I was able to ${result}, creating tangible value for the organisation. This achievement reflects my ${proof}.`;
 }
 
-/* ── Generate and fill ── */
 async function qaGenerate() {
   const text = qaBuildSummary();
   closeQAModal();
@@ -3949,16 +3814,19 @@ async function qaGenAchievement() {
   autoSave();
   toast('Achievement description generated ✦ Personalise the details.', 'gold', 4000);
 }
+
 /* ============================================================
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();
   initCookieBanner();
-  initTour();
   initWACOverlay();
   initWizard();
   setupScrollReveals();
+
+  /* ── NEW: fire landing tour on first load ── */
+  if (typeof GHJTour !== 'undefined') GHJTour.triggerView('landing');
 
   const pathMatch = window.location.pathname.match(/^\/job\/(.+)/);
   if (pathMatch) {
