@@ -19,7 +19,9 @@
 
 <link rel="icon" type="image/png" href="favicon.png">
 
-  <link rel="stylesheet" href="styles.css">
+<!-- Main styles -->
+<link rel="stylesheet" href="styles.css">
+<!-- Tour hint system styles -->
 <link rel="stylesheet" href="tour-system.css">
 </head>
 <body>
@@ -30,7 +32,7 @@
 <div id="toast-container"></div>
 
 <!-- ============================================================
-     TOUR POPOVERS
+     TOUR OVERLAY — shared dim layer (re-used by GHJTour)
      ============================================================ -->
 <div id="tour-overlay" onclick="GHJTour.dismissAll()"></div>
 
@@ -58,7 +60,7 @@
     </div>
     <button class="btn btn-ghost btn-sm" id="nav-login-btn" onclick="showAuthModal()" style="display:none">Log in</button>
     <button class="btn btn-outline btn-sm" onclick="showView('employer')">Post a Job</button>
-    <button class="btn btn-gold btn-sm" onclick="showView('wizard')">Build CV</button>
+    <button class="btn btn-gold btn-sm" id="nav-build-cv-btn" onclick="showView('wizard')">Build CV</button>
   </div>
   <button class="hamburger" id="hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
     <span></span><span></span><span></span>
@@ -410,6 +412,7 @@
       <h2 class="builder-step-title">Personal Information</h2>
       <p class="builder-step-desc">Start with the basics. This appears at the top of your CV.</p>
       <div class="builder-tip" id="tip-personal"></div>
+
       <div class="photo-upload-area">
         <div class="photo-circle" id="photo-preview" onclick="document.getElementById('photo-input').click()">📷</div>
         <div>
@@ -430,6 +433,8 @@
         <label>City / Country</label>
         <input type="text" class="form-control" id="b-location" placeholder="e.g. Banjul, The Gambia">
       </div>
+
+      <!-- ── UPDATED: Summary helper button now lives BELOW the textarea ── -->
       <div class="form-group">
         <label>Professional Summary</label>
         <textarea class="form-control" id="b-summary" rows="4" placeholder="Write a 2-3 sentence overview of your professional background and key strengths..."></textarea>
@@ -475,34 +480,34 @@
     </div>
 
     <!-- Step 6: Contact & More -->
-<div class="builder-step" id="builder-step-6">
-  <h2 class="builder-step-title">Contact &amp; More</h2>
-  <p class="builder-step-desc">Final details to make you reachable and stand out.</p>
-  <div class="form-group"><label>Email *</label><input type="email" class="form-control" id="b-email" placeholder="e.g. fatou@example.com"></div>
-  <div class="form-group"><label>Phone</label><input type="text" class="form-control" id="b-phone" placeholder="e.g. +220 XXX XXXX"></div>
-  <div class="form-group"><label>LinkedIn URL</label><input type="text" class="form-control" id="b-linkedin" placeholder="e.g. linkedin.com/in/yourname"></div>
-  <div class="divider"></div>
+    <div class="builder-step" id="builder-step-6">
+      <h2 class="builder-step-title">Contact &amp; More</h2>
+      <p class="builder-step-desc">Final details to make you reachable and stand out.</p>
+      <div class="form-group"><label>Email *</label><input type="email" class="form-control" id="b-email" placeholder="e.g. fatou@example.com"></div>
+      <div class="form-group"><label>Phone</label><input type="text" class="form-control" id="b-phone" placeholder="e.g. +220 XXX XXXX"></div>
+      <div class="form-group"><label>LinkedIn URL</label><input type="text" class="form-control" id="b-linkedin" placeholder="e.g. linkedin.com/in/yourname"></div>
+      <div class="divider"></div>
 
-  <!-- LANGUAGES -->
-  <div class="form-group" style="margin-bottom:8px"><label>Languages</label></div>
-  <div class="dynamic-list" id="languages-list"></div>
-  <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addLanguage()">+ Add Language</button>
-  <div class="divider"></div>
+      <!-- LANGUAGES -->
+      <div class="form-group" style="margin-bottom:8px"><label>Languages</label></div>
+      <div class="dynamic-list" id="languages-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addLanguage()">+ Add Language</button>
+      <div class="divider"></div>
 
-  <!-- CERTIFICATIONS -->
-  <div class="form-group" style="margin-bottom:8px"><label>Certifications</label></div>
-  <div class="dynamic-list" id="certs-list"></div>
-  <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addCertification()">+ Add Certification</button>
-  <div class="divider"></div>
+      <!-- CERTIFICATIONS -->
+      <div class="form-group" style="margin-bottom:8px"><label>Certifications</label></div>
+      <div class="dynamic-list" id="certs-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addCertification()">+ Add Certification</button>
+      <div class="divider"></div>
 
-  <!-- REFERENCES -->
-  <div class="form-group" style="margin-bottom:8px"><label>References</label></div>
-  <div class="dynamic-list" id="refs-list"></div>
-  <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addReference()">+ Add Reference</button>
-  <div class="divider"></div>
+      <!-- REFERENCES -->
+      <div class="form-group" style="margin-bottom:8px"><label>References</label></div>
+      <div class="dynamic-list" id="refs-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;margin-bottom:28px" onclick="addReference()">+ Add Reference</button>
+      <div class="divider"></div>
 
-  <button class="btn btn-gold btn-lg btn-full" onclick="generateCV()">✦ Generate My CV</button>
-</div>
+      <button class="btn btn-gold btn-lg btn-full" onclick="generateCV()">✦ Generate My CV</button>
+    </div>
 
   </div><!-- /builder-body -->
 
@@ -523,7 +528,8 @@
     <div class="preview-topbar-title">✦ CV</div>
 
     <div class="preview-topbar-group">
-      <button class="btn btn-gold btn-sm" onclick="downloadPDF()" title="Download CV as PDF">
+      <!-- id="preview-download-btn" is used by tour-system.js to target this button -->
+      <button class="btn btn-gold btn-sm" id="preview-download-btn" onclick="downloadPDF()" title="Download CV as PDF">
         ⬇ Download CV
       </button>
       <button class="btn btn-outline btn-sm" onclick="initiateDownloadPayment('bundle')"
@@ -548,7 +554,8 @@
     <div class="preview-topbar-group">
       <button class="btn btn-ghost btn-sm" onclick="showView('builder')">✏ Edit</button>
       <button class="btn btn-ghost btn-sm" onclick="showView('coverletter')">✉ Cover Letter</button>
-      <button class="btn btn-ghost btn-sm cust-gear-btn" onclick="toggleCustomizer()" title="Customise — change theme, share" aria-label="Customise CV">
+      <!-- id="cust-gear-btn-target" used by tour-system.js -->
+      <button class="btn btn-ghost btn-sm cust-gear-btn" id="cust-gear-btn-target" onclick="toggleCustomizer()" title="Customise — change theme, share" aria-label="Customise CV">
         <span class="cust-gear-icon">⚙</span>
         <span class="cust-gear-label">Customise</span>
       </button>
@@ -615,6 +622,7 @@
       <div class="js-search-row">
         <div class="js-search-input-wrap">
           <span class="js-search-icon">🔍</span>
+          <!-- id="js-keyword" used by tour-system.js -->
           <input
             class="js-search-input"
             id="js-keyword"
@@ -1024,6 +1032,7 @@
         </div>
 
         <!-- Sidebar -->
+        <!-- id="post-job-sidebar" used by tour-system.js -->
         <div class="post-job-sidebar" id="post-job-sidebar">
           <div class="sidebar-card">
             <h4>👁 Live Preview</h4>
@@ -1099,7 +1108,8 @@
 
     <div class="cl-builder">
 
-      <div class="import-cv-bar">
+      <!-- id="cl-import-bar" used by tour-system.js -->
+      <div class="import-cv-bar" id="cl-import-bar">
         <span>Auto-fill from your CV? <strong id="cl-cv-name">No CV found</strong></span>
         <button class="btn btn-gold btn-sm" onclick="importFromCV()">Import CV ↓</button>
       </div>
@@ -1232,6 +1242,7 @@
           </div>
         </div>
         <div style="margin-top:16px">
+          <!-- id="ai-write-all-btn" used by tour-system.js -->
           <button class="btn btn-gold btn-full" id="ai-write-all-btn" onclick="aiWriteAll()">
             ✦ AI Write Entire Letter
           </button>
@@ -1727,6 +1738,7 @@
     </svg>
   </a>
 </div>
+
 <!-- ============================================================
      Q&A SUMMARY / DESCRIPTION / ACHIEVEMENT HELPER MODAL
      ============================================================ -->
@@ -1753,7 +1765,7 @@
       </div>
     </div>
 
-    <!-- ── STEP 1: About you (summary mode) ── -->
+    <!-- STEP 1: About you (summary mode) -->
     <div id="qa-step1">
       <h3 style="font-size:20px;margin-bottom:20px">About you</h3>
 
@@ -1796,7 +1808,7 @@
         onclick="qaGoTo(2)">Continue →</button>
     </div>
 
-    <!-- ── STEP 2: Strengths (summary mode) ── -->
+    <!-- STEP 2: Strengths (summary mode) -->
     <div id="qa-step2" style="display:none">
       <h3 style="font-size:20px;margin-bottom:20px">Your strengths</h3>
 
@@ -1832,7 +1844,7 @@
       </div>
     </div>
 
-    <!-- ── STEP 3: Recent role (experience description mode) ── -->
+    <!-- STEP 3: Recent role (experience description mode) -->
     <div id="qa-step3" style="display:none">
       <h3 style="font-size:20px;margin-bottom:20px">Your most recent role</h3>
 
@@ -1866,7 +1878,7 @@
       </div>
     </div>
 
-    <!-- ── STEP 4: Achievement (achievement description mode) ── -->
+    <!-- STEP 4: Achievement (achievement description mode) -->
     <div id="qa-step4" style="display:none">
       <h3 style="font-size:20px;margin-bottom:20px">Your achievement</h3>
 
@@ -1916,7 +1928,14 @@
 
   </div>
 </div>
-  <script src="script.js" defer></script>
+
+<!-- ============================================================
+     SCRIPTS — order matters:
+     1. Main app logic
+     2. Tour system (depends on GHJTour being available when
+        DOMContentLoaded fires in script.js)
+     ============================================================ -->
+<script src="script.js" defer></script>
 <script src="tour-system.js" defer></script>
 </body>
 </html>
