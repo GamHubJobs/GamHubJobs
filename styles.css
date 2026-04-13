@@ -144,13 +144,11 @@ h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 400; line-height: 1
   border-radius: var(--radius);
   padding: 12px 16px;
   color: var(--text);
-  font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
+  font-size: 16px;
   transition: border-color 0.2s;
   outline: none;
   width: 100%;
-  /* Ensure minimum touch target height */
   min-height: 44px;
-  /* Prevent iOS from rounding inputs */
   -webkit-appearance: none;
   appearance: none;
 }
@@ -249,7 +247,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 
 .nav-actions { display: flex; align-items: center; gap: 10px; }
 
-/* Hamburger — big enough tap target on mobile */
+/* Hamburger */
 .hamburger {
   display: none;
   background: rgba(255,255,255,0.06);
@@ -273,10 +271,9 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 }
 .hamburger:hover span,
 .hamburger.open  span { background: var(--text); }
-/* Helper text label below the bars */
 .hamburger-label {
   display: block;
-  font-size: 0;   /* hide any raw text; content comes from ::after */
+  font-size: 0;
   line-height: 1;
   margin-top: 4px;
 }
@@ -289,11 +286,9 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   transition: color 0.2s;
   color: var(--muted);
 }
-/* Swap label: "MENU" when closed, "CLOSE" when open */
 .hamburger:not(.open) .hamburger-label::after { content: 'Menu'; }
 .hamburger.open       .hamburger-label::after { content: 'Close'; color: var(--gold); }
 .hamburger:hover:not(.open) .hamburger-label::after { color: var(--text); }
-/* Animate bars into X */
 .hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
 .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
 .hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
@@ -319,7 +314,6 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   min-height: 44px;
 }
 #mobile-drawer a:hover { color: var(--gold); }
-/* Auth info row in drawer */
 .drawer-auth-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 0;
@@ -330,7 +324,6 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   max-width: 200px;
 }
-/* Drawer action buttons */
 .drawer-actions {
   display: flex; flex-direction: column; gap: 10px;
   padding-top: 18px;
@@ -879,22 +872,27 @@ footer {
 }
 .context-badge .cb-icon { font-size: 14px; }
 
-/* Builder progress */
+/* ── UPDATED: Builder progress bar — fixed step truncation ── */
 .builder-progress {
   padding: 12px 0;
-  display: flex; gap: 6px;
+  display: flex;
+  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
+  -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
-  /* Snap to step indicators as user scrolls */
   scroll-snap-type: x mandatory;
+  /* Prevent steps shrinking and truncating text */
+  white-space: nowrap;
 }
 .builder-progress::-webkit-scrollbar { display: none; }
-.bp-step { scroll-snap-align: start; }
+
+/* ── UPDATED: Steps no longer shrink below their content width ── */
 .bp-step {
-  flex: 1; min-width: 80px;
+  flex: 0 0 auto;           /* was: flex: 1; — caused text to be cut off */
+  min-width: 90px;           /* was: 80px */
   height: 36px;
-  display: flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 500;
   border-radius: 6px;
   cursor: pointer;
@@ -904,6 +902,7 @@ footer {
   transition: all 0.2s;
   white-space: nowrap;
   padding: 0 10px;
+  scroll-snap-align: start;
 }
 .bp-step.active {
   background: rgba(212,168,83,0.15);
@@ -975,7 +974,7 @@ footer {
 }
 .btn-remove:hover { background: rgba(255,80,80,0.2); }
 
-/* Skill row — just name input + remove button */
+/* Skill row */
 .skill-row {
   display: flex;
   align-items: center;
@@ -983,7 +982,7 @@ footer {
 }
 .skill-row .skill-name-input {
   flex: 1;
-  min-width: 0; /* prevents overflow on narrow screens */
+  min-width: 0;
 }
 
 /* Profession tip */
@@ -1022,7 +1021,6 @@ footer {
   display: flex; align-items: center; gap: 8px;
   position: sticky; top: 68px; z-index: 100;
   overflow-x: auto;
-  /* Hide scrollbar but keep scrollable */
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -1032,7 +1030,6 @@ footer {
   white-space: nowrap;
   flex-shrink: 0;
 }
-/* Groups in topbar */
 .preview-topbar-group {
   display: flex; align-items: center; gap: 6px;
   flex-shrink: 0;
@@ -1043,7 +1040,6 @@ footer {
   flex-shrink: 0;
   margin: 0 2px;
 }
-/* Gear / customise button with label */
 .cust-gear-btn {
   display: flex; align-items: center; gap: 3px;
   flex-direction: column;
@@ -1088,7 +1084,6 @@ footer {
 /* A4 Paper */
 .cv-wrapper {
   padding: 40px 24px;
-  /* Extra bottom padding for browser chrome on mobile */
   padding-bottom: max(80px, env(safe-area-inset-bottom, 40px) + 40px);
   display: flex; justify-content: center;
   min-height: calc(100vh - 56px);
@@ -1182,7 +1177,6 @@ footer {
   background: var(--cv-accent);
   flex-shrink: 0;
 }
-/* Hide the bar — no slider means bar is meaningless */
 .cv-skill-track { display: none; }
 .cv-skill-fill  { display: none; }
 
@@ -1242,15 +1236,11 @@ footer {
 }
 .share-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-
-/* VIEW 5 (Job Discovery) removed */
-
 /* ============================================================
    VIEW 5b — JOB SEARCH
    ============================================================ */
 #view-job-search { padding-top: 68px; }
 
-/* ── Top bar ── */
 .js-topbar {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
@@ -1283,7 +1273,6 @@ footer {
   flex-shrink: 0;
 }
 
-/* ── Search section ── */
 .js-search-section {
   background: linear-gradient(160deg, rgba(212,168,83,0.06) 0%, transparent 60%);
   border-bottom: 1px solid var(--border);
@@ -1367,7 +1356,6 @@ footer {
 }
 .js-result-meta strong { color: var(--gold); }
 
-/* ── Job grid ── */
 .js-list-wrap {
   max-width: 1100px;
   margin: 0 auto;
@@ -1379,7 +1367,6 @@ footer {
   gap: 22px;
 }
 
-/* ── Job card ── */
 .js-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1408,7 +1395,6 @@ footer {
 }
 .js-card:hover::before { opacity: 1; }
 
-/* Card header — logo + title */
 .js-card-head {
   display: flex;
   gap: 14px;
@@ -1458,7 +1444,6 @@ footer {
   font-weight: 500;
 }
 
-/* Badges row */
 .js-card-badges {
   display: flex;
   flex-wrap: wrap;
@@ -1499,7 +1484,6 @@ footer {
 }
 .js-badge-loc::before { content: '📍 '; }
 
-/* Description — always 3-line clamp on card (detail in modal) */
 .js-card-desc {
   font-size: 13px;
   color: var(--text2);
@@ -1548,12 +1532,11 @@ footer {
   margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border);
 }
 
-/* ── Job Detail Modal ── */
+/* Job Detail Modal */
 .jd-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.72);
-  /* NO backdrop-filter blur — causes mobile rendering issues */
   z-index: 1200;
   display: flex;
   align-items: flex-end;
@@ -1562,7 +1545,6 @@ footer {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease;
-  /* Prevent iOS rubber-band scroll on the overlay itself */
   overscroll-behavior: contain;
 }
 .jd-backdrop.jd-open {
@@ -1581,18 +1563,15 @@ footer {
   border: 1px solid var(--border);
   width: 100%;
   max-width: 700px;
-  /* Mobile: full height minus safe area */
   height: 100%;
   max-height: 100dvh;
   border-radius: 20px 20px 0 0;
-  /* Use flex column — only .jd-modal-body scrolls */
   display: flex;
   flex-direction: column;
-  overflow: visible; /* do NOT clip children here */
+  overflow: visible;
   box-shadow: 0 -8px 48px rgba(0,0,0,0.5);
   transform: translateY(32px);
   transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
-  /* Keep modal above navbar */
   position: relative;
 }
 .jd-backdrop.jd-open .jd-modal {
@@ -1610,7 +1589,6 @@ footer {
   }
 }
 
-/* Modal header */
 .jd-modal-head {
   display: flex;
   align-items: flex-start;
@@ -1669,7 +1647,6 @@ footer {
   border-color: var(--gold);
 }
 
-/* Highlight chips */
 .jd-chips-row {
   display: flex;
   flex-wrap: wrap;
@@ -1706,20 +1683,18 @@ footer {
   color: var(--gold);
 }
 
-/* Scrollable body — ONLY this element scrolls */
 .jd-modal-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   flex: 1;
-  min-height: 0; /* critical for flex children to scroll correctly */
+  min-height: 0;
   padding: 20px 24px 40px;
 }
 .jd-modal-body::-webkit-scrollbar { width: 4px; }
 .jd-modal-body::-webkit-scrollbar-track { background: transparent; }
 .jd-modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-/* Sections */
 .jd-section {
   padding: 20px 0;
   border-bottom: 1px solid var(--border);
@@ -1738,13 +1713,11 @@ footer {
 }
 .jd-section-icon { font-size: 14px; }
 
-/* Detail key-value grid */
 .jd-detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
-.jd-detail-item {}
 .jd-detail-label {
   font-size: 10px;
   font-weight: 700;
@@ -1765,7 +1738,6 @@ footer {
 }
 .jd-detail-value a:hover { text-decoration: underline; }
 
-/* Body text */
 .jd-body-text {
   font-size: 14px;
   color: var(--text2);
@@ -1774,7 +1746,6 @@ footer {
   white-space: pre-line;
 }
 
-/* Bulleted list text (from newline-separated strings) */
 .jd-list-text {
   display: flex;
   flex-direction: column;
@@ -1795,7 +1766,6 @@ footer {
   margin-top: 2px;
 }
 
-/* Apply section highlight */
 .jd-section-apply {
   background: rgba(212,168,83,0.04);
   border-radius: 12px;
@@ -1844,7 +1814,6 @@ footer {
   color: var(--gold);
 }
 
-/* Action buttons row */
 .js-card-actions {
   display: flex;
   gap: 8px;
@@ -1886,7 +1855,7 @@ footer {
 }
 .js-btn-apply:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(212,168,83,0.35); }
 
-/* ── Share button + inline dropdown ── */
+/* Share dropdown */
 .js-share-wrap {
   position: relative;
   margin-left: auto;
@@ -1915,7 +1884,6 @@ footer {
 }
 .js-btn-share svg { width: 13px; height: 13px; flex-shrink: 0; }
 
-/* Dropdown panel */
 .js-share-dropdown {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -1939,7 +1907,6 @@ footer {
   pointer-events: auto;
 }
 
-/* On mobile, anchor to left so it doesn't go off screen */
 @media (max-width: 480px) {
   .js-share-dropdown {
     right: auto;
@@ -1975,7 +1942,7 @@ footer {
   white-space: nowrap;
 }
 .js-share-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
-.js-share-item.priority:hover { color: #25d366; } /* WhatsApp green */
+.js-share-item.priority:hover { color: #25d366; }
 .js-share-item-icon {
   font-size: 16px;
   width: 22px;
@@ -1983,20 +1950,13 @@ footer {
   flex-shrink: 0;
 }
 .js-share-item-label { flex: 1; }
-.js-share-item-sub {
-  font-size: 10px;
-  color: var(--muted);
-  font-weight: 400;
-}
 .js-share-divider {
   height: 1px;
   background: var(--border);
   margin: 4px 0;
 }
-/* "Copied!" state on Copy Link item */
 .js-share-item.copied { color: #6ee7b7 !important; }
 
-/* ── Empty state ── */
 .js-empty {
   text-align: center;
   padding: 64px 24px;
@@ -2007,7 +1967,6 @@ footer {
 .js-empty h3 { font-size: 22px; color: var(--text2); margin-bottom: 8px; }
 .js-empty p { margin-bottom: 20px; }
 
-/* ── Responsive ── */
 @media (max-width: 768px) {
   .js-topbar { padding: 0 16px; }
   .js-topbar-inner { height: auto; min-height: 56px; flex-wrap: wrap; gap: 10px; padding: 10px 0; }
@@ -2027,8 +1986,6 @@ footer {
 /* ============================================================
    VIEW 6 — EMPLOYER PORTAL
    ============================================================ */
-
-/* ── Portal layout ── */
 #view-employer { display: none; padding-top: 68px; }
 #view-employer.active { display: block; }
 
@@ -2049,15 +2006,12 @@ footer {
   border-radius: 100px; padding: 3px 10px;
 }
 
-/* ── Portal body ── */
 .employer-body {
   max-width: 1100px;
   margin: 0 auto;
   padding: 48px 40px 80px;
 }
 
-
-/* ── Portal tabs ── */
 .portal-tabs {
   display: flex; gap: 4px;
   background: rgba(255,255,255,0.03);
@@ -2085,7 +2039,6 @@ footer {
 .portal-panel { display: none; }
 .portal-panel.active { display: block; animation: fadeUp 0.35s var(--ease); }
 
-/* ── Post a Job form ── */
 .post-job-layout {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -2104,7 +2057,6 @@ footer {
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-/* Character counter */
 .form-group-counted { position: relative; }
 .char-counter {
   position: absolute; right: 12px; bottom: 10px;
@@ -2113,7 +2065,6 @@ footer {
   pointer-events: none;
 }
 
-/* Job type radio pills */
 .type-pills { display: flex; gap: 8px; flex-wrap: wrap; }
 .type-pill {
   display: flex; align-items: center; gap: 6px;
@@ -2133,7 +2084,6 @@ footer {
   color: var(--gold);
 }
 
-/* Benefits / perks chips */
 .perks-grid { display: flex; gap: 8px; flex-wrap: wrap; }
 .perk-chip {
   padding: 7px 14px;
@@ -2150,7 +2100,6 @@ footer {
   color: var(--gold2);
 }
 
-/* Plan selector */
 .plan-cards { display: flex; flex-direction: column; gap: 12px; }
 .plan-card {
   background: var(--surface);
@@ -2183,7 +2132,6 @@ footer {
 .plan-features li::before { content: '✓'; color: var(--gold); font-size: 11px; }
 .plan-card.selected .plan-features li::before { color: #4ade80; }
 
-/* Sidebar info panel */
 .post-job-sidebar { display: flex; flex-direction: column; gap: 20px; }
 
 .sidebar-card {
@@ -2207,7 +2155,6 @@ footer {
 .sidebar-stat:last-child { border-bottom: none; }
 .sidebar-stat-val { font-weight: 700; color: var(--gold); font-family: var(--font-mono); }
 
-/* Preview card (live preview as they type) */
 .job-preview-card {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(212,168,83,0.2);
@@ -2221,7 +2168,6 @@ footer {
 .preview-meta-item { font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.04); border-radius: 4px; padding: 3px 8px; }
 .preview-job-desc { font-size: 12px; color: var(--text2); line-height: 1.6; max-height: 80px; overflow: hidden; min-height: 16px; }
 
-/* Submit button state */
 .submit-btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .submit-spinner {
   width: 16px; height: 16px;
@@ -2235,7 +2181,6 @@ footer {
 .btn-submitting .submit-spinner { display: block; }
 .btn-submitting .submit-text { opacity: 0.6; }
 
-/* ── Success screen ── */
 .submission-success {
   text-align: center; padding: 60px 40px;
   display: none;
@@ -2261,7 +2206,6 @@ footer {
   color: var(--gold); margin-bottom: 6px;
 }
 
-/* ── Manage jobs panel ── */
 .manage-jobs-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 24px;
@@ -2295,14 +2239,12 @@ footer {
 .status-rejected { background: rgba(248,113,113,0.12);border: 1px solid rgba(248,113,113,0.3); color: #f87171; }
 .manage-job-actions { display: flex; gap: 8px; flex-direction: column; align-items: flex-end; }
 
-/* ── Empty manage state ── */
 .manage-empty {
   text-align: center; padding: 80px 40px;
   color: var(--muted);
 }
 .manage-empty h3 { font-size: 20px; color: var(--text2); margin-bottom: 8px; }
 
-/* ── Admin panel (simple) ── */
 .admin-login-form {
   max-width: 400px; margin: 0 auto;
   background: var(--surface);
@@ -2335,7 +2277,6 @@ footer {
 .btn-reject  { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.35); color: #f87171; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
 .btn-reject:hover  { background: rgba(248,113,113,0.2); }
 
-/* ── Stats bar ── */
 .employer-stats-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -2356,7 +2297,6 @@ footer {
 }
 .employer-stat-label { font-size: 12px; color: var(--muted); }
 
-/* ── Responsive ── */
 @media (max-width: 900px) {
   .post-job-layout { grid-template-columns: 1fr; }
   .post-job-sidebar { display: none; }
@@ -2374,7 +2314,6 @@ footer {
 /* ============================================================
    VIEW 7 — COVER LETTER GENERATOR
    ============================================================ */
-
 #view-coverletter { display: none; padding-top: 68px; }
 #view-coverletter.active { display: block; }
 
@@ -2393,12 +2332,10 @@ footer {
 .cl-layout {
   display: grid;
   grid-template-columns: 460px 1fr;
-  /* Use dynamic viewport height on mobile so browser chrome is subtracted */
   min-height: calc(100dvh - 128px);
   height: calc(100dvh - 128px);
   overflow: hidden;
 }
-/* Fallback for browsers without dvh support */
 @supports not (height: 100dvh) {
   .cl-layout {
     min-height: calc(100vh - 168px);
@@ -2406,14 +2343,11 @@ footer {
   }
 }
 
-/* Builder panel */
 .cl-builder {
   background: var(--bg2); border-right: 1px solid var(--border);
   overflow-y: auto;
-  /* Independent scroll — the panel scrolls, not the whole page */
   height: 100%;
   padding: 28px 28px 100px;
-  /* Momentum scrolling on iOS */
   -webkit-overflow-scrolling: touch;
 }
 .cl-section { margin-bottom: 28px; }
@@ -2424,7 +2358,6 @@ footer {
 }
 .cl-section-title::after { content:''; flex:1; height:1px; background:rgba(212,168,83,0.2); }
 
-/* Tone selector */
 .tone-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tone-card {
   background: var(--surface); border: 2px solid var(--border);
@@ -2437,7 +2370,6 @@ footer {
 .tone-card .tone-label { font-size: 11px; font-weight: 600; color: var(--text2); }
 .tone-card.selected .tone-label { color: var(--gold); }
 
-/* Import CV bar */
 .import-cv-bar {
   background: rgba(212,168,83,0.07); border: 1px solid rgba(212,168,83,0.25);
   border-radius: var(--radius); padding: 12px 16px;
@@ -2447,7 +2379,6 @@ footer {
 .import-cv-bar span { color: var(--text2); }
 .import-cv-bar strong { color: var(--gold); }
 
-/* Paragraph items */
 .cl-para-list { display: flex; flex-direction: column; gap: 12px; }
 .cl-para-item {
   background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
@@ -2467,7 +2398,6 @@ footer {
 }
 .cl-para-item textarea::placeholder { color: var(--muted); }
 
-/* AI button */
 .btn-ai {
   background: rgba(212,168,83,0.1); border: 1px solid rgba(212,168,83,0.3);
   color: var(--gold); border-radius: 6px; padding: 4px 10px;
@@ -2477,7 +2407,6 @@ footer {
 .btn-ai:hover { background: rgba(212,168,83,0.2); }
 .btn-ai.loading { opacity: 0.5; pointer-events: none; }
 
-/* AI shimmer loading */
 .ai-shimmer {
   background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(212,168,83,0.1) 50%, rgba(255,255,255,0.03) 75%);
   background-size: 200% 100%; animation: shimmer 1.2s infinite;
@@ -2485,14 +2414,12 @@ footer {
 }
 @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 
-/* Builder sticky footer */
 .cl-builder-footer {
   position: sticky; bottom: 0; background: var(--bg2);
   border-top: 1px solid var(--border); padding: 14px 28px;
   display: flex; gap: 10px; margin: 0 -28px -100px;
 }
 
-/* Preview panel */
 .cl-preview-panel {
   background: #ccc9bf;
   overflow-y: auto;
@@ -2518,34 +2445,25 @@ footer {
 }
 .cl-tbtn.active { border-color: #333; transform: scale(1.2); }
 
-/* A4 letter paper */
 .cl-paper {
   width: 100%; max-width: 660px;
   min-height: 930px;
   background: #fff; color: #1a1a1a;
   box-shadow: 0 10px 50px rgba(0,0,0,0.2);
   border-radius: 2px;
-  /* overflow must be visible so letter body is never clipped */
   overflow: visible;
   font-family: 'Outfit', sans-serif;
   position: relative;
 }
-/* PDF export class — applied during download only */
 .cl-paper.pdf-export {
-  /* Lock to exact A4 pixel width at 96dpi */
   width: 794px !important;
   max-width: 794px !important;
   min-width: 794px !important;
-  /* Remove overflow clip so nothing gets cut off */
   overflow: visible !important;
-  /* Remove decorative styles that confuse html2canvas */
   box-shadow: none !important;
   border-radius: 0 !important;
-  /* Ensure fonts render with explicit family (no CSS var fallback needed) */
   font-family: 'Outfit', Arial, sans-serif !important;
-  /* Prevent any transform that would shift the capture origin */
   transform: none !important;
-  /* Prevent page-level scroll offset affecting capture */
   position: relative !important;
   top: 0 !important;
   left: 0 !important;
@@ -2563,7 +2481,6 @@ footer {
   top: 0 !important;
   left: 0 !important;
 }
-/* During PDF export, also lock child layout containers */
 .cv-paper.pdf-export .cv-body {
   display: grid !important;
   grid-template-columns: 1fr 260px !important;
@@ -2574,11 +2491,7 @@ footer {
   overflow: visible !important;
 }
 
-/* ============================================================
-   PDF LAYOUT FIXES — A4 width, overflow, page-break, print
-   ============================================================ */
-
-/* 1 — Page width & centering */
+/* PDF layout fixes */
 .cv-paper, .cl-paper {
   max-width: 794px;
   margin-left: auto;
@@ -2586,8 +2499,6 @@ footer {
   box-sizing: border-box;
   background: #ffffff;
 }
-
-/* 2 — Remove right-side overflow */
 .cv-paper *,
 .cl-paper * {
   max-width: 100%;
@@ -2598,8 +2509,6 @@ footer {
 .cl-paper p, .cl-paper span, .cl-paper div {
   word-break: break-word;
 }
-
-/* 3 — Page break rules — prevent text being cut */
 .cv-section,
 .cl-letter-section,
 .cl-letter-para,
@@ -2608,29 +2517,21 @@ footer {
   page-break-inside: avoid;
   break-inside: avoid;
 }
-
-/* 4 — Fix header width */
 .cv-header {
   width: 100%;
   display: block;
   box-sizing: border-box;
 }
-
-/* 5 — Fix paragraph line flow */
 .cv-paper p,
 .cl-letter-para {
   line-height: 1.6;
   orphans: 3;
   widows: 3;
 }
-
-/* 6 — Preview wrapper scaling for mobile */
 .cl-preview-panel {
   display: flex;
   justify-content: center;
 }
-
-/* 7 — Cover letter paper full constraints */
 .cl-paper {
   width: 100%;
   max-width: 794px;
@@ -2647,7 +2548,7 @@ footer {
   border-radius: 0 !important;
 }
 
-/* Themes */
+/* Cover letter themes */
 .cl-paper.clt-classic   { --cl-accent:#1a3a5c; --cl-bar:#1a3a5c; --cl-bar-text:#fff; }
 .cl-paper.clt-minimal   { --cl-accent:#222;    --cl-bar:#f5f5f5; --cl-bar-text:#222; }
 .cl-paper.clt-warm      { --cl-accent:#5a3e2b; --cl-bar:#5a3e2b; --cl-bar-text:#fff; }
@@ -2661,7 +2562,6 @@ footer {
 }
 .cl-paper.clt-minimal::before { display: none; }
 
-/* Letter header */
 .cl-letter-header {
   background: var(--cl-bar); padding: 30px 44px 24px;
   color: var(--cl-bar-text);
@@ -2676,9 +2576,8 @@ footer {
 }
 .cl-letter-contacts span { display: flex; align-items: center; gap: 4px; }
 
-/* Letter body */
 .cl-letter-body {
-  padding: 32px 44px 60px; /* extra bottom padding prevents last line clipping */
+  padding: 32px 44px 60px;
 }
 .cl-letter-date { font-size: 12px; color: #777; margin-bottom: 20px; }
 .cl-letter-recipient { margin-bottom: 20px; }
@@ -2700,7 +2599,6 @@ footer {
 }
 .cl-letter-sig-sub { font-size: 12px; color: #777; margin-top: 2px; }
 
-/* Mobile */
 @media (max-width: 1000px) {
   .cl-layout {
     grid-template-columns: 1fr;
@@ -2712,13 +2610,11 @@ footer {
   .cl-layout.show-preview .cl-builder { display: none; }
   .cl-layout.show-preview .cl-preview-panel {
     display: flex;
-    /* Full height on mobile so all content is reachable */
     min-height: calc(100dvh - 128px);
     height: auto;
     overflow-y: auto;
-    padding-bottom: 140px; /* clear browser chrome */
+    padding-bottom: 140px;
   }
-  /* Make paper full-width on mobile preview */
   .cl-layout.show-preview .cl-paper {
     max-width: 100%;
     margin: 0;
@@ -2737,10 +2633,7 @@ footer {
 }
 
 @media print {
-  /* Hide everything except whichever view is being printed */
   body > *:not(#view-preview):not(#view-coverletter) { display: none !important; }
-
-  /* ── CV Preview print styles ── */
   #view-preview { display: block !important; background: none !important; }
   .preview-topbar, .customizer-panel, .customizer-overlay { display: none !important; }
   .cv-wrapper { padding: 0 !important; justify-content: center !important; }
@@ -2752,8 +2645,6 @@ footer {
     overflow: visible !important;
   }
   .cv-section, .cv-main > *, .cv-side > * { page-break-inside: avoid; break-inside: avoid; }
-
-  /* ── Cover Letter print styles ── */
   #view-coverletter { display: block !important; background: none !important; }
   .cl-topbar, .cl-builder, .cl-preview-actions, .cl-theme-switcher { display: none !important; }
   .cl-layout { grid-template-columns: 1fr !important; }
@@ -2767,11 +2658,9 @@ footer {
   }
   .cl-letter-header, .cl-letter-body { box-sizing: border-box; }
   .cl-letter-para { page-break-inside: avoid; break-inside: avoid; }
-
-  /* ── Shared print utilities ── */
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   #cookie-banner, .wa-widget, .wa-channel-overlay,
-  .tour-overlay, .tour-popover, .tour-highlight-ring { display: none !important; }
+  .tour-overlay, .ghj-tour-popover, .ghj-tour-ring { display: none !important; }
 }
 
 /* ============================================================
@@ -2790,18 +2679,14 @@ footer {
 
 @media (max-width: 768px) {
   .nav-links { display: none; }
-  /* On mobile hide all action buttons — they move into the drawer */
   .nav-actions .btn-outline { display: none; }
   .nav-actions .btn-gold    { display: none; }
   .nav-actions .nav-user-pill { display: none !important; }
   .nav-actions #nav-login-btn { display: none !important; }
   .hamburger { display: flex; }
-  /* Navbar padding tighter on mobile */
   #navbar { padding: 0 16px; }
-  /* Ensure minimum tap target size for all buttons (44px) */
   .btn { min-height: 44px; }
   .btn-sm { min-height: 38px; padding: 8px 14px; font-size: 13px; }
-  /* Builder nav stays accessible */
   .builder-nav { padding: 12px 16px; }
   .wizard-nav  { padding: 14px 16px; }
   .hero { padding: 48px 24px; }
@@ -2828,17 +2713,15 @@ footer {
 @media (max-width: 480px) {
   .profession-grid { grid-template-columns: repeat(2, 1fr); }
   .builder-progress { gap: 4px; }
-  .bp-step { min-width: 60px; font-size: 11px; }
+  .bp-step { min-width: 72px; font-size: 11px; }
   .how-steps { grid-template-columns: 1fr; }
 }
 
 /* ============================================================
-   SUPABASE AUTH — NAV USER PILL + MAGIC LINK MODAL
+   SUPABASE AUTH
    ============================================================ */
-
-/* Nav user pill (shown when logged in) */
 .nav-user-pill {
-  display: none; /* shown by JS when logged in */
+  display: none;
   align-items: center; gap: 8px;
   background: rgba(212,168,83,0.1);
   border: 1px solid rgba(212,168,83,0.3);
@@ -2868,7 +2751,6 @@ footer {
 }
 .nav-logout-btn:hover { color: #f87171; }
 
-/* Auth modal overlay */
 .auth-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.75);
@@ -2936,13 +2818,11 @@ footer {
   font-size: 12px; color: var(--muted);
   text-align: center; margin-top: 14px; margin-bottom: 0;
 }
-/* Email sent confirmation */
 .auth-sent { display: none; text-align: center; }
 .auth-sent-icon { font-size: 48px; margin-bottom: 16px; }
 .auth-sent h4 { font-size: 20px; margin-bottom: 10px; }
 .auth-sent p { font-size: 14px; color: var(--text2); line-height: 1.8; }
 
-/* Auth error message */
 .auth-error {
   background: rgba(248,113,113,0.1);
   border: 1px solid rgba(248,113,113,0.3);
@@ -2958,7 +2838,7 @@ footer {
 }
 
 /* ============================================================
-   LEGAL VIEWS — Privacy Policy + Terms of Service
+   LEGAL VIEWS
    ============================================================ */
 #view-privacy,
 #view-terms { display: none; padding-top: 68px; background: var(--bg); min-height: 100vh; }
@@ -2981,7 +2861,6 @@ footer {
   padding: 56px 40px 100px;
 }
 
-/* Hero heading */
 .legal-hero {
   margin-bottom: 56px;
   padding-bottom: 40px;
@@ -3011,7 +2890,6 @@ footer {
   margin-bottom: 20px;
 }
 
-/* Table of contents */
 .legal-toc {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3041,7 +2919,6 @@ footer {
 }
 .legal-toc a:hover { color: var(--gold); }
 
-/* Sections */
 .legal-section {
   margin-bottom: 52px;
   scroll-margin-top: 140px;
@@ -3083,7 +2960,6 @@ footer {
 }
 .legal-section strong { color: var(--text); font-weight: 600; }
 
-/* Highlight box */
 .legal-highlight {
   background: rgba(212,168,83,0.07);
   border-left: 3px solid var(--gold);
@@ -3096,7 +2972,6 @@ footer {
 }
 .legal-highlight strong { color: var(--gold); }
 
-/* Contact card */
 .legal-contact-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3156,150 +3031,22 @@ footer {
   #cookie-banner { padding: 14px 20px; }
   .cookie-text { font-size: 12px; }
 }
-/* cookie-banner hidden in @media print above */
 
-/* ── 480px and below — tiny phones (iPhone SE, etc.) ── */
+/* ── 480px and below ── */
 @media (max-width: 480px) {
   .preview-topbar-divider { display: none; }
   .preview-topbar-title   { font-size: 12px; }
-  /* Stack download as primary full-width button below topbar */
   #view-preview { padding-top: 68px; }
   .cv-wrapper { padding: 24px 12px 100px; }
-  /* Wizard grid — 2 cols on tiny phones */
   .profession-grid { grid-template-columns: repeat(2, 1fr); }
   .palette-grid    { grid-template-columns: 1fr 1fr; }
-  /* Builder steps label smaller */
-  .bp-step { font-size: 11px; min-width: 56px; padding: 0 6px; }
+  .bp-step { font-size: 11px; min-width: 72px; padding: 0 6px; }
   .jobs-layout { padding: 20px 14px 100px; }
 }
 
 /* ============================================================
-   TOUR POPOVER — Onboarding hint system
+   JOB LISTING PLAN BADGES
    ============================================================ */
-
-/* Dim overlay — focuses attention on the hinted element */
-.tour-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0);
-  z-index: 9100;
-  pointer-events: none;
-  transition: opacity 0.3s;
-  opacity: 0;
-}
-.tour-overlay.active {
-  pointer-events: all;
-  opacity: 1;
-  background: rgba(0,0,0,0.45);
-}
-
-/* The popover card */
-.tour-popover {
-  position: fixed;
-  z-index: 9200;
-  max-width: 220px;
-  background: #fff;
-  color: #111;
-  border-radius: 14px;
-  padding: 14px 16px 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12);
-  font-family: var(--font-body);
-  pointer-events: all;
-  /* Entrance animation */
-  opacity: 0;
-  transform: scale(0.88) translateY(6px);
-  transition: opacity 0.28s cubic-bezier(0.34,1.56,0.64,1),
-              transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
-}
-.tour-popover.visible {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
-/* Dismiss X */
-.tour-dismiss {
-  position: absolute; top: 8px; right: 8px;
-  width: 20px; height: 20px;
-  background: rgba(0,0,0,0.07);
-  border: none; border-radius: 50%;
-  cursor: pointer; font-size: 11px; color: #666;
-  display: flex; align-items: center; justify-content: center;
-  line-height: 1;
-  transition: background 0.15s;
-  padding: 0;
-}
-.tour-dismiss:hover { background: rgba(0,0,0,0.15); color: #111; }
-
-/* Text */
-.tour-text {
-  font-size: 13px;
-  line-height: 1.55;
-  color: #222;
-  margin-right: 16px; /* space for X button */
-  font-weight: 500;
-}
-.tour-text em {
-  font-style: normal;
-  color: #d4a853;
-  font-weight: 700;
-}
-
-/* Step counter pill */
-.tour-step-pill {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: #f0ede8;
-  border-radius: 100px;
-  padding: 3px 9px;
-  font-size: 10px; font-weight: 700;
-  color: #888;
-  margin-top: 10px;
-  letter-spacing: 0.05em;
-}
-.tour-step-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: #ccc;
-  transition: background 0.2s;
-}
-.tour-step-dot.active { background: #d4a853; }
-
-/* SVG Arrow — points from popover toward the target */
-.tour-arrow {
-  position: absolute;
-  width: 28px; height: 28px;
-  overflow: visible;
-  pointer-events: none;
-}
-
-/* Arrow placement variants */
-.tour-popover[data-arrow="right"] .tour-arrow {
-  right: -14px; top: 50%; transform: translateY(-50%);
-}
-.tour-popover[data-arrow="left"] .tour-arrow {
-  left: -14px; top: 50%; transform: translateY(-50%) scaleX(-1);
-}
-.tour-popover[data-arrow="bottom"] .tour-arrow {
-  bottom: -14px; left: 50%; transform: translateX(-50%) rotate(90deg);
-}
-.tour-popover[data-arrow="top"] .tour-arrow {
-  top: -14px; left: 50%; transform: translateX(-50%) rotate(-90deg);
-}
-
-/* Highlight ring around the target */
-.tour-highlight-ring {
-  position: fixed;
-  border-radius: 12px;
-  box-shadow: 0 0 0 3px #d4a853, 0 0 0 6px rgba(212,168,83,0.25);
-  z-index: 9150;
-  pointer-events: none;
-  transition: all 0.3s var(--ease);
-  animation: ringPulse 2s ease-in-out infinite;
-}
-@keyframes ringPulse {
-  0%,100% { box-shadow: 0 0 0 3px #d4a853, 0 0 0 6px rgba(212,168,83,0.25); }
-  50%      { box-shadow: 0 0 0 3px #f0c97a, 0 0 0 10px rgba(212,168,83,0.15); }
-}
-
-
-/* ── Job listing plan badges ──────────────────────────────── */
 .job-plan-badge {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 10px; font-weight: 800;
@@ -3317,7 +3064,6 @@ footer {
   border: 1px solid rgba(180,100,255,0.5);
   color: #c084fc;
 }
-/* Premium card gets a glowing border */
 .job-card.plan-premium {
   border-color: rgba(180,100,255,0.4);
   box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(180,100,255,0.2);
@@ -3326,7 +3072,6 @@ footer {
   border-color: rgba(212,168,83,0.4);
   box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(212,168,83,0.15);
 }
-/* Company logo on card */
 .job-card-logo {
   width: 40px; height: 40px;
   border-radius: 8px;
@@ -3343,7 +3088,6 @@ footer {
   display: flex; align-items: center; justify-content: center;
   font-size: 16px; flex-shrink: 0;
 }
-/* Pinned indicator for premium */
 .job-card-pinned {
   position: absolute; top: -1px; right: 16px;
   background: linear-gradient(135deg, #7c3aed, #a855f7);
@@ -3353,9 +3097,8 @@ footer {
   border-radius: 0 0 8px 8px;
 }
 
-
 /* ============================================================
-   WHATSAPP CHAT WIDGET — floating bottom-right button
+   WHATSAPP CHAT WIDGET
    ============================================================ */
 .wa-widget {
   position: fixed;
@@ -3373,7 +3116,6 @@ footer {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* Label pill */
 .wa-label {
   background: #fff;
   color: #111;
@@ -3393,7 +3135,6 @@ footer {
   box-shadow: 0 8px 28px rgba(0,0,0,0.22);
 }
 
-/* Green circle button */
 .wa-btn {
   width: 52px;
   height: 52px;
@@ -3433,36 +3174,28 @@ footer {
   z-index: 1;
 }
 
-/* ── Mobile: hide label so it never covers buttons ────────── */
 @media (max-width: 768px) {
   .wa-label { display: none; }
   .wa-widget { right: 14px; }
 }
 
-/* ── Push widget above sticky bottom bars on mobile ───────── */
-/* Builder nav bar is fixed at bottom (~70px tall) */
 body.view-builder   .wa-widget { bottom: 90px; }
-/* Wizard nav is sticky at bottom */
 body.view-wizard    .wa-widget { bottom: 90px; }
-/* Cover letter has a sticky builder footer */
 body.view-coverletter .wa-widget { bottom: 90px; }
 
-/* On desktop restore normal position for all views */
 @media (min-width: 769px) {
   body.view-builder   .wa-widget,
   body.view-wizard    .wa-widget,
   body.view-coverletter .wa-widget { bottom: 28px; }
 }
 
-/* Cookie banner pushes widget up further */
 body.cookie-visible .wa-widget { bottom: 100px; }
 @media (max-width: 768px) {
   body.cookie-visible .wa-widget { bottom: 112px; }
 }
 
-
 /* ============================================================
-   WHATSAPP CHANNEL OVERLAY — 60-second job alert prompt
+   WHATSAPP CHANNEL OVERLAY
    ============================================================ */
 #wa-channel-overlay {
   position: fixed;
@@ -3471,7 +3204,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Scroll if card taller than viewport on tiny phones */
   overflow-y: auto;
   padding: 16px;
   background: rgba(8, 8, 16, 0.88);
@@ -3481,7 +3213,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   pointer-events: none;
   transition: opacity 0.6s ease;
   cursor: pointer;
-  /* Safe area padding for notched phones */
   padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
 }
 #wa-channel-overlay.visible {
@@ -3489,7 +3220,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   pointer-events: all;
 }
 
-/* Card — centred, stops click propagation only on the X button */
 .wac-card {
   position: relative;
   max-width: 480px;
@@ -3497,7 +3227,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   background: linear-gradient(160deg, #0d1117 0%, #0a1a0f 60%, #0d1117 100%);
   border: 1px solid rgba(37,211,102,0.3);
   border-radius: 20px;
-  /* Use clamp so padding shrinks on tiny screens */
   padding: clamp(28px, 6vw, 48px) clamp(20px, 6vw, 40px) clamp(24px, 5vw, 40px);
   text-align: center;
   box-shadow:
@@ -3506,7 +3235,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
     0 0 60px rgba(37,211,102,0.08);
   animation: wacCardPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
   cursor: default;
-  /* Prevent card from ever being taller than the viewport */
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
   scrollbar-width: none;
@@ -3517,7 +3245,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   to   { transform: scale(1)    translateY(0);    opacity: 1; }
 }
 
-/* Dismiss X */
 .wac-close {
   position: absolute;
   top: 16px; right: 16px;
@@ -3534,7 +3261,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
 }
 .wac-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
 
-/* Pulsing WhatsApp logo circle */
 .wac-logo-wrap {
   width: clamp(56px, 14vw, 80px);
   height: clamp(56px, 14vw, 80px);
@@ -3553,7 +3279,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
 }
 .wac-logo-wrap svg { width: clamp(28px, 7vw, 42px); height: clamp(28px, 7vw, 42px); fill: #fff; }
 
-/* Urgency badge */
 .wac-badge {
   display: inline-flex; align-items: center; gap: 6px;
   background: rgba(37,211,102,0.12);
@@ -3574,7 +3299,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   0%,100% { opacity: 1; } 50% { opacity: 0.2; }
 }
 
-/* Headline */
 .wac-headline {
   font-family: var(--font-display);
   font-size: clamp(22px, 5vw, 30px);
@@ -3585,7 +3309,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
 }
 .wac-headline span { color: #25D366; }
 
-/* Subtext */
 .wac-sub {
   font-size: 14px;
   color: rgba(255,255,255,0.65);
@@ -3593,7 +3316,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   margin-bottom: 28px;
 }
 
-/* Benefits list */
 .wac-benefits {
   list-style: none;
   padding: 0; margin: 0 0 clamp(16px, 4vw, 32px);
@@ -3616,7 +3338,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   margin-top: 1px;
 }
 
-/* CTA button */
 .wac-cta {
   display: flex;
   align-items: center;
@@ -3643,7 +3364,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
 }
 .wac-cta svg { width: 22px; height: 22px; fill: #fff; flex-shrink: 0; }
 
-/* Social proof */
 .wac-proof {
   margin-top: 18px;
   font-size: 12px;
@@ -3651,7 +3371,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
 }
 .wac-proof strong { color: rgba(255,255,255,0.6); }
 
-/* Dismiss link */
 .wac-dismiss-link {
   display: block;
   margin-top: 14px;
@@ -3664,7 +3383,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
 }
 .wac-dismiss-link:hover { color: rgba(255,255,255,0.5); }
 
-/* Shimmer line at top of card */
 .wac-shimmer {
   position: absolute;
   top: 0; left: 20%; right: 20%;
@@ -3673,7 +3391,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   border-radius: 0 0 4px 4px;
 }
 
-/* Tiny phones — extra compact */
 @media (max-width: 390px) {
   .wac-badge        { font-size: 10px; padding: 4px 10px; }
   .wac-benefits li  { font-size: 12px; }
@@ -3681,7 +3398,6 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   .wac-proof        { font-size: 11px; }
   .wac-dismiss-link { font-size: 11px; }
 }
-/* Landscape mobile — reduce vertical spacing so card fits */
 @media (max-height: 600px) and (max-width: 900px) {
   .wac-logo-wrap    { width: 44px; height: 44px; margin-bottom: 10px; }
   .wac-logo-wrap svg{ width: 22px; height: 22px; }
@@ -3692,4 +3408,24 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   .wac-benefits li  { font-size: 12px; }
   .wac-benefit-icon { width: 18px; height: 18px; font-size: 9px; }
   .wac-cta          { padding: 11px 16px; font-size: 14px; }
+}
+
+/* ============================================================
+   TOUR OVERLAY (shared element — re-used by GHJTour)
+   The full tour popover + ring styles live in tour-system.css.
+   Only the overlay base rule lives here so the element renders
+   correctly even before tour-system.css is parsed.
+   ============================================================ */
+#tour-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 9100;
+  pointer-events: none;
+  transition: background 0.35s ease, opacity 0.35s ease;
+  opacity: 0;
+}
+#tour-overlay.active {
+  pointer-events: all;
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.48);
 }
