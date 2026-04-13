@@ -20,6 +20,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 
   <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="tour-system.css">
 </head>
 <body>
 
@@ -31,41 +32,7 @@
 <!-- ============================================================
      TOUR POPOVERS
      ============================================================ -->
-<div id="tour-overlay" class="tour-overlay" onclick="tourDismissAll()"></div>
-<div id="tour-ring-hamburger" class="tour-highlight-ring" style="display:none"></div>
-<div id="tour-ring-gear"      class="tour-highlight-ring" style="display:none"></div>
-
-<!-- Popover 1 — Hamburger Menu -->
-<div id="tour-hamburger" class="tour-popover" role="tooltip" aria-live="polite" data-arrow="right" style="display:none">
-  <svg class="tour-arrow" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M4 14 L22 14 M22 14 L14 6 M22 14 L14 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <button class="tour-dismiss" onclick="tourDismiss('hamburger')" aria-label="Dismiss hint">✕</button>
-  <div class="tour-text">
-    Tap here to <em>Log in</em> and access the full menu
-  </div>
-  <div class="tour-step-pill">
-    <div class="tour-step-dot active"></div>
-    <div class="tour-step-dot"></div>
-    <span>1 of 2</span>
-  </div>
-</div>
-
-<!-- Popover 2 — Gear / Customise button -->
-<div id="tour-gear" class="tour-popover" role="tooltip" aria-live="polite" data-arrow="bottom" style="display:none">
-  <svg class="tour-arrow" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M14 4 L14 22 M14 22 L6 14 M14 22 L22 14" stroke="#d4a853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <button class="tour-dismiss" onclick="tourDismiss('gear')" aria-label="Dismiss hint">✕</button>
-  <div class="tour-text">
-    Tap here to <em>Download your CV</em> and change themes
-  </div>
-  <div class="tour-step-pill">
-    <div class="tour-step-dot"></div>
-    <div class="tour-step-dot active"></div>
-    <span>2 of 2</span>
-  </div>
-</div>
+<div id="tour-overlay" onclick="GHJTour.dismissAll()"></div>
 
 <!-- ============================================================
      STICKY NAVBAR
@@ -246,7 +213,7 @@
       </div>
       <div class="how-step" style="background: rgba(100,200,100,0.04); border-color: rgba(100,200,100,0.2);">
         <div class="how-step-num" style="color: #4ade80">✦ — APPLY</div>
-        <h3>Search & Apply to Jobs</h3>
+        <h3>Search &amp; Apply to Jobs</h3>
         <p>Browse listings, write a cover letter, and apply to jobs across The Gambia — all from one platform.</p>
       </div>
     </div>
@@ -443,10 +410,6 @@
       <h2 class="builder-step-title">Personal Information</h2>
       <p class="builder-step-desc">Start with the basics. This appears at the top of your CV.</p>
       <div class="builder-tip" id="tip-personal"></div>
-<button class="btn btn-outline btn-sm" style="margin-bottom:24px"
-  onclick="openSummaryHelper()">
-  ✦ Click Here To Answer questions to generate my summary
-</button>
       <div class="photo-upload-area">
         <div class="photo-circle" id="photo-preview" onclick="document.getElementById('photo-input').click()">📷</div>
         <div>
@@ -470,6 +433,10 @@
       <div class="form-group">
         <label>Professional Summary</label>
         <textarea class="form-control" id="b-summary" rows="4" placeholder="Write a 2-3 sentence overview of your professional background and key strengths..."></textarea>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%;text-align:left"
+          onclick="openSummaryHelper()">
+          ✦ Click Here To Answer questions to generate my summary
+        </button>
       </div>
     </div>
 
@@ -501,7 +468,7 @@
 
     <!-- Step 5: Achievements -->
     <div class="builder-step" id="builder-step-5">
-      <h2 class="builder-step-title" id="achievements-title">Achievements & Work Samples</h2>
+      <h2 class="builder-step-title" id="achievements-title">Achievements &amp; Work Samples</h2>
       <p class="builder-step-desc">Showcase your best work, projects, or accomplishments.</p>
       <div class="dynamic-list" id="achievements-list"></div>
       <button class="btn btn-ghost btn-sm" style="margin-top:16px" onclick="addAchievement()">+ Add Entry</button>
@@ -660,7 +627,7 @@
         <div class="js-search-selects">
           <select class="js-select" id="js-cat" onchange="filterJobs()">
             <option value="">All Categories</option>
-            <option value="IT & Tech">IT & Tech</option>
+            <option value="IT & Tech">IT &amp; Tech</option>
             <option value="Marketing">Marketing</option>
             <option value="Finance">Finance</option>
             <option value="Design">Design</option>
@@ -863,18 +830,18 @@
                 <label>Industry</label>
                 <select class="form-control" id="pj-industry">
                   <option value="">Select industry</option>
-                  <option>Banking & Finance</option>
+                  <option>Banking &amp; Finance</option>
                   <option>NGO / Development</option>
-                  <option>Technology & ICT</option>
+                  <option>Technology &amp; ICT</option>
                   <option>Healthcare</option>
                   <option>Education</option>
                   <option>Government</option>
-                  <option>Hospitality & Tourism</option>
-                  <option>Media & Communications</option>
-                  <option>Construction & Engineering</option>
+                  <option>Hospitality &amp; Tourism</option>
+                  <option>Media &amp; Communications</option>
+                  <option>Construction &amp; Engineering</option>
                   <option>Agriculture</option>
-                  <option>Retail & FMCG</option>
-                  <option>Transport & Logistics</option>
+                  <option>Retail &amp; FMCG</option>
+                  <option>Transport &amp; Logistics</option>
                   <option>Other</option>
                 </select>
               </div>
@@ -976,13 +943,13 @@
             </div>
 
             <div class="form-group">
-              <label>Perks & Benefits <span style="color:var(--muted);font-weight:400">(select all that apply)</span></label>
+              <label>Perks &amp; Benefits <span style="color:var(--muted);font-weight:400">(select all that apply)</span></label>
               <div class="perks-grid" id="perks-grid">
                 <span class="perk-chip" onclick="togglePerk(this)">🏥 Health Insurance</span>
                 <span class="perk-chip" onclick="togglePerk(this)">🚗 Transport Allowance</span>
                 <span class="perk-chip" onclick="togglePerk(this)">🍱 Meal Allowance</span>
                 <span class="perk-chip" onclick="togglePerk(this)">📱 Phone Allowance</span>
-                <span class="perk-chip" onclick="togglePerk(this)">🎓 Training & Dev</span>
+                <span class="perk-chip" onclick="togglePerk(this)">🎓 Training &amp; Dev</span>
                 <span class="perk-chip" onclick="togglePerk(this)">🏖 Annual Leave</span>
                 <span class="perk-chip" onclick="togglePerk(this)">💰 Pension Scheme</span>
                 <span class="perk-chip" onclick="togglePerk(this)">🏠 Housing Allowance</span>
@@ -1643,7 +1610,7 @@
       <div class="legal-contact-card">
         <div class="legal-contact-icon">✉</div>
         <div>
-          <h4>GamHub Jobs — Legal & Support</h4>
+          <h4>GamHub Jobs — Legal &amp; Support</h4>
           <a href="mailto:gamhubjobs@gmail.com">gamhubjobs@gmail.com</a>
           <div style="font-size:12px;color:var(--muted);margin-top:4px">We respond within 14 business days</div>
         </div>
@@ -1950,5 +1917,6 @@
   </div>
 </div>
   <script src="script.js" defer></script>
+<script src="tour-system.js" defer></script>
 </body>
 </html>
