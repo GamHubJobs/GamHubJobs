@@ -36,18 +36,7 @@ const GHJTour = (() => {
       groupIndex: 1,
       groupTotal: 2,
     },
-    {
-      id: 'landing-build-cv',
-      targetId: 'nav-build-cv-btn',          // we add this id below
-      text: 'Click <em>Build CV</em> to get started — it takes under 3 minutes',
-      side: 'bottom',
-      view: 'landing',
-      delay: 3200,
-      group: 'landing',
-      groupIndex: 2,
-      groupTotal: 2,
-    },
-
+    
     /* ── GROUP 2: Design Wizard ── */
     {
       id: 'wizard-profession',
@@ -84,17 +73,7 @@ const GHJTour = (() => {
       groupIndex: 2,
       groupTotal: 3,
     },
-    {
-      id: 'builder-autosave',
-      targetId: 'autosave-dot',
-      text: 'Green dot = <em>saved ✓</em>. Your CV data lives in your browser — no account needed yet',
-      side: 'bottom',
-      view: 'builder',
-      delay: 4400,
-      group: 'builder',
-      groupIndex: 3,
-      groupTotal: 3,
-    },
+    
 
     /* ── GROUP 4: CV Preview ── */
     {
@@ -158,17 +137,7 @@ const GHJTour = (() => {
     },
 
     /* ── GROUP 7: Employer Portal ── */
-    {
-      id: 'employer-preview',
-      targetId: 'post-job-sidebar',
-      text: 'The <em>Live Preview</em> on the right updates as you type — see exactly how your listing will look',
-      side: 'left',
-      view: 'employer',
-      delay: 1000,
-      group: 'employer',
-      groupIndex: 1,
-      groupTotal: 1,
-    },
+    
   ];
 
   /* ── State ─────────────────────────────────────────────── */
