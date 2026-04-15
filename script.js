@@ -2492,11 +2492,13 @@ function renderJobs(list) {
 }
 
 function getJobUrl(job) {
-  const slug = (job.id || job.title)
+  /* Use ?job= query param — WhatsApp and other apps strip #hash fragments
+     so we use a query string which survives all sharing channels          */
+  const id = job.id || (job.title || 'job')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
-  return window.location.origin + window.location.pathname + '#job-' + slug;
+  return window.location.origin + window.location.pathname + '?job=' + id;
 }
 
 function extractApplyEmail(job) {
@@ -3828,17 +3830,31 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── NEW: fire landing tour on first load ── */
   if (typeof GHJTour !== 'undefined') GHJTour.triggerView('landing');
 
-  const pathMatch = window.location.pathname.match(/^\/job\/(.+)/);
-  if (pathMatch) {
-    const jobId = pathMatch[1].replace(/\/$/, '');
-    const job = JOB_LISTINGS.find(j => j.id === jobId);
-    if (job) {
+  /* ── Deep link handler ─────────────────────────────────────────
+     Handles two URL formats:
+       1. ?job=frontend-developer-gamtech   (shared via WhatsApp / social)
+       2. /job/frontend-developer-gamtech   (direct path, legacy)
+     Both open the matching job detail page immediately instead of
+     showing the landing page.
+  ─────────────────────────────────────────────────────────────── */
+  const _urlParams    = new URLSearchParams(window.location.search);
+  const _sharedJobId  = _urlParams.get('job');
+  const _pathMatch    = window.location.pathname.match(/^\/job\/(.+)/);
+  const _pathJobId    = _pathMatch ? _pathMatch[1].replace(/\/$/, '') : null;
+  const _deepLinkId   = _sharedJobId || _pathJobId;
+
+  if (_deepLinkId) {
+    const _linkedJob = JOB_LISTINGS.find(j => j.id === _deepLinkId);
+    if (_linkedJob) {
       showView('job-search');
-      setTimeout(() => openJobPage(job), 200);
+      setTimeout(() => openJobPage(_linkedJob), 200);
     } else {
       showView('job-search');
       toast('Job not found — showing all available jobs.', 'default', 4000);
     }
+    /* Clean the ?job= out of the address bar so it looks tidy.
+       replaceState does NOT reload the page. */
+    window.history.replaceState({}, '', window.location.pathname);
   }
 
   const savedTheme = loadData('theme');
