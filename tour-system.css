@@ -124,25 +124,7 @@
   font-weight: 700;
 }
 
-/* ── Auto-dismiss progress bar (scroll hints only) ──────── */
-/* A thin gold line at the bottom that shrinks over 6s,
-   giving a subtle visual cue that the hint will disappear */
-.ghj-tour-popover.scroll-hint::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0;
-  height: 2px;
-  width: 100%;
-  background: linear-gradient(90deg, #d4a853, #f0c97a);
-  border-radius: 0 0 14px 14px;
-  transform-origin: left center;
-  transform: scaleX(1);
-  transition: none;
-}
-.ghj-tour-popover.scroll-hint.visible::after {
-  transform: scaleX(0);
-  transition: transform 6s linear;
-}
+
 
 /* ── Step progress pill ─────────────────────────────────── */
 .ghj-tour-step-pill {
