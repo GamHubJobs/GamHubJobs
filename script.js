@@ -842,17 +842,7 @@ function generateCV() {
   }
   autoSave();
   const data = loadData('cvData');
-  if (!data || !data.fullname.trim()) {
-    toast('Please enter your full name before generating', 'error');
-    return;
-  }
-  /* ── ECOSYSTEM: nudge towards cover letter after CV is generated ── */
-  const hasCL = (() => {
-    try { const cl = JSON.parse(localStorage.getItem('folio_cover_letter')); return !!(cl && cl.fullname); } catch { return false; }
-  })();
-  if (!hasCL) {
-    setTimeout(() => toast('CV ready! ✦ Write a cover letter next to complete your application package.', 'gold', 5000), 800);
-  }
+  if (!data || !data.fullname.trim()) { toast('Please enter your full name before generating', 'error'); return; }
   toast('CV generated! ✦', 'gold');
   showView('preview');
 }
@@ -1040,17 +1030,8 @@ async function useFreeDownload() {
 }
 
 async function downloadPDF() {
-  /* ── ECOSYSTEM GATE: must be logged in ── */
   if (!currentUser) {
     showAuthModal(function() { downloadPDF(); });
-    return;
-  }
-
-  /* ── ECOSYSTEM GATE: must have actually built a CV ── */
-  const cv = loadData('cvData');
-  if (!cv || !cv.fullname?.trim()) {
-    toast('Build your CV first before downloading!', 'error', 4000);
-    setTimeout(() => showView('wizard'), 600);
     return;
   }
 
@@ -1078,17 +1059,8 @@ async function downloadPDF() {
 }
 
 async function downloadCoverLetter() {
-  /* ── ECOSYSTEM GATE: must be logged in ── */
   if (!currentUser) {
     showAuthModal(function() { downloadCoverLetter(); });
-    return;
-  }
-
-  /* ── ECOSYSTEM GATE: cover letter is worthless without a CV backing it ── */
-  const cv = loadData('cvData');
-  if (!cv || !cv.fullname?.trim()) {
-    toast('Build your CV first — your cover letter pulls data from it!', 'error', 5000);
-    setTimeout(() => showView('wizard'), 700);
     return;
   }
 
@@ -2517,6 +2489,12 @@ function renderJobs(list) {
   list.forEach((job, idx) => {
     grid.appendChild(createJobCard(job, idx));
   });
+
+  /* Stamp the first Apply Now button so GHJTour can observe it */
+  requestAnimationFrame(() => {
+    const firstApply = grid.querySelector('.js-btn-apply');
+    if (firstApply && !firstApply.id) firstApply.id = 'ghj-first-apply-btn';
+  });
 }
 
 function getJobUrl(job) {
@@ -2543,20 +2521,6 @@ function applyNowEmail(jobId) {
   const job = JOB_LISTINGS.find(j => j.id === jobId);
   if (!job) return;
 
-  /* ── ECOSYSTEM GATE 1: must be logged in ── */
-  if (!currentUser) {
-    showAuthModal(() => applyNowEmail(jobId));
-    return;
-  }
-
-  /* ── ECOSYSTEM GATE 2: must have a CV with at least a name ── */
-  const cv = loadData('cvData');
-  if (!cv || !cv.fullname || !cv.fullname.trim()) {
-    toast('Build your CV first — employers need to know who you are!', 'error', 5000);
-    setTimeout(() => showView('wizard'), 600);
-    return;
-  }
-
   const email = extractApplyEmail(job);
 
   if (!email) {
@@ -2566,19 +2530,9 @@ function applyNowEmail(jobId) {
 
   toast('📎 Make sure you have downloaded your CV and attach it before sending.', 'gold', 6000);
 
-  const cv2 = loadData('cvData') || {};
-  const applicantName = cv2.fullname || '';
-  const applicantTitle = cv2.title   || '';
-
-  const subject = encodeURIComponent('Application for ' + job.title + (applicantName ? ' — ' + applicantName : ''));
+  const subject = encodeURIComponent('Job Application for ' + job.title);
   const body = encodeURIComponent(
-    'Dear Hiring Manager,\n\n' +
-    'I am writing to apply for the position of ' + job.title + ' at ' + job.company + '.\n\n' +
-    (applicantName  ? 'Name: ' + applicantName + '\n' : '') +
-    (applicantTitle ? 'Current title: ' + applicantTitle + '\n' : '') +
-    '\nPlease find my CV (built on GamHub Jobs) attached to this email.\n\n' +
-    'Thank you for your time and consideration.\n\n' +
-    (applicantName ? applicantName : 'Kind regards')
+    'Hello,\n\nI am applying for the position of ' + job.title + '.\n\nPlease find my CV attached.\n\nThank you.'
   );
 
   setTimeout(() => {
@@ -3111,20 +3065,6 @@ function initCoverLetter() {
   loadCoverLetterData();
   setDefaultDate();
   updateImportBadge();
-
-  /* ── ECOSYSTEM: auto-fill from CV if cover letter fields are still empty ── */
-  const cv = loadData('cvData');
-  const clFullname = document.getElementById('cl-fullname')?.value?.trim();
-  if (cv && cv.fullname && !clFullname) {
-    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-    set('cl-fullname', cv.fullname);
-    set('cl-title',    cv.title);
-    set('cl-email',    cv.email);
-    set('cl-phone',    cv.phone);
-    set('cl-location', cv.location);
-    toast('CV details auto-filled ✦', 'gold', 2500);
-  }
-
   renderCoverLetter();
 
   const toggleBtn = document.getElementById('cl-toggle-btn');
@@ -3162,11 +3102,7 @@ function updateImportBadge() {
 
 function importFromCV() {
   const cv = loadData('cvData');
-  if (!cv || !cv.fullname?.trim()) {
-    toast('No CV found — build your CV first and then come back!', 'error', 5000);
-    setTimeout(() => showView('wizard'), 700);
-    return;
-  }
+  if (!cv) { toast('No CV found. Build your CV first.', 'error'); return; }
 
   const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
   set('cl-fullname', cv.fullname);
@@ -3888,69 +3824,6 @@ async function qaGenAchievement() {
 }
 
 /* ============================================================
-   ECOSYSTEM HEALTH BAR — shows CV completion on landing page
-   ============================================================ */
-function renderEcosystemStatus() {
-  const cv    = loadData('cvData');
-  const wiz   = loadData('wizard');
-  const theme = loadData('theme');
-
-  const steps = [
-    { label: 'Account',      done: !!currentUser },
-    { label: 'Design',       done: !!(wiz && wiz.profession && wiz.palette && wiz.font) },
-    { label: 'CV built',     done: !!(cv && cv.fullname && cv.fullname.trim()) },
-    { label: 'Cover letter', done: (() => { try { const cl = JSON.parse(localStorage.getItem('folio_cover_letter')); return !!(cl && cl.fullname); } catch { return false; } })() },
-  ];
-
-  const complete = steps.filter(s => s.done).length;
-  const total    = steps.length;
-  const pct      = Math.round((complete / total) * 100);
-
-  /* Inject or update the status bar in the hero section */
-  let bar = document.getElementById('ghj-ecosystem-bar');
-  if (!bar) {
-    const hero = document.querySelector('.hero-inner');
-    if (!hero) return;
-    bar = document.createElement('div');
-    bar.id = 'ghj-ecosystem-bar';
-    bar.style.cssText = [
-      'margin-top:32px',
-      'background:rgba(255,255,255,0.04)',
-      'border:1px solid rgba(212,168,83,0.2)',
-      'border-radius:14px',
-      'padding:16px 20px',
-      'max-width:480px',
-      'font-family:var(--font-body)',
-    ].join(';');
-    hero.appendChild(bar);
-  }
-
-  const stepDots = steps.map(s =>
-    `<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:${s.done ? '#4ade80' : 'var(--muted)'}">
-      <span style="font-size:11px">${s.done ? '✓' : '○'}</span>${s.label}
-    </span>`
-  ).join('<span style="color:var(--border);margin:0 6px">·</span>');
-
-  bar.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-size:13px;font-weight:600;color:var(--text2)">
-        ${complete === total ? '✦ Profile complete — you are ready to apply!' : 'Your application profile · ' + complete + ' of ' + total + ' complete'}
-      </span>
-      <span style="font-size:11px;font-family:var(--font-mono);color:var(--gold)">${pct}%</span>
-    </div>
-    <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;margin-bottom:12px">
-      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;transition:width 0.6s ease"></div>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">${stepDots}</div>
-    ${complete < total ? `
-    <button onclick="showView('${!wiz?.profession ? 'wizard' : !cv?.fullname ? 'builder' : 'coverletter'}')"
-      style="margin-top:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;border:none;border-radius:100px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body)">
-      ${!wiz?.profession ? 'Start — Pick your profession →' : !cv?.fullname?.trim() ? 'Continue — Build your CV →' : 'Next — Write your cover letter →'}
-    </button>` : ''}
-  `;
-}
-
-/* ============================================================
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -3962,9 +3835,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── NEW: fire landing tour on first load ── */
   if (typeof GHJTour !== 'undefined') GHJTour.triggerView('landing');
-
-  /* ── ECOSYSTEM: show profile completion status on landing ── */
-  renderEcosystemStatus();
 
   /* ── Deep link handler ─────────────────────────────────────────
      Handles two URL formats:
