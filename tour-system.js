@@ -34,18 +34,7 @@ const GHJTour = (() => {
       groupIndex: 1,
       groupTotal: 2,
     },
-    {
-      id: 'landing-build-cv',
-      targetId: 'nav-build-cv-btn',
-      text: 'Click <em>Build CV</em> to get started — it takes under 3 minutes',
-      side: 'bottom',
-      view: 'landing',
-      trigger: 'timer',
-      delay: 3400,
-      group: 'landing',
-      groupIndex: 2,
-      groupTotal: 2,
-    },
+    
 
     /* ── Landing page — scroll-triggered sections ─────────── */
     {
@@ -117,19 +106,7 @@ const GHJTour = (() => {
       groupIndex: 2,
       groupTotal: 3,
     },
-    {
-      id: 'builder-autosave',
-      targetId: 'autosave-dot',
-      text: 'Green dot = <em>saved ✓</em>. Your CV data lives in your browser — no account needed yet',
-      side: 'bottom',
-      view: 'builder',
-      trigger: 'timer',
-      delay: 3200,
-      noOverlay: true,
-      group: 'builder',
-      groupIndex: 3,
-      groupTotal: 3,
-    },
+    
 
     /* ── CV Preview ───────────────────────────────────────── */
     {
@@ -216,19 +193,7 @@ const GHJTour = (() => {
     },
 
     /* ── Employer Portal ──────────────────────────────────── */
-    {
-      id: 'employer-preview',
-      targetId: 'post-job-sidebar',
-      text: 'The <em>Live Preview</em> updates as you type — see exactly how employers will see your listing',
-      side: 'left',
-      view: 'employer',
-      trigger: 'scroll',
-      threshold: 0.3,
-      noOverlay: true,
-      group: 'employer',
-      groupIndex: 1,
-      groupTotal: 2,
-    },
+  
     {
       id: 'employer-plan',
       targetId: 'submit-job-btn',
