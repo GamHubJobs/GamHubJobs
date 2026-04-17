@@ -130,7 +130,7 @@ function showView(id) {
   if (id === 'coverletter') initCoverLetter();
   if (id === 'job-search')  initJobSearchView();
 
-  /* ── NEW: fire tour hints for every view ── */
+  /* ── fire tour hints for every view ── */
   if (typeof GHJTour !== 'undefined') GHJTour.triggerView(id);
 }
 
@@ -1051,6 +1051,8 @@ async function downloadPDF() {
     } else {
       toast('Free download — ' + (freeLeft - 1) + ' remaining.', 'default', 2500);
     }
+    // ── GA: track CV download ──
+    trackCVDownload();
     executePDFDownload('cv');
     return;
   }
@@ -1738,6 +1740,8 @@ async function finaliseDownload(token) {
 
       const type = retry.payment_type || 'cv';
       toast('Payment confirmed! ✦ Starting download…', 'success', 3000);
+      // ── GA: track paid CV download ──
+      trackCVDownload();
       executePDFDownload(type);
       return;
     }
@@ -1745,6 +1749,8 @@ async function finaliseDownload(token) {
     const type = data.payment_type || 'cv';
     toast('Payment confirmed! ✦ Starting download…', 'success', 3000);
     showView(type === 'coverletter' ? 'coverletter' : 'preview');
+    // ── GA: track paid CV download ──
+    trackCVDownload();
     setTimeout(() => executePDFDownload(type), 800);
 
   } catch (err) {
@@ -2498,8 +2504,6 @@ function renderJobs(list) {
 }
 
 function getJobUrl(job) {
-  /* Use ?job= query param — WhatsApp and other apps strip #hash fragments
-     so we use a query string which survives all sharing channels          */
   const id = job.id || (job.title || 'job')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -2520,6 +2524,9 @@ function extractApplyEmail(job) {
 function applyNowEmail(jobId) {
   const job = JOB_LISTINGS.find(j => j.id === jobId);
   if (!job) return;
+
+  // ── GA: track apply click ──
+  trackApply(job.title || jobId);
 
   const email = extractApplyEmail(job);
 
@@ -2713,6 +2720,9 @@ document.addEventListener('DOMContentLoaded', () => {
    JOB DETAIL MODAL
    ============================================================ */
 function openJobModal(job) {
+  // ── GA: track job view ──
+  trackJobView(job.title || 'Unknown Job');
+
   const backdrop = document.getElementById('jd-backdrop');
   if (!backdrop) return;
 
@@ -2834,6 +2844,9 @@ function closeJobModal() {
 let _selectedJobId = null;
 
 function openJobPage(job) {
+  // ── GA: track job view ──
+  trackJobView(job.title || 'Unknown Job');
+
   _selectedJobId = job.id;
   const initials = job.company.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   document.getElementById('jd-page-logo').innerHTML = job.logo
@@ -3824,6 +3837,45 @@ async function qaGenAchievement() {
 }
 
 /* ============================================================
+   GOOGLE ANALYTICS TRACKING
+   ============================================================ */
+
+/**
+ * Track when a job detail page or modal is opened.
+ * Called inside openJobPage() and openJobModal().
+ */
+function trackJobView(jobTitle) {
+  if (typeof gtag === 'function') {
+    gtag('event', 'job_view', {
+      job_title: jobTitle,
+    });
+  }
+}
+
+/**
+ * Track when the Apply Now button is clicked.
+ * Called inside applyNowEmail() before the mailto redirect.
+ */
+function trackApply(jobTitle) {
+  if (typeof gtag === 'function') {
+    gtag('event', 'apply_click', {
+      job_title: jobTitle,
+    });
+  }
+}
+
+/**
+ * Track when a CV PDF download is initiated (free or paid).
+ * Called inside downloadPDF() after the free-download check,
+ * and inside finaliseDownload() after payment confirmation.
+ */
+function trackCVDownload() {
+  if (typeof gtag === 'function') {
+    gtag('event', 'cv_download');
+  }
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -3833,7 +3885,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initWizard();
   setupScrollReveals();
 
-  /* ── NEW: fire landing tour on first load ── */
+  /* ── fire landing tour on first load ── */
   if (typeof GHJTour !== 'undefined') GHJTour.triggerView('landing');
 
   /* ── Deep link handler ─────────────────────────────────────────
@@ -3858,8 +3910,6 @@ document.addEventListener('DOMContentLoaded', () => {
       showView('job-search');
       toast('Job not found — showing all available jobs.', 'default', 4000);
     }
-    /* Clean the ?job= out of the address bar so it looks tidy.
-       replaceState does NOT reload the page. */
     window.history.replaceState({}, '', window.location.pathname);
   }
 
