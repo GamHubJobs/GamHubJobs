@@ -193,19 +193,7 @@ const GHJTour = (() => {
     },
 
     /* ── Employer Portal ──────────────────────────────────── */
-    {
-      id: 'employer-preview',
-      targetId: 'post-job-sidebar',
-      text: 'The <em>Live Preview</em> updates as you type — see exactly how employers will see your listing',
-      side: 'left',
-      view: 'employer',
-      trigger: 'scroll',
-      threshold: 0.3,
-      noOverlay: true,
-      group: 'employer',
-      groupIndex: 1,
-      groupTotal: 2,
-    },
+   
     {
       id: 'employer-plan',
       targetId: 'submit-job-btn',
