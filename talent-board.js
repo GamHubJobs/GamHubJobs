@@ -1,46 +1,10 @@
 /* ============================================================
    GAMHUB JOBS — TALENT BOARD
    talent-board.js
-
-   Job seekers post their profile. Employers browse and contact.
-   Same share-to-unlock gate as job listings (uses the
-   showUnlockModal / isShareUnlocked system from unlock-share-feature.js).
-
-   INSTALL:
-     1. Paste <div id="view-talent-board"> block from talent-board.html
-        into index.html (before the cookie banner).
-     2. Add to index.html <head>:
-          <link rel="stylesheet" href="talent-board.css">
-     3. Add to index.html <body> (after tour-system.js):
-          <script src="talent-board.js" defer></script>
-     4. Add nav links (see talent-board.html comments).
-
-   Supabase table required:
-     CREATE TABLE talent_profiles (
-       id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-       name          text NOT NULL,
-       title         text NOT NULL,
-       category      text,
-       experience    text,
-       location      text,
-       availability  text,
-       summary       text,
-       skills        text,
-       education     text,
-       email         text NOT NULL,
-       phone         text,
-       link          text,
-       cv_link       text,
-       job_type      text,
-       salary        text,
-       approved      boolean DEFAULT false,
-       submitted_at  timestamptz DEFAULT now()
-     );
    ============================================================ */
 
 /* ============================================================
-   SAMPLE PROFILES — shown while real Supabase data loads
-   (mirrors the JOB_LISTINGS pattern from script.js)
+   SAMPLE PROFILES
    ============================================================ */
 const TB_SAMPLE_PROFILES = [
   {
@@ -169,14 +133,11 @@ const TB_SAMPLE_PROFILES = [
    STATE
    ============================================================ */
 let TB_PROFILES = [...TB_SAMPLE_PROFILES];
-const TB_STORAGE_KEY   = 'ghj_talent_profiles';
-const TB_ADMIN_WA_NUM  = '2206371941'; // same as job notifications
+const TB_STORAGE_KEY  = 'ghj_talent_profiles';
+const TB_ADMIN_WA_NUM = '2206371941';
 
 /* ============================================================
-   INIT — called by showView('talent-board') in script.js
-   Hook: add `if (id === 'talent-board') initTalentBoard();`
-   inside the showView() function in script.js.
-   OR just call it from the DOMContentLoaded listener below.
+   INIT
    ============================================================ */
 function initTalentBoard() {
   tbLoadLocalProfiles();
@@ -186,15 +147,12 @@ function initTalentBoard() {
 
 /* ============================================================
    LOAD LOCALLY SUBMITTED PROFILES
-   Merges user-submitted profiles (stored in localStorage)
-   with the sample profiles, newest first.
    ============================================================ */
 function tbLoadLocalProfiles() {
   try {
-    const local = JSON.parse(localStorage.getItem(TB_STORAGE_KEY) || '[]');
-    // Prepend local (approved) profiles to the sample list
+    const local    = JSON.parse(localStorage.getItem(TB_STORAGE_KEY) || '[]');
     const approved = local.filter(p => p.approved !== false);
-    TB_PROFILES = [...approved, ...TB_SAMPLE_PROFILES];
+    TB_PROFILES    = [...approved, ...TB_SAMPLE_PROFILES];
   } catch(e) {
     TB_PROFILES = [...TB_SAMPLE_PROFILES];
   }
@@ -273,9 +231,8 @@ function tbCreateCard(profile) {
     'Open to Offers': 'avail-open',
   }[profile.availability] || 'avail-open';
 
-  const skills = (profile.skills || '')
+  const skills    = (profile.skills || '')
     .split(',').map(s => s.trim()).filter(Boolean).slice(0, 4);
-
   const postedAgo = tbTimeAgo(profile.submitted_at);
 
   card.innerHTML = `
@@ -290,8 +247,8 @@ function tbCreateCard(profile) {
     <div class="tb-card-meta">
       ${profile.category   ? `<span class="tb-meta-item">🎯 ${tbEsc(profile.category)}</span>` : ''}
       ${profile.experience ? `<span class="tb-meta-item">⏱ ${tbEsc(profile.experience)}</span>` : ''}
-      ${profile.location   ? `<span class="tb-meta-item">📍 ${tbEsc(profile.location)}</span>`   : ''}
-      ${profile.job_type   ? `<span class="tb-meta-item">💼 ${tbEsc(profile.job_type)}</span>`   : ''}
+      ${profile.location   ? `<span class="tb-meta-item">📍 ${tbEsc(profile.location)}</span>`  : ''}
+      ${profile.job_type   ? `<span class="tb-meta-item">💼 ${tbEsc(profile.job_type)}</span>`  : ''}
     </div>
     <p class="tb-card-summary">${tbEsc(profile.summary || '')}</p>
     ${skills.length ? `
@@ -323,8 +280,8 @@ function tbCreateCard(profile) {
 function tbInitModal() {
   const backdrop = document.getElementById('tb-modal-backdrop');
   const closeBtn = document.getElementById('tb-modal-close');
-  if (closeBtn)  closeBtn.addEventListener('click', tbCloseModal);
-  if (backdrop)  backdrop.addEventListener('click', e => {
+  if (closeBtn) closeBtn.addEventListener('click', tbCloseModal);
+  if (backdrop) backdrop.addEventListener('click', e => {
     if (e.target === backdrop) tbCloseModal();
   });
   document.addEventListener('keydown', e => {
@@ -413,9 +370,9 @@ function tbOpenProfile(id) {
   if (!backdrop) return;
   backdrop.style.display = 'flex';
   document.body.dataset.tbScrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = '-' + window.scrollY + 'px';
-  document.body.style.width = '100%';
+  document.body.style.position    = 'fixed';
+  document.body.style.top         = '-' + window.scrollY + 'px';
+  document.body.style.width       = '100%';
   requestAnimationFrame(() => requestAnimationFrame(() => backdrop.classList.add('tb-open')));
 }
 
@@ -432,7 +389,7 @@ function tbCloseModal() {
 }
 
 /* ============================================================
-   CONTACT CANDIDATE — opens pre-filled mailto
+   CONTACT CANDIDATE
    ============================================================ */
 function tbContactCandidate(id) {
   const profile = TB_PROFILES.find(p => String(p.id) === String(id));
@@ -453,7 +410,7 @@ function tbContactCandidate(id) {
 }
 
 /* ============================================================
-   POST PROFILE FORM
+   POST PROFILE FORM  — FIXED
    ============================================================ */
 function tbShowPostForm() {
   // Require auth — mirrors generateCV() in script.js
@@ -467,13 +424,29 @@ function tbShowPostForm() {
   const backdrop = document.getElementById('tb-post-backdrop');
   if (!backdrop) return;
 
-  // Reset form
-  document.getElementById('tb-post-form').style.display    = '';
-  document.getElementById('tb-post-success').style.display = 'none';
+  // Reset form to initial state
+  const formEl    = document.getElementById('tb-post-form');
+  const successEl = document.getElementById('tb-post-success');
+  if (formEl)    formEl.style.display    = '';
+  if (successEl) successEl.style.display = 'none';
 
-  backdrop.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  requestAnimationFrame(() => requestAnimationFrame(() => backdrop.classList.add('tb-open')));
+  // Show backdrop (must set display BEFORE starting CSS transition)
+  backdrop.style.display      = 'flex';
+  backdrop.style.opacity      = '0';
+  backdrop.style.pointerEvents = 'auto';
+
+  // Lock body scroll using the same fixed-position pattern used elsewhere
+  document.body.dataset.tbPostScrollY = window.scrollY;
+  document.body.style.position        = 'fixed';
+  document.body.style.top             = '-' + window.scrollY + 'px';
+  document.body.style.width           = '100%';
+
+  // Double rAF: first frame applies display:flex, second triggers the CSS transition
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      backdrop.classList.add('tb-open');
+    });
+  });
 
   // Auto-fill from saved CV data if available
   tbAutoFillFromCV();
@@ -482,8 +455,16 @@ function tbShowPostForm() {
 function tbClosePostForm() {
   const backdrop = document.getElementById('tb-post-backdrop');
   if (!backdrop) return;
+
   backdrop.classList.remove('tb-open');
-  document.body.style.overflow = '';
+
+  // Restore body scroll (mirrors tbShowPostForm lock)
+  const scrollY = parseInt(document.body.dataset.tbPostScrollY || '0', 10);
+  document.body.style.position = '';
+  document.body.style.top      = '';
+  document.body.style.width    = '';
+  window.scrollTo(0, scrollY);
+
   setTimeout(() => { backdrop.style.display = 'none'; }, 320);
 }
 
@@ -501,7 +482,6 @@ function tbAutoFillFromCV() {
     setVal('tp-email',   cv.email);
     setVal('tp-phone',   cv.phone);
     setVal('tp-summary', cv.summary);
-    // Skills: join array of {name} objects
     if (cv.skills && cv.skills.length) {
       const skillsEl = document.getElementById('tp-skills');
       if (skillsEl && !skillsEl.value) {
@@ -509,7 +489,7 @@ function tbAutoFillFromCV() {
       }
     }
     if (cv.education && cv.education.length) {
-      const eduEl = document.getElementById('tp-education');
+      const eduEl   = document.getElementById('tp-education');
       const firstEdu = cv.education[0];
       if (eduEl && !eduEl.value && firstEdu) {
         eduEl.value = [firstEdu.qualification, firstEdu.institution, firstEdu.year]
@@ -536,23 +516,21 @@ function tbCharCount(inputId, countId, max) {
 }
 
 /* ============================================================
-   SUBMIT PROFILE — gated by WhatsApp share unlock
+   SUBMIT PROFILE
    ============================================================ */
 function tbSubmitProfile() {
-  // Collect & validate
   const name     = document.getElementById('tp-name')?.value.trim()     || '';
   const title    = document.getElementById('tp-title')?.value.trim()    || '';
   const category = document.getElementById('tp-category')?.value        || '';
   const email    = document.getElementById('tp-email')?.value.trim()    || '';
   const summary  = document.getElementById('tp-summary')?.value.trim()  || '';
 
-  if (!name)               { tbToast('Please enter your full name', 'error');       return; }
-  if (!title)              { tbToast('Please enter your professional title', 'error'); return; }
-  if (!category)           { tbToast('Please select a profession category', 'error'); return; }
+  if (!name)               { tbToast('Please enter your full name', 'error');           return; }
+  if (!title)              { tbToast('Please enter your professional title', 'error');  return; }
+  if (!category)           { tbToast('Please select a profession category', 'error');   return; }
   if (!email || !email.includes('@')) { tbToast('Please enter a valid email', 'error'); return; }
   if (summary.length < 80) { tbToast('Summary must be at least 80 characters', 'error'); return; }
 
-  // Build payload
   const payload = {
     id:           'local-' + Date.now(),
     name:         tbSanitize(name, 100),
@@ -570,45 +548,33 @@ function tbSubmitProfile() {
     cv_link:      tbSanitizeUrl(document.getElementById('tp-cv-link')?.value.trim()|| ''),
     job_type:     document.querySelector('input[name="tp-jobtype"]:checked')?.value || 'Full-Time',
     salary:       tbSanitize(document.getElementById('tp-salary')?.value.trim()   || '', 80),
-    approved:     true,   // shown immediately locally; admin reviews via WA notification
+    approved:     true,
     submitted_at: new Date().toISOString(),
   };
 
-  // ── SHARE GATE — same as job listings ──────────────────────
-  // showUnlockModal is defined in unlock-share-feature.js
   if (typeof showUnlockModal === 'function') {
     showUnlockModal('job', () => tbFinaliseProfileSubmit(payload));
   } else {
-    // Fallback if unlock feature not loaded
     tbFinaliseProfileSubmit(payload);
   }
 }
 
 function tbFinaliseProfileSubmit(payload) {
-  // Save locally
   tbSaveLocalProfile(payload);
-
-  // Add to in-memory list so it appears immediately
   TB_PROFILES.unshift(payload);
 
-  // Show success state inside the post modal
   const formEl    = document.getElementById('tb-post-form');
   const successEl = document.getElementById('tb-post-success');
   if (formEl)    formEl.style.display    = 'none';
   if (successEl) successEl.style.display = '';
 
-  // Send WhatsApp admin notification
   tbSendAdminNotification(payload);
-
-  // Re-render grid
   tbRenderProfiles(TB_PROFILES);
-
   tbToast('Profile posted! Employers can now find you ✦', 'success', 5000);
 }
 
 /* ============================================================
    ADMIN WHATSAPP NOTIFICATION
-   Mirrors sendJobNotificationWhatsApp() in script.js
    ============================================================ */
 function tbSendAdminNotification(profile) {
   try {
@@ -621,22 +587,22 @@ function tbSendAdminNotification(profile) {
       '🌟 *NEW TALENT PROFILE — GamHub Jobs*\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       '👤 *CANDIDATE DETAILS*\n' +
-      '• Name: '          + (profile.name        || '—') + '\n' +
-      '• Title: '         + (profile.title       || '—') + '\n' +
-      '• Category: '      + (profile.category    || '—') + '\n' +
-      '• Experience: '    + (profile.experience  || '—') + '\n' +
-      '• Location: '      + (profile.location    || '—') + '\n' +
-      '• Availability: '  + (profile.availability|| '—') + '\n' +
-      '• Job Type: '      + (profile.job_type    || '—') + '\n' +
-      '• Salary Exp: '    + (profile.salary      || '—') + '\n\n' +
+      '• Name: '         + (profile.name         || '—') + '\n' +
+      '• Title: '        + (profile.title        || '—') + '\n' +
+      '• Category: '     + (profile.category     || '—') + '\n' +
+      '• Experience: '   + (profile.experience   || '—') + '\n' +
+      '• Location: '     + (profile.location     || '—') + '\n' +
+      '• Availability: ' + (profile.availability || '—') + '\n' +
+      '• Job Type: '     + (profile.job_type     || '—') + '\n' +
+      '• Salary Exp: '   + (profile.salary       || '—') + '\n\n' +
       '📧 *CONTACT*\n' +
-      '• Email: '         + (profile.email       || '—') + '\n' +
-      '• Phone: '         + (profile.phone       || '—') + '\n' +
-      '• Link: '          + (profile.link        || '—') + '\n\n' +
-      '📝 *SUMMARY*\n'   + (profile.summary      || '—') + '\n\n' +
-      '🛠 *SKILLS*\n'    + (profile.skills       || '—') + '\n\n' +
-      '🎓 *EDUCATION*\n' + (profile.education    || '—') + '\n\n' +
-      '🕐 Submitted: '   + submittedAt;
+      '• Email: '        + (profile.email        || '—') + '\n' +
+      '• Phone: '        + (profile.phone        || '—') + '\n' +
+      '• Link: '         + (profile.link         || '—') + '\n\n' +
+      '📝 *SUMMARY*\n'  + (profile.summary       || '—') + '\n\n' +
+      '🛠 *SKILLS*\n'   + (profile.skills        || '—') + '\n\n' +
+      '🎓 *EDUCATION*\n'+ (profile.education     || '—') + '\n\n' +
+      '🕐 Submitted: '  + submittedAt;
 
     const encoded = encodeURIComponent(msg);
     window.open('https://wa.me/' + TB_ADMIN_WA_NUM + '?text=' + encoded, '_blank', 'noopener,noreferrer');
@@ -673,29 +639,24 @@ function tbToast(msg, type, duration) {
 
 function tbTimeAgo(iso) {
   if (!iso) return '';
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff  = Date.now() - new Date(iso).getTime();
   const mins  = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days  = Math.floor(diff / 86400000);
-  if (days  > 0)  return days  + 'd ago';
-  if (hours > 0)  return hours + 'h ago';
-  if (mins  > 0)  return mins  + 'm ago';
+  if (days  > 0) return days  + 'd ago';
+  if (hours > 0) return hours + 'h ago';
+  if (mins  > 0) return mins  + 'm ago';
   return 'Just now';
 }
 
 /* ============================================================
-   HOOK INTO showView() — intercept 'talent-board' view
-   This patches showView so initTalentBoard() is called
-   automatically when the view is opened, without touching
-   the original showView() in script.js.
+   HOOK INTO showView()
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
-  // Wait for script.js showView to be defined, then wrap it
   const _originalShowView = window.showView;
   window.showView = function(id) {
     if (typeof _originalShowView === 'function') _originalShowView(id);
     if (id === 'talent-board') {
-      // Give the view a frame to become active before rendering
       requestAnimationFrame(() => initTalentBoard());
     }
   };
