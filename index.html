@@ -24,6 +24,7 @@
 <!-- Tour hint system styles -->
 <link rel="stylesheet" href="tour-system.css">
 <link rel="stylesheet" href="unlock-share.css">
+<link rel="stylesheet" href="talent-board.css">
   
 
 <!-- Vercel Web Analytics -->
@@ -69,6 +70,7 @@
     <a href="#" onclick="scrollToTemplates()">Templates</a>
     <a href="#" onclick="showView('coverletter')" style="color:var(--gold2)">Cover Letter</a>
     <a href="#" onclick="showView('job-search')" style="color:var(--gold)">🔍 Job Search</a>
+    <a href="#" onclick="showView('talent-board')" style="color:var(--gold)">🌟 Talent Board</a>
     <a href="#" onclick="showView('employer')" style="color:var(--gold)">For Employers</a>
   </div>
   <div class="nav-actions">
@@ -98,6 +100,7 @@
   <a href="#" onclick="scrollToTemplates();closeMobileNav()">🖼 Templates</a>
   <a href="#" onclick="showView('coverletter');closeMobileNav()">✉ Cover Letter</a>
   <a href="#" onclick="showView('job-search');closeMobileNav()">🔍 Job Search</a>
+  <a href="#" onclick="showView('talent-board');closeMobileNav()">🌟 Talent Board</a>
   <a href="#" onclick="showView('employer');closeMobileNav()">🏢 Post a Job</a>
   <div class="drawer-actions">
     <button class="btn btn-gold btn-full" onclick="showView('wizard');closeMobileNav()">
@@ -1648,7 +1651,341 @@
     </div>
   </div>
 </div><!-- /view-terms -->
+<!-- ============================================================
+     TALENT BOARD — PASTE THIS BLOCK INTO index.html
+     Place it just before the closing </body> tag, after
+     the existing VIEW 9 (Terms) block and before the
+     cookie banner / auth modal sections.
 
+     Then add these two nav links wherever you want them:
+       Navbar:       <a href="#" onclick="showView('talent-board')">Talent Board</a>
+       Mobile drawer:<a href="#" onclick="showView('talent-board');closeMobileNav()">🌟 Talent Board</a>
+
+     Also add this button to the employer portal sidebar card
+     (optional shortcut for employers):
+       <button class="btn btn-outline btn-full btn-sm"
+         onclick="showView('talent-board')">🌟 Browse Talent →</button>
+     ============================================================ -->
+
+<!-- ============================================================
+     VIEW — TALENT BOARD (Job Seekers post their profiles)
+     ============================================================ -->
+<div id="view-talent-board" class="view">
+
+  <div class="tb-topbar">
+    <div class="tb-topbar-inner">
+      <div class="tb-topbar-left">
+        <h2 class="tb-topbar-title">🌟 Talent Board</h2>
+        <p class="tb-topbar-sub">Gambian professionals open to new opportunities</p>
+      </div>
+      <div class="tb-topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="showView('landing')">← Home</button>
+        <button class="btn btn-gold btn-sm" id="tb-post-btn" onclick="tbShowPostForm()">
+          + Post My Profile
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <div class="tb-search-section">
+    <div class="tb-search-card">
+      <div class="tb-search-row">
+        <div class="tb-search-input-wrap">
+          <span class="tb-search-icon">🔍</span>
+          <input
+            class="tb-search-input"
+            id="tb-keyword"
+            type="text"
+            placeholder="Search by name, profession, or skill…"
+            oninput="tbFilterProfiles()"
+            autocomplete="off"
+          >
+        </div>
+        <div class="tb-search-selects">
+          <select class="tb-select" id="tb-cat" onchange="tbFilterProfiles()">
+            <option value="">All Professions</option>
+            <option>IT &amp; Tech</option>
+            <option>Marketing</option>
+            <option>Finance</option>
+            <option>Design</option>
+            <option>NGO / Development</option>
+            <option>Healthcare</option>
+            <option>Education</option>
+            <option>Hospitality</option>
+            <option>Agriculture</option>
+            <option>Media</option>
+            <option>Legal</option>
+            <option>HR</option>
+            <option>Government</option>
+            <option>Sales</option>
+            <option>Engineering</option>
+            <option>Other</option>
+          </select>
+          <select class="tb-select" id="tb-avail" onchange="tbFilterProfiles()">
+            <option value="">Any Availability</option>
+            <option value="Immediately">Available Immediately</option>
+            <option value="2 Weeks">Available in 2 Weeks</option>
+            <option value="1 Month">Available in 1 Month</option>
+            <option value="Open to Offers">Open to Offers</option>
+          </select>
+        </div>
+        <button class="btn btn-gold tb-search-btn" onclick="tbFilterProfiles()">Search</button>
+      </div>
+      <div class="tb-result-meta" id="tb-result-meta"></div>
+    </div>
+  </div>
+
+  <!-- Profile grid -->
+  <div class="tb-list-wrap">
+    <div class="tb-profile-grid" id="tb-profile-grid"></div>
+    <div class="tb-empty" id="tb-empty" style="display:none">
+      <div class="tb-empty-icon">🎯</div>
+      <h3>No profiles match your search</h3>
+      <p>Try different keywords or clear your filters.</p>
+      <button class="btn btn-gold btn-sm"
+        onclick="document.getElementById('tb-keyword').value='';
+                 document.getElementById('tb-cat').value='';
+                 document.getElementById('tb-avail').value='';
+                 tbFilterProfiles()">Clear Filters</button>
+    </div>
+  </div>
+
+  <!-- Profile Detail Modal -->
+  <div class="tb-modal-backdrop" id="tb-modal-backdrop" style="display:none">
+    <div class="tb-modal" id="tb-modal" role="dialog" aria-modal="true">
+      <div class="tb-modal-head">
+        <div class="tb-modal-head-left">
+          <div class="tb-modal-avatar" id="tb-modal-avatar"></div>
+          <div>
+            <h2 class="tb-modal-name" id="tb-modal-name"></h2>
+            <p class="tb-modal-role" id="tb-modal-role"></p>
+          </div>
+        </div>
+        <button class="tb-modal-close" id="tb-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="tb-modal-chips" id="tb-modal-chips"></div>
+      <div class="tb-modal-body" id="tb-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Post Profile Modal -->
+  <div class="tb-post-backdrop" id="tb-post-backdrop" style="display:none">
+    <div class="tb-post-modal" id="tb-post-modal" role="dialog" aria-modal="true">
+
+      <div class="tb-post-header">
+        <h3>Post My Profile</h3>
+        <button class="tb-modal-close" onclick="tbClosePostForm()">✕</button>
+      </div>
+
+      <!-- Success state -->
+      <div class="tb-post-success" id="tb-post-success" style="display:none">
+        <div style="font-size:52px;margin-bottom:16px">🎉</div>
+        <h3>Profile Posted!</h3>
+        <p>Your profile is now visible to employers on the Talent Board. Good luck!</p>
+        <button class="btn btn-gold" onclick="tbClosePostForm();tbRenderProfiles(TB_PROFILES)">
+          View Talent Board →
+        </button>
+      </div>
+
+      <!-- Form -->
+      <div class="tb-post-form" id="tb-post-form">
+        <p class="tb-post-subtitle">
+          Let employers find you. Free to post — same share-to-unlock mechanism as job listings.
+        </p>
+
+        <div class="tb-form-section-label">Your Details</div>
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" class="form-control" id="tp-name" placeholder="e.g. Fatou Jallow">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Professional Title *</label>
+            <input type="text" class="form-control" id="tp-title"
+              placeholder="e.g. Senior Marketing Manager">
+          </div>
+          <div class="form-group">
+            <label>Profession Category *</label>
+            <select class="form-control" id="tp-category">
+              <option value="">Select category</option>
+              <option>IT &amp; Tech</option>
+              <option>Marketing</option>
+              <option>Finance</option>
+              <option>Design</option>
+              <option>NGO / Development</option>
+              <option>Healthcare</option>
+              <option>Education</option>
+              <option>Hospitality</option>
+              <option>Agriculture</option>
+              <option>Media</option>
+              <option>Legal</option>
+              <option>HR</option>
+              <option>Government</option>
+              <option>Sales</option>
+              <option>Engineering</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Years of Experience</label>
+            <select class="form-control" id="tp-experience">
+              <option value="">Select</option>
+              <option>Less than 1 year</option>
+              <option>1–3 years</option>
+              <option>3–5 years</option>
+              <option>5–10 years</option>
+              <option>10+ years</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <select class="form-control" id="tp-location">
+              <option value="">Select location</option>
+              <option>Banjul</option>
+              <option>Serrekunda</option>
+              <option>Bakau</option>
+              <option>Fajara</option>
+              <option>Kololi</option>
+              <option>Kairaba Avenue</option>
+              <option>Brikama</option>
+              <option>Kanifing</option>
+              <option>Lamin</option>
+              <option>Basse</option>
+              <option>Remote / Open to Any</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Availability *</label>
+          <div class="type-pills" id="tp-avail-pills">
+            <label class="type-pill selected">
+              <input type="radio" name="tp-avail" value="Immediately" checked
+                onchange="tbSelectPill(this)">⚡ Immediately
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="tp-avail" value="2 Weeks"
+                onchange="tbSelectPill(this)">📅 2 Weeks
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="tp-avail" value="1 Month"
+                onchange="tbSelectPill(this)">🗓 1 Month
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="tp-avail" value="Open to Offers"
+                onchange="tbSelectPill(this)">🤝 Open to Offers
+            </label>
+          </div>
+        </div>
+
+        <div class="tb-form-section-label" style="margin-top:24px">Professional Profile</div>
+        <div class="form-group">
+          <label>Professional Summary *
+            <span style="color:var(--muted);font-weight:400">(min 80 characters)</span>
+          </label>
+          <textarea class="form-control" id="tp-summary" rows="4"
+            placeholder="Describe your background, key strengths, and what kind of role you're looking for…"
+            oninput="tbCharCount('tp-summary','tp-sum-count',600)"></textarea>
+          <span class="char-counter" id="tp-sum-count" style="position:static;display:block;text-align:right;margin-top:4px;font-size:11px;color:var(--muted)">0 / 600</span>
+        </div>
+
+        <div class="form-group">
+          <label>Key Skills
+            <span style="color:var(--muted);font-weight:400">(comma-separated)</span>
+          </label>
+          <input type="text" class="form-control" id="tp-skills"
+            placeholder="e.g. Microsoft Excel, Project Management, Adobe Photoshop">
+        </div>
+
+        <div class="form-group">
+          <label>Highest Qualification</label>
+          <input type="text" class="form-control" id="tp-education"
+            placeholder="e.g. BSc Business Administration — University of The Gambia, 2020">
+        </div>
+
+        <div class="tb-form-section-label" style="margin-top:24px">Contact & Links</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Contact Email *</label>
+            <input type="email" class="form-control" id="tp-email"
+              placeholder="yourname@email.com">
+          </div>
+          <div class="form-group">
+            <label>Phone
+              <span style="color:var(--muted);font-weight:400">(optional)</span>
+            </label>
+            <input type="text" class="form-control" id="tp-phone"
+              placeholder="+220 XXX XXXX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>LinkedIn / Portfolio URL
+              <span style="color:var(--muted);font-weight:400">(optional)</span>
+            </label>
+            <input type="url" class="form-control" id="tp-link"
+              placeholder="https://linkedin.com/in/yourname">
+          </div>
+          <div class="form-group">
+            <label>GamHub Jobs CV URL
+              <span style="color:var(--muted);font-weight:400">(optional — share your built CV)</span>
+            </label>
+            <input type="url" class="form-control" id="tp-cv-link"
+              placeholder="https://gamhubjobs.com/?cv=yourname">
+          </div>
+        </div>
+
+        <div class="tb-form-section-label" style="margin-top:24px">Preferences</div>
+        <div class="form-group">
+          <label>Job Type Preference</label>
+          <div class="type-pills" id="tp-type-pills">
+            <label class="type-pill selected">
+              <input type="radio" name="tp-jobtype" value="Full-Time" checked
+                onchange="tbSelectPill(this)">💼 Full-Time
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="tp-jobtype" value="Part-Time"
+                onchange="tbSelectPill(this)">⏰ Part-Time
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="tp-jobtype" value="Remote"
+                onchange="tbSelectPill(this)">🌍 Remote
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="tp-jobtype" value="Contract"
+                onchange="tbSelectPill(this)">📋 Contract
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="tp-jobtype" value="Any"
+                onchange="tbSelectPill(this)">🤝 Any
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Salary Expectation
+            <span style="color:var(--muted);font-weight:400">(optional)</span>
+          </label>
+          <input type="text" class="form-control" id="tp-salary"
+            placeholder="e.g. GMD 25,000 – 35,000 / month">
+        </div>
+
+        <div style="margin-top:32px">
+          <button class="btn btn-gold btn-lg btn-full" id="tp-submit-btn"
+            onclick="tbSubmitProfile()">
+            ✦ Post My Profile Free
+          </button>
+          <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px">
+            Free to post · Visible to verified Gambian employers · Share 5× to unlock
+          </p>
+        </div>
+      </div><!-- /tb-post-form -->
+
+    </div>
+  </div>
+
+</div><!-- /view-talent-board -->
 <!-- ============================================================
      COOKIE CONSENT BANNER
      ============================================================ -->
@@ -1957,5 +2294,6 @@
 <script src="script.js" defer></script>
 <script src="tour-system.js" defer></script>
 <script src="unlock-share-feature.js" defer></script>
+<script src="talent-board.js" defer></script>
 </body>
 </html>
