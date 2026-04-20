@@ -1,8 +1,6 @@
 /* ============================================================
    GAMHUB JOBS — TALENT BOARD STYLES
    talent-board.css
-   Add to index.html <head>:
-     <link rel="stylesheet" href="talent-board.css">
    ============================================================ */
 
 /* ============================================================
@@ -185,9 +183,9 @@
   align-self: flex-start;
 }
 .avail-now   { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.35); color: #6ee7b7; }
-.avail-soon  { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); color: #fcd34d; }
-.avail-month { background: rgba(63,162,224,0.12); border: 1px solid rgba(63,162,224,0.35); color: #7ec8f0; }
-.avail-open  { background: rgba(212,168,83,0.1);  border: 1px solid rgba(212,168,83,0.3);  color: var(--gold2); }
+.avail-soon  { background: rgba(251,191,36,0.12);  border: 1px solid rgba(251,191,36,0.35);  color: #fcd34d; }
+.avail-month { background: rgba(63,162,224,0.12);  border: 1px solid rgba(63,162,224,0.35);  color: #7ec8f0; }
+.avail-open  { background: rgba(212,168,83,0.1);   border: 1px solid rgba(212,168,83,0.3);   color: var(--gold2); }
 
 .tb-card-meta {
   display: flex; flex-wrap: wrap; gap: 6px;
@@ -272,7 +270,7 @@
 .tb-modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.72);
-  z-index: 1200;
+  z-index: 9998;
   display: flex; align-items: flex-end; justify-content: center;
   padding: 0;
   opacity: 0; pointer-events: none;
@@ -285,6 +283,8 @@
 }
 
 .tb-modal {
+  position: relative;
+  z-index: 9999;
   background: var(--bg2);
   border: 1px solid var(--border);
   width: 100%; max-width: 680px;
@@ -343,13 +343,13 @@
   padding: 5px 12px; border-radius: 100px;
   font-size: 12px; font-weight: 600;
 }
-.tb-chip.avail-now   { background: rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); color:#6ee7b7; }
-.tb-chip.avail-soon  { background: rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); color:#fcd34d; }
-.tb-chip.avail-month { background: rgba(63,162,224,0.1); border:1px solid rgba(63,162,224,0.3); color:#7ec8f0; }
-.tb-chip.avail-open  { background: rgba(212,168,83,0.1); border:1px solid rgba(212,168,83,0.3); color:var(--gold2); }
-.tb-chip-cat    { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text2); }
-.tb-chip-type   { background: rgba(167,139,250,0.1);  border:1px solid rgba(167,139,250,0.3); color:#c4b5fd; }
-.tb-chip-salary { background: rgba(212,168,83,0.1);   border:1px solid rgba(212,168,83,0.3);  color:var(--gold); }
+.tb-chip.avail-now   { background: rgba(52,211,153,0.1);  border:1px solid rgba(52,211,153,0.3);  color:#6ee7b7; }
+.tb-chip.avail-soon  { background: rgba(251,191,36,0.1);   border:1px solid rgba(251,191,36,0.3);  color:#fcd34d; }
+.tb-chip.avail-month { background: rgba(63,162,224,0.1);   border:1px solid rgba(63,162,224,0.3);  color:#7ec8f0; }
+.tb-chip.avail-open  { background: rgba(212,168,83,0.1);   border:1px solid rgba(212,168,83,0.3);  color:var(--gold2); }
+.tb-chip-cat    { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);  color:var(--text2); }
+.tb-chip-type   { background: rgba(167,139,250,0.1);  border:1px solid rgba(167,139,250,0.3);  color:#c4b5fd; }
+.tb-chip-salary { background: rgba(212,168,83,0.1);   border:1px solid rgba(212,168,83,0.3);   color:var(--gold); }
 
 .tb-modal-body {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -369,7 +369,6 @@
 .tb-detail-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px;
 }
-.tb-detail-item {}
 .tb-detail-label {
   font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.06em;
@@ -413,24 +412,41 @@
 .tb-apply-ghost:hover { border-color: var(--gold) !important; color: var(--gold); }
 
 /* ============================================================
-   POST PROFILE MODAL
+   POST PROFILE MODAL  — FIXED
    ============================================================ */
 .tb-post-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.82);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  z-index: 1300;
+
+  /* Dark scrim — no blur so the modal content is never blurred */
+  background: rgba(0,0,0,0.85);
+
+  /* Removed backdrop-filter: blur() — this was causing the modal
+     content to appear blurred because the modal was composited
+     inside the same stacking context as the blurred backdrop. */
+
+  z-index: 9999;
   display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; pointer-events: none;
+  padding: 0;
+
+  /* Start invisible; JS adds .tb-open to fade in */
+  opacity: 0;
+  pointer-events: none;
   transition: opacity 0.3s ease;
 }
-.tb-post-backdrop.tb-open { opacity: 1; pointer-events: auto; }
+.tb-post-backdrop.tb-open {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 @media (min-width: 640px) {
   .tb-post-backdrop { align-items: center; padding: 20px; }
 }
 
+/* The modal card itself sits above the backdrop in its own layer */
 .tb-post-modal {
+  position: relative;
+  z-index: 10000;           /* explicitly above the backdrop */
+
   background: var(--bg2);
   border: 1px solid var(--border);
   width: 100%; max-width: 720px;
@@ -439,10 +455,19 @@
   display: flex; flex-direction: column;
   overflow: hidden;
   box-shadow: 0 -12px 60px rgba(0,0,0,0.6);
+
+  /* Slide up from below */
   transform: translateY(40px);
   transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+
+  /* Ensure content inside is never blurred */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  isolation: isolate;       /* new stacking context so children are unaffected */
 }
-.tb-post-backdrop.tb-open .tb-post-modal { transform: translateY(0); }
+.tb-post-backdrop.tb-open .tb-post-modal {
+  transform: translateY(0);
+}
 
 @media (min-width: 640px) {
   .tb-post-modal {
@@ -459,13 +484,14 @@
   flex-shrink: 0;
 }
 .tb-post-header h3 { font-size: 18px; font-weight: 700; margin: 0; }
-.tb-post-subtitle  {
+.tb-post-subtitle {
   font-size: 13px; color: var(--muted);
   margin-bottom: 24px; line-height: 1.6;
 }
 
 .tb-post-form {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   flex: 1; min-height: 0;
   padding: 24px 24px 60px;
 }
@@ -473,11 +499,16 @@
   text-align: center;
   padding: 60px 40px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .tb-post-success h3 { font-size: 26px; margin-bottom: 10px; }
 .tb-post-success p  { font-size: 14px; color: var(--text2); margin-bottom: 28px; line-height: 1.7; }
+
 .tb-form-section-label {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   font-size: 10px; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--gold); margin-bottom: 16px;
@@ -491,25 +522,25 @@
    RESPONSIVE
    ============================================================ */
 @media (max-width: 768px) {
-  .tb-topbar   { padding: 0 16px; }
-  .tb-topbar-inner { height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+  .tb-topbar         { padding: 0 16px; }
+  .tb-topbar-inner   { height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
   .tb-search-section { padding: 20px 16px; }
-  .tb-search-row { flex-direction: column; align-items: stretch; }
+  .tb-search-row     { flex-direction: column; align-items: stretch; }
   .tb-search-input-wrap { min-width: unset; }
   .tb-search-selects { flex-direction: column; }
-  .tb-select { min-width: unset; }
-  .tb-search-btn { width: 100%; }
-  .tb-list-wrap { padding: 20px 16px 60px; }
-  .tb-profile-grid { grid-template-columns: 1fr; }
-  .tb-card-actions { flex-wrap: wrap; }
-  .tb-post-form { padding: 18px 16px 80px; }
-  .form-row { grid-template-columns: 1fr; }
+  .tb-select         { min-width: unset; }
+  .tb-search-btn     { width: 100%; }
+  .tb-list-wrap      { padding: 20px 16px 60px; }
+  .tb-profile-grid   { grid-template-columns: 1fr; }
+  .tb-card-actions   { flex-wrap: wrap; }
+  .tb-post-form      { padding: 18px 16px 80px; }
+  .form-row          { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
-  .tb-card-head { flex-wrap: wrap; }
-  .tb-avail-badge { order: -1; }
-  .tb-card-footer { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .tb-card-head    { flex-wrap: wrap; }
+  .tb-avail-badge  { order: -1; }
+  .tb-card-footer  { flex-direction: column; align-items: flex-start; gap: 10px; }
   .tb-card-actions { width: 100%; justify-content: space-between; }
-  .tb-btn-contact { flex: 1; justify-content: center; }
+  .tb-btn-contact  { flex: 1; justify-content: center; }
 }
