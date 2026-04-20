@@ -182,14 +182,12 @@
   flex-shrink: 0;
   align-self: flex-start;
 }
-.avail-now   { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.35); color: #6ee7b7; }
-.avail-soon  { background: rgba(251,191,36,0.12);  border: 1px solid rgba(251,191,36,0.35);  color: #fcd34d; }
-.avail-month { background: rgba(63,162,224,0.12);  border: 1px solid rgba(63,162,224,0.35);  color: #7ec8f0; }
-.avail-open  { background: rgba(212,168,83,0.1);   border: 1px solid rgba(212,168,83,0.3);   color: var(--gold2); }
+.avail-now   { background: rgba(52,211,153,0.12);  border: 1px solid rgba(52,211,153,0.35);  color: #6ee7b7; }
+.avail-soon  { background: rgba(251,191,36,0.12);   border: 1px solid rgba(251,191,36,0.35);  color: #fcd34d; }
+.avail-month { background: rgba(63,162,224,0.12);   border: 1px solid rgba(63,162,224,0.35);  color: #7ec8f0; }
+.avail-open  { background: rgba(212,168,83,0.1);    border: 1px solid rgba(212,168,83,0.3);   color: var(--gold2); }
 
-.tb-card-meta {
-  display: flex; flex-wrap: wrap; gap: 6px;
-}
+.tb-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
 .tb-meta-item {
   font-size: 11px;
   color: var(--muted);
@@ -207,9 +205,7 @@
   overflow: hidden;
   margin: 0;
 }
-.tb-card-skills {
-  display: flex; flex-wrap: wrap; gap: 6px;
-}
+.tb-card-skills { display: flex; flex-wrap: wrap; gap: 6px; }
 .tb-skill-tag {
   font-size: 11px;
   background: rgba(212,168,83,0.08);
@@ -242,6 +238,9 @@
   padding: 7px 14px; font-size: 12px; font-weight: 600;
   cursor: pointer; font-family: var(--font-body);
   transition: all 0.2s; white-space: nowrap;
+  /* Ensure tappable on mobile */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .tb-btn-view:hover { border-color: var(--gold); color: var(--gold); }
 .tb-btn-contact {
@@ -252,6 +251,9 @@
   cursor: pointer; font-family: var(--font-body);
   transition: transform 0.2s, box-shadow 0.2s;
   white-space: nowrap;
+  /* Ensure tappable on mobile */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .tb-btn-contact:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(212,168,83,0.35); }
 
@@ -266,11 +268,13 @@
 
 /* ============================================================
    PROFILE DETAIL MODAL
+   z-index sits above tour rings (9150) and tour popovers (9200)
    ============================================================ */
 .tb-modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.72);
-  z-index: 9998;
+  /* z-index above tour system (max 9200) but below post modal */
+  z-index: 9300;
   display: flex; align-items: flex-end; justify-content: center;
   padding: 0;
   opacity: 0; pointer-events: none;
@@ -284,7 +288,7 @@
 
 .tb-modal {
   position: relative;
-  z-index: 9999;
+  z-index: 9301;
   background: var(--bg2);
   border: 1px solid var(--border);
   width: 100%; max-width: 680px;
@@ -295,6 +299,10 @@
   box-shadow: 0 -8px 48px rgba(0,0,0,0.5);
   transform: translateY(32px);
   transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
+  isolation: isolate;
+  /* No backdrop-filter — avoids blurring modal content */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .tb-modal-backdrop.tb-open .tb-modal { transform: translateY(0); }
 
@@ -327,10 +335,13 @@
 .tb-modal-role { font-size: 13px; color: var(--text2); margin: 0; }
 .tb-modal-close {
   background: rgba(255,255,255,0.07); border: 1px solid var(--border);
-  color: var(--muted); width: 32px; height: 32px; border-radius: 50%;
+  color: var(--muted); width: 36px; height: 36px; border-radius: 50%;
   font-size: 14px; cursor: pointer; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s; margin-top: 2px;
+  /* Larger tap target on mobile */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .tb-modal-close:hover { background: rgba(255,255,255,0.12); color: var(--text); }
 
@@ -347,9 +358,9 @@
 .tb-chip.avail-soon  { background: rgba(251,191,36,0.1);   border:1px solid rgba(251,191,36,0.3);  color:#fcd34d; }
 .tb-chip.avail-month { background: rgba(63,162,224,0.1);   border:1px solid rgba(63,162,224,0.3);  color:#7ec8f0; }
 .tb-chip.avail-open  { background: rgba(212,168,83,0.1);   border:1px solid rgba(212,168,83,0.3);  color:var(--gold2); }
-.tb-chip-cat    { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);  color:var(--text2); }
-.tb-chip-type   { background: rgba(167,139,250,0.1);  border:1px solid rgba(167,139,250,0.3);  color:#c4b5fd; }
-.tb-chip-salary { background: rgba(212,168,83,0.1);   border:1px solid rgba(212,168,83,0.3);   color:var(--gold); }
+.tb-chip-cat    { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text2); }
+.tb-chip-type   { background: rgba(167,139,250,0.1);  border:1px solid rgba(167,139,250,0.3); color:#c4b5fd; }
+.tb-chip-salary { background: rgba(212,168,83,0.1);   border:1px solid rgba(212,168,83,0.3);  color:var(--gold); }
 
 .tb-modal-body {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -396,10 +407,14 @@
 .tb-contact-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .tb-apply-btn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 22px; border-radius: 100px;
+  padding: 12px 22px; border-radius: 100px;
   font-size: 14px; font-weight: 700; font-family: var(--font-body);
   cursor: pointer; border: none; transition: transform 0.2s, box-shadow 0.2s;
   letter-spacing: 0.03em;
+  /* Reliable tap on mobile */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 44px;  /* iOS minimum tap target */
 }
 .tb-apply-primary {
   background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #0a0a0a;
@@ -412,23 +427,18 @@
 .tb-apply-ghost:hover { border-color: var(--gold) !important; color: var(--gold); }
 
 /* ============================================================
-   POST PROFILE MODAL  — FIXED
+   POST PROFILE MODAL
+   z-index sits above profile detail modal
    ============================================================ */
 .tb-post-backdrop {
   position: fixed; inset: 0;
-
-  /* Dark scrim — no blur so the modal content is never blurred */
-  background: rgba(0,0,0,0.85);
-
-  /* Removed backdrop-filter: blur() — this was causing the modal
-     content to appear blurred because the modal was composited
-     inside the same stacking context as the blurred backdrop. */
-
-  z-index: 9999;
+  /* Plain dark scrim — NO backdrop-filter/blur on the backdrop.
+     blur() on a parent creates a stacking context that makes
+     child elements appear blurred on some mobile browsers. */
+  background: rgba(0,0,0,0.88);
+  z-index: 9400;
   display: flex; align-items: flex-end; justify-content: center;
   padding: 0;
-
-  /* Start invisible; JS adds .tb-open to fade in */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -442,10 +452,13 @@
   .tb-post-backdrop { align-items: center; padding: 20px; }
 }
 
-/* The modal card itself sits above the backdrop in its own layer */
 .tb-post-modal {
+  /* Own stacking context so no blur or filter from ancestors bleeds in */
   position: relative;
-  z-index: 10000;           /* explicitly above the backdrop */
+  z-index: 9401;
+  isolation: isolate;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -456,14 +469,8 @@
   overflow: hidden;
   box-shadow: 0 -12px 60px rgba(0,0,0,0.6);
 
-  /* Slide up from below */
   transform: translateY(40px);
   transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
-
-  /* Ensure content inside is never blurred */
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  isolation: isolate;       /* new stacking context so children are unaffected */
 }
 .tb-post-backdrop.tb-open .tb-post-modal {
   transform: translateY(0);
