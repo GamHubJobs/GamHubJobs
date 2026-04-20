@@ -137,9 +137,52 @@ const TB_STORAGE_KEY  = 'ghj_talent_profiles';
 const TB_ADMIN_WA_NUM = '2206371941';
 
 /* ============================================================
+   BODY SCROLL LOCK HELPERS
+   A reference-counted lock so nested open/close calls never
+   leave the page stuck. tbForceUnlockScroll() is called on
+   every view change as a safety net.
+   ============================================================ */
+let _tbScrollLockCount = 0;
+let _tbSavedScrollY    = 0;
+
+function tbLockScroll() {
+  if (_tbScrollLockCount === 0) {
+    _tbSavedScrollY              = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top      = '-' + _tbSavedScrollY + 'px';
+    document.body.style.width    = '100%';
+    document.body.style.overflow = 'hidden';
+  }
+  _tbScrollLockCount++;
+}
+
+function tbUnlockScroll() {
+  if (_tbScrollLockCount <= 0) return;
+  _tbScrollLockCount--;
+  if (_tbScrollLockCount === 0) {
+    document.body.style.position = '';
+    document.body.style.top      = '';
+    document.body.style.width    = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, _tbSavedScrollY);
+  }
+}
+
+/* Hard reset — called on any view change to guarantee no lock persists */
+function tbForceUnlockScroll() {
+  _tbScrollLockCount           = 0;
+  document.body.style.position = '';
+  document.body.style.top      = '';
+  document.body.style.width    = '';
+  document.body.style.overflow = '';
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 function initTalentBoard() {
+  /* Release any stale scroll lock from a previous visit to this view */
+  tbForceUnlockScroll();
   tbLoadLocalProfiles();
   tbRenderProfiles(TB_PROFILES);
   tbInitModal();
@@ -212,6 +255,12 @@ function tbRenderProfiles(list) {
     `Showing <strong>${list.length}</strong> of <strong>${TB_PROFILES.length}</strong> professionals`;
 
   list.forEach(profile => grid.appendChild(tbCreateCard(profile)));
+
+  /* Stamp IDs so the tour system can target them */
+  requestAnimationFrame(() => {
+    const firstContact = grid.querySelector('.tb-btn-contact');
+    if (firstContact && !firstContact.id) firstContact.id = 'tb-first-contact-btn';
+  });
 }
 
 /* ============================================================
@@ -326,13 +375,11 @@ function tbOpenProfile(id) {
         ${profile.salary     ? `<div class="tb-detail-item"><div class="tb-detail-label">Salary Expectation</div><div class="tb-detail-val">${tbEsc(profile.salary)}</div></div>` : ''}
       </div>
     </div>
-
     ${profile.summary ? `
     <div class="tb-modal-section">
       <div class="tb-modal-section-title">👤 About</div>
       <p class="tb-modal-body-text">${tbEsc(profile.summary)}</p>
     </div>` : ''}
-
     ${skills.length ? `
     <div class="tb-modal-section">
       <div class="tb-modal-section-title">🛠 Skills</div>
@@ -340,7 +387,6 @@ function tbOpenProfile(id) {
         ${skills.map(s => `<span class="tb-skill-tag">${tbEsc(s)}</span>`).join('')}
       </div>
     </div>` : ''}
-
     ${(profile.link || profile.cv_link) ? `
     <div class="tb-modal-section">
       <div class="tb-modal-section-title">🔗 Links</div>
@@ -349,7 +395,6 @@ function tbOpenProfile(id) {
         ${profile.cv_link ? `<a href="${tbEsc(profile.cv_link)}" target="_blank" rel="noopener noreferrer" class="tb-link-btn">View CV ↗</a>` : ''}
       </div>
     </div>` : ''}
-
     <div class="tb-modal-section tb-modal-contact-section">
       <div class="tb-modal-section-title">🚀 Contact This Candidate</div>
       <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7">
@@ -369,10 +414,7 @@ function tbOpenProfile(id) {
   const backdrop = document.getElementById('tb-modal-backdrop');
   if (!backdrop) return;
   backdrop.style.display = 'flex';
-  document.body.dataset.tbScrollY = window.scrollY;
-  document.body.style.position    = 'fixed';
-  document.body.style.top         = '-' + window.scrollY + 'px';
-  document.body.style.width       = '100%';
+  tbLockScroll();
   requestAnimationFrame(() => requestAnimationFrame(() => backdrop.classList.add('tb-open')));
 }
 
@@ -380,11 +422,7 @@ function tbCloseModal() {
   const backdrop = document.getElementById('tb-modal-backdrop');
   if (!backdrop || !backdrop.classList.contains('tb-open')) return;
   backdrop.classList.remove('tb-open');
-  const scrollY = parseInt(document.body.dataset.tbScrollY || '0', 10);
-  document.body.style.position = '';
-  document.body.style.top      = '';
-  document.body.style.width    = '';
-  window.scrollTo(0, scrollY);
+  tbUnlockScroll();
   setTimeout(() => { backdrop.style.display = 'none'; }, 320);
 }
 
@@ -397,10 +435,8 @@ function tbContactCandidate(id) {
     tbToast('No contact email available for this profile.', 'error');
     return;
   }
-  const subject = encodeURIComponent(
-    'Employer Enquiry via GamHub Jobs — ' + profile.title
-  );
-  const body = encodeURIComponent(
+  const subject = encodeURIComponent('Employer Enquiry via GamHub Jobs — ' + profile.title);
+  const body    = encodeURIComponent(
     'Hello ' + (profile.name || 'there') + ',\n\n' +
     'I found your profile on the GamHub Jobs Talent Board and I am interested in discussing a potential opportunity with you.\n\n' +
     'Please let me know if you are available for a conversation.\n\n' +
@@ -410,10 +446,10 @@ function tbContactCandidate(id) {
 }
 
 /* ============================================================
-   POST PROFILE FORM  — FIXED
+   POST PROFILE FORM
    ============================================================ */
 function tbShowPostForm() {
-  // Require auth — mirrors generateCV() in script.js
+  /* Require auth */
   if (typeof currentUser !== 'undefined' && !currentUser) {
     if (typeof showAuthModal === 'function') {
       showAuthModal(() => tbShowPostForm());
@@ -424,31 +460,22 @@ function tbShowPostForm() {
   const backdrop = document.getElementById('tb-post-backdrop');
   if (!backdrop) return;
 
-  // Reset form to initial state
+  /* Reset to form state */
   const formEl    = document.getElementById('tb-post-form');
   const successEl = document.getElementById('tb-post-success');
   if (formEl)    formEl.style.display    = '';
   if (successEl) successEl.style.display = 'none';
 
-  // Show backdrop (must set display BEFORE starting CSS transition)
-  backdrop.style.display      = 'flex';
-  backdrop.style.opacity      = '0';
-  backdrop.style.pointerEvents = 'auto';
+  backdrop.style.display = 'flex';
+  tbLockScroll();
 
-  // Lock body scroll using the same fixed-position pattern used elsewhere
-  document.body.dataset.tbPostScrollY = window.scrollY;
-  document.body.style.position        = 'fixed';
-  document.body.style.top             = '-' + window.scrollY + 'px';
-  document.body.style.width           = '100%';
-
-  // Double rAF: first frame applies display:flex, second triggers the CSS transition
+  /* Double rAF: first frame paints display:flex, second triggers the CSS opacity transition */
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       backdrop.classList.add('tb-open');
     });
   });
 
-  // Auto-fill from saved CV data if available
   tbAutoFillFromCV();
 }
 
@@ -456,19 +483,15 @@ function tbClosePostForm() {
   const backdrop = document.getElementById('tb-post-backdrop');
   if (!backdrop) return;
 
+  const wasOpen = backdrop.classList.contains('tb-open');
   backdrop.classList.remove('tb-open');
 
-  // Restore body scroll (mirrors tbShowPostForm lock)
-  const scrollY = parseInt(document.body.dataset.tbPostScrollY || '0', 10);
-  document.body.style.position = '';
-  document.body.style.top      = '';
-  document.body.style.width    = '';
-  window.scrollTo(0, scrollY);
+  if (wasOpen) tbUnlockScroll();
 
   setTimeout(() => { backdrop.style.display = 'none'; }, 320);
 }
 
-/* Auto-fill name/title/email/skills from the CV builder localStorage */
+/* Auto-fill from CV builder localStorage */
 function tbAutoFillFromCV() {
   try {
     const cv = JSON.parse(localStorage.getItem('gamhubjobs_cv_data') || 'null');
@@ -484,17 +507,15 @@ function tbAutoFillFromCV() {
     setVal('tp-summary', cv.summary);
     if (cv.skills && cv.skills.length) {
       const skillsEl = document.getElementById('tp-skills');
-      if (skillsEl && !skillsEl.value) {
+      if (skillsEl && !skillsEl.value)
         skillsEl.value = cv.skills.map(s => s.name).filter(Boolean).join(', ');
-      }
     }
     if (cv.education && cv.education.length) {
-      const eduEl   = document.getElementById('tp-education');
+      const eduEl    = document.getElementById('tp-education');
       const firstEdu = cv.education[0];
-      if (eduEl && !eduEl.value && firstEdu) {
+      if (eduEl && !eduEl.value && firstEdu)
         eduEl.value = [firstEdu.qualification, firstEdu.institution, firstEdu.year]
           .filter(Boolean).join(' — ');
-      }
     }
   } catch(e) {}
 }
@@ -519,17 +540,17 @@ function tbCharCount(inputId, countId, max) {
    SUBMIT PROFILE
    ============================================================ */
 function tbSubmitProfile() {
-  const name     = document.getElementById('tp-name')?.value.trim()     || '';
-  const title    = document.getElementById('tp-title')?.value.trim()    || '';
-  const category = document.getElementById('tp-category')?.value        || '';
-  const email    = document.getElementById('tp-email')?.value.trim()    || '';
-  const summary  = document.getElementById('tp-summary')?.value.trim()  || '';
+  const name     = document.getElementById('tp-name')?.value.trim()    || '';
+  const title    = document.getElementById('tp-title')?.value.trim()   || '';
+  const category = document.getElementById('tp-category')?.value       || '';
+  const email    = document.getElementById('tp-email')?.value.trim()   || '';
+  const summary  = document.getElementById('tp-summary')?.value.trim() || '';
 
-  if (!name)               { tbToast('Please enter your full name', 'error');           return; }
-  if (!title)              { tbToast('Please enter your professional title', 'error');  return; }
-  if (!category)           { tbToast('Please select a profession category', 'error');   return; }
-  if (!email || !email.includes('@')) { tbToast('Please enter a valid email', 'error'); return; }
-  if (summary.length < 80) { tbToast('Summary must be at least 80 characters', 'error'); return; }
+  if (!name)                          { tbToast('Please enter your full name', 'error');            return; }
+  if (!title)                         { tbToast('Please enter your professional title', 'error');   return; }
+  if (!category)                      { tbToast('Please select a profession category', 'error');    return; }
+  if (!email || !email.includes('@')) { tbToast('Please enter a valid email', 'error');             return; }
+  if (summary.length < 80)            { tbToast('Summary must be at least 80 characters', 'error'); return; }
 
   const payload = {
     id:           'local-' + Date.now(),
@@ -540,14 +561,14 @@ function tbSubmitProfile() {
     location:     tbSanitize(document.getElementById('tp-location')?.value   || '', 100),
     availability: document.querySelector('input[name="tp-avail"]:checked')?.value || 'Open to Offers',
     summary:      tbSanitize(summary, 1000),
-    skills:       tbSanitize(document.getElementById('tp-skills')?.value.trim()   || '', 300),
-    education:    tbSanitize(document.getElementById('tp-education')?.value.trim()|| '', 200),
+    skills:       tbSanitize(document.getElementById('tp-skills')?.value.trim()    || '', 300),
+    education:    tbSanitize(document.getElementById('tp-education')?.value.trim() || '', 200),
     email:        tbSanitize(email, 254),
-    phone:        tbSanitize(document.getElementById('tp-phone')?.value.trim()    || '', 30),
-    link:         tbSanitizeUrl(document.getElementById('tp-link')?.value.trim()  || ''),
+    phone:        tbSanitize(document.getElementById('tp-phone')?.value.trim()     || '', 30),
+    link:         tbSanitizeUrl(document.getElementById('tp-link')?.value.trim()   || ''),
     cv_link:      tbSanitizeUrl(document.getElementById('tp-cv-link')?.value.trim()|| ''),
     job_type:     document.querySelector('input[name="tp-jobtype"]:checked')?.value || 'Full-Time',
-    salary:       tbSanitize(document.getElementById('tp-salary')?.value.trim()   || '', 80),
+    salary:       tbSanitize(document.getElementById('tp-salary')?.value.trim()    || '', 80),
     approved:     true,
     submitted_at: new Date().toISOString(),
   };
@@ -582,7 +603,6 @@ function tbSendAdminNotification(profile) {
       day: 'numeric', month: 'long', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
-
     const msg =
       '🌟 *NEW TALENT PROFILE — GamHub Jobs*\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
@@ -603,7 +623,6 @@ function tbSendAdminNotification(profile) {
       '🛠 *SKILLS*\n'   + (profile.skills        || '—') + '\n\n' +
       '🎓 *EDUCATION*\n'+ (profile.education     || '—') + '\n\n' +
       '🕐 Submitted: '  + submittedAt;
-
     const encoded = encodeURIComponent(msg);
     window.open('https://wa.me/' + TB_ADMIN_WA_NUM + '?text=' + encoded, '_blank', 'noopener,noreferrer');
   } catch(e) {
@@ -619,24 +638,17 @@ function tbEsc(str) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-
 function tbSanitize(val, max) {
   return String(val || '').trim().slice(0, max || 500);
 }
-
 function tbSanitizeUrl(val) {
   const s = String(val || '').trim();
   return /^https?:\/\//i.test(s) ? s.slice(0, 500) : '';
 }
-
 function tbToast(msg, type, duration) {
-  if (typeof toast === 'function') {
-    toast(msg, type || 'default', duration || 3500);
-  } else {
-    console.log('[TalentBoard]', msg);
-  }
+  if (typeof toast === 'function') toast(msg, type || 'default', duration || 3500);
+  else console.log('[TalentBoard]', msg);
 }
-
 function tbTimeAgo(iso) {
   if (!iso) return '';
   const diff  = Date.now() - new Date(iso).getTime();
@@ -651,11 +663,33 @@ function tbTimeAgo(iso) {
 
 /* ============================================================
    HOOK INTO showView()
+   Releases scroll lock and collapses any open modals on
+   every navigation — this is the universal safety net.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const _originalShowView = window.showView;
+
   window.showView = function(id) {
+    /* 1. Hard-release any scroll lock before switching views */
+    tbForceUnlockScroll();
+
+    /* 2. Collapse TB modals without going through close logic
+          (avoids double unlock calls) */
+    const postBackdrop = document.getElementById('tb-post-backdrop');
+    const viewBackdrop = document.getElementById('tb-modal-backdrop');
+    if (postBackdrop) {
+      postBackdrop.classList.remove('tb-open');
+      setTimeout(() => { postBackdrop.style.display = 'none'; }, 320);
+    }
+    if (viewBackdrop) {
+      viewBackdrop.classList.remove('tb-open');
+      setTimeout(() => { viewBackdrop.style.display = 'none'; }, 320);
+    }
+
+    /* 3. Call the original routing function */
     if (typeof _originalShowView === 'function') _originalShowView(id);
+
+    /* 4. Init talent board when navigating to it */
     if (id === 'talent-board') {
       requestAnimationFrame(() => initTalentBoard());
     }
