@@ -9,15 +9,13 @@
 const GHJTour = (() => {
 
   /* ── Storage ───────────────────────────────────────────── */
-  const STORAGE_KEY = 'ghj_tour_v3';   // bumped from v2 — resets old hints
+  const STORAGE_KEY = 'ghj_tour_v3';
 
   /* ── Tour definitions ──────────────────────────────────── */
   /*
     trigger: 'scroll'  → fires when the target enters the viewport
              'timer'   → fires after `delay` ms (for always-visible elements)
-    threshold: 0–1     → how much of the element must be visible (default 0.4)
-    delay:             → for 'timer' triggers only
-    noOverlay:true     → skip the dim overlay (for scroll hints — less intrusive)
+    noOverlay:true     → skip the dim overlay (less intrusive for scroll hints)
   */
   const TOURS = [
 
@@ -34,7 +32,6 @@ const GHJTour = (() => {
       groupIndex: 1,
       groupTotal: 2,
     },
-    
 
     /* ── Landing page — scroll-triggered sections ─────────── */
     {
@@ -106,7 +103,6 @@ const GHJTour = (() => {
       groupIndex: 2,
       groupTotal: 3,
     },
-    
 
     /* ── CV Preview ───────────────────────────────────────── */
     {
@@ -150,8 +146,6 @@ const GHJTour = (() => {
     },
     {
       id: 'jobsearch-apply-btn',
-      /* The first Apply Now button rendered in the job grid.
-         The id is stamped onto it dynamically — see _ensureTargetIds(). */
       targetId: 'ghj-first-apply-btn',
       text: 'Ready to apply? <em>Build your CV first</em> — it takes 3 minutes and employers see it instantly',
       side: 'top',
@@ -193,7 +187,6 @@ const GHJTour = (() => {
     },
 
     /* ── Employer Portal ──────────────────────────────────── */
-   
     {
       id: 'employer-plan',
       targetId: 'submit-job-btn',
@@ -207,14 +200,56 @@ const GHJTour = (() => {
       groupIndex: 2,
       groupTotal: 2,
     },
+
+    /* ── Talent Board ─────────────────────────────────────── */
+    {
+      id: 'talentboard-post-btn',
+      targetId: 'tb-post-btn',
+      text: 'Job seekers — tap <em>+ Post My Profile</em> to get discovered by Gambian employers for free',
+      side: 'bottom',
+      view: 'talent-board',
+      trigger: 'timer',
+      delay: 1000,
+      group: 'talentboard',
+      groupIndex: 1,
+      groupTotal: 3,
+    },
+    {
+      id: 'talentboard-search',
+      targetId: 'tb-keyword',
+      text: 'Employers — search by <em>name, skill, or profession</em> to find the right candidate',
+      side: 'bottom',
+      view: 'talent-board',
+      trigger: 'scroll',
+      threshold: 0.8,
+      noOverlay: true,
+      group: 'talentboard',
+      groupIndex: 2,
+      groupTotal: 3,
+    },
+    {
+      id: 'talentboard-contact-btn',
+      /* Stamped onto the first Contact button by tbRenderProfiles() */
+      targetId: 'tb-first-contact-btn',
+      text: 'Tap <em>Contact →</em> on any profile to send a direct email to the candidate instantly',
+      side: 'top',
+      view: 'talent-board',
+      trigger: 'scroll',
+      threshold: 0.5,
+      noOverlay: true,
+      group: 'talentboard',
+      groupIndex: 3,
+      groupTotal: 3,
+    },
+
   ];
 
   /* ── State ─────────────────────────────────────────────── */
   let _dismissed       = {};
   let _activeTimers    = [];
   let _activePopovers  = [];
-  let _scrollObserver  = null;  // IntersectionObserver for scroll hints
-  let _pendingScroll   = [];    // steps waiting for their element to appear
+  let _scrollObserver  = null;
+  let _pendingScroll   = [];
   let _currentView     = null;
 
   /* ── Persistence ───────────────────────────────────────── */
@@ -227,10 +262,7 @@ const GHJTour = (() => {
     catch {}
   }
   function _isDismissed(id) { return !!_dismissed[id]; }
-  function _dismiss(id) {
-    _dismissed[id] = true;
-    _saveState();
-  }
+  function _dismiss(id) { _dismissed[id] = true; _saveState(); }
 
   /* ── DOM helpers ───────────────────────────────────────── */
   function _getOverlay() { return document.getElementById('tour-overlay'); }
@@ -240,8 +272,8 @@ const GHJTour = (() => {
       'nav-build-cv-btn':     () => document.querySelector('.nav-actions .btn-gold'),
       'preview-download-btn': () => document.querySelector('.preview-topbar-group .btn-gold'),
       'cl-import-bar':        () => document.querySelector('.import-cv-bar'),
-      /* Stamp the first Apply Now button in the rendered job grid */
       'ghj-first-apply-btn':  () => document.querySelector('#js-job-grid .js-btn-apply'),
+      'tb-first-contact-btn': () => document.querySelector('#tb-profile-grid .tb-btn-contact'),
     };
     Object.entries(map).forEach(([id, finder]) => {
       if (!document.getElementById(id)) {
@@ -311,13 +343,11 @@ const GHJTour = (() => {
   /* ── Build & show a single popover ─────────────────────── */
   function _showStep(step) {
     if (_isDismissed(step.id)) return;
-    /* Guard: don't show if we've since switched to a different view */
     if (step.view !== '*' && step.view !== _currentView) return;
 
     _ensureTargetIds();
     const targetEl = document.getElementById(step.targetId);
     if (!targetEl) return;
-    /* Don't stack duplicate popovers */
     if (document.getElementById('ghj-pop-' + step.id)) return;
 
     /* Ring */
@@ -367,44 +397,35 @@ const GHJTour = (() => {
 
     _activePopovers.push({ step, pop, ring });
 
-    /* Only show dim overlay if step opts into it */
     if (!step.noOverlay && step.groupIndex === 1) {
       _getOverlay()?.classList.add('active');
     }
-
   }
 
   /* ── Scroll observer ────────────────────────────────────── */
   function _buildObserver() {
-    if (_scrollObserver) {
-      _scrollObserver.disconnect();
-    }
+    if (_scrollObserver) _scrollObserver.disconnect();
 
     _scrollObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
 
-        /* Find which pending step(s) target this element */
         const triggered = _pendingScroll.filter(
           s => document.getElementById(s.targetId) === entry.target
         );
 
         triggered.forEach(step => {
-          /* Remove from pending immediately so it doesn't fire twice */
           _pendingScroll = _pendingScroll.filter(s => s.id !== step.id);
           _scrollObserver.unobserve(entry.target);
 
-          /* Small settle delay so the element is fully visible */
           const settleDelay = step.scrollDelay || 300;
           const t = setTimeout(() => _showStep(step), settleDelay);
           _activeTimers.push(t);
         });
       });
     }, {
-      /* rootMargin: bring the trigger point 10% above the fold bottom
-         so hints appear just as the element becomes comfortably visible */
       rootMargin: '0px 0px -10% 0px',
-      threshold:  0,   /* we use rootMargin for position, not threshold */
+      threshold:  0,
     });
   }
 
@@ -413,8 +434,6 @@ const GHJTour = (() => {
     _ensureTargetIds();
     const targetEl = document.getElementById(step.targetId);
     if (!targetEl) {
-      /* Element may not exist yet (e.g. job cards render async).
-         Retry every 600 ms for up to 8 seconds. */
       let tries = 0;
       const retry = setInterval(() => {
         tries++;
@@ -431,9 +450,7 @@ const GHJTour = (() => {
       return;
     }
 
-    /* If element is already fully visible (e.g. near top of page),
-       show after a short settle rather than waiting for a scroll. */
-    const rect = targetEl.getBoundingClientRect();
+    const rect           = targetEl.getBoundingClientRect();
     const alreadyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
 
     if (alreadyVisible) {
@@ -473,7 +490,6 @@ const GHJTour = (() => {
   function triggerView(viewId) {
     _currentView = viewId;
 
-    /* Stop pending timers and unobserve pending scroll watchers */
     _activeTimers.forEach(t => clearTimeout(t));
     _activeTimers = [];
 
@@ -481,8 +497,6 @@ const GHJTour = (() => {
     _pendingScroll = [];
 
     dismissAll();
-
-    /* Rebuild a fresh observer for this view */
     _buildObserver();
 
     const steps = TOURS.filter(s =>
@@ -493,7 +507,6 @@ const GHJTour = (() => {
       if (step.trigger === 'scroll') {
         _watchForScroll(step);
       } else {
-        /* timer-based (always-visible elements like navbar buttons) */
         const t = setTimeout(() => _showStep(step), step.delay || 800);
         _activeTimers.push(t);
       }
