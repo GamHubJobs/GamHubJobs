@@ -551,3 +551,32 @@
   .tb-card-actions { width: 100%; justify-content: space-between; }
   .tb-btn-contact  { flex: 1; justify-content: center; }
 }
+/* ── Featured profile badge on card ── */
+.tb-featured-badge {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+}
+
+.tb-card.tb-card-featured {
+  border-color: rgba(212,168,83,0.45);
+  box-shadow: 0 4px 24px rgba(212,168,83,0.12);
+}
+
+.tb-card.tb-card-featured::before {
+  opacity: 1; /* always show the gold top bar */
+}
+
+.tb-plan-badge-featured {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 100px;
+  background: rgba(212,168,83,0.12);
+  border: 1px solid rgba(212,168,83,0.35);
+  color: var(--gold2);
+  white-space: nowrap;
+}
+
+/* plan-card re-use — scope to talent board page */
+.tb-plan-card { cursor: pointer; }
