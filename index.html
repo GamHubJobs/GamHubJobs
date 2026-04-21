@@ -1751,23 +1751,6 @@
     </div>
   </div>
 
-  <!-- Profile Detail Modal -->
-  <div class="tb-modal-backdrop" id="tb-modal-backdrop" style="display:none">
-    <div class="tb-modal" id="tb-modal" role="dialog" aria-modal="true">
-      <div class="tb-modal-head">
-        <div class="tb-modal-head-left">
-          <div class="tb-modal-avatar" id="tb-modal-avatar"></div>
-          <div>
-            <h2 class="tb-modal-name" id="tb-modal-name"></h2>
-            <p class="tb-modal-role" id="tb-modal-role"></p>
-          </div>
-        </div>
-        <button class="tb-modal-close" id="tb-modal-close" aria-label="Close">✕</button>
-      </div>
-      <div class="tb-modal-chips" id="tb-modal-chips"></div>
-      <div class="tb-modal-body" id="tb-modal-body"></div>
-    </div>
-  </div>
 
   <!-- Post Profile Modal -->
 <div class="tb-post-backdrop" id="tb-post-backdrop" style="display:none">
@@ -2410,6 +2393,72 @@
   </div><!-- /tb-qa-overlay -->
 
 </div><!-- /view-talent-post -->
+<!-- ============================================================
+     VIEW — TALENT PROFILE (dedicated full page)
+     ============================================================ -->
+<div id="view-talent-profile" class="view">
+
+  <div class="jd-page-topbar">
+    <button class="jd-page-back" id="tp-profile-back-btn">← Back to Talent Board</button>
+    <button class="btn btn-ghost btn-sm" onclick="showView('landing')"
+      style="margin-left:auto">🏠 Home</button>
+  </div>
+
+  <div class="jd-page-hero" id="tp-profile-hero">
+    <div class="tb-modal-avatar" id="tp-profile-avatar"
+      style="width:64px;height:64px;font-size:24px;flex-shrink:0"></div>
+    <div class="jd-page-hero-info">
+      <h1 class="jd-page-title" id="tp-profile-name"></h1>
+      <p class="jd-page-company" id="tp-profile-role"></p>
+      <div class="jd-chips-row" id="tp-profile-chips"></div>
+    </div>
+  </div>
+
+  <div class="jd-page-content">
+    <div class="jd-page-sections">
+
+      <section class="jd-section" id="tp-profile-sec-details">
+        <h3 class="jd-section-title">
+          <span class="jd-section-icon">📋</span> Details
+        </h3>
+        <div class="jd-detail-grid" id="tp-profile-details-grid"></div>
+      </section>
+
+      <section class="jd-section" id="tp-profile-sec-about">
+        <h3 class="jd-section-title">
+          <span class="jd-section-icon">👤</span> About
+        </h3>
+        <p class="jd-body-text" id="tp-profile-summary"></p>
+      </section>
+
+      <section class="jd-section" id="tp-profile-sec-skills">
+        <h3 class="jd-section-title">
+          <span class="jd-section-icon">🛠</span> Skills
+        </h3>
+        <div class="tb-skills-wrap" id="tp-profile-skills"></div>
+      </section>
+
+      <section class="jd-section" id="tp-profile-sec-links">
+        <h3 class="jd-section-title">
+          <span class="jd-section-icon">🔗</span> Links
+        </h3>
+        <div class="tb-links-wrap" id="tp-profile-links"></div>
+      </section>
+
+      <section class="jd-section jd-section-apply" id="tp-profile-sec-contact">
+        <h3 class="jd-section-title">
+          <span class="jd-section-icon">🚀</span> Contact This Candidate
+        </h3>
+        <p class="jd-body-text" style="margin-bottom:16px">
+          Reach out directly via email to start a conversation.
+        </p>
+        <div class="jd-apply-actions" id="tp-profile-actions"></div>
+      </section>
+
+    </div>
+  </div>
+
+</div><!-- /view-talent-profile -->
 <!-- ============================================================
      COOKIE CONSENT BANNER
      ============================================================ -->
