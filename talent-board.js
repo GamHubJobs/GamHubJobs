@@ -24,6 +24,8 @@ const TB_SAMPLE_PROFILES = [
     cv_link: '',
     job_type: 'Full-Time',
     salary: 'GMD 35,000+',
+    plan: 'free',
+    featured: false,
     approved: true,
     submitted_at: new Date(Date.now() - 86400000 * 2).toISOString(),
   },
@@ -44,6 +46,8 @@ const TB_SAMPLE_PROFILES = [
     cv_link: '',
     job_type: 'Full-Time',
     salary: 'GMD 30,000 – 45,000',
+    plan: 'featured',
+    featured: true,
     approved: true,
     submitted_at: new Date(Date.now() - 86400000 * 1).toISOString(),
   },
@@ -64,6 +68,8 @@ const TB_SAMPLE_PROFILES = [
     cv_link: '',
     job_type: 'Full-Time',
     salary: 'GMD 28,000 – 38,000',
+    plan: 'free',
+    featured: false,
     approved: true,
     submitted_at: new Date(Date.now() - 86400000 * 3).toISOString(),
   },
@@ -84,6 +90,8 @@ const TB_SAMPLE_PROFILES = [
     cv_link: '',
     job_type: 'Full-Time',
     salary: 'GMD 22,000 – 32,000',
+    plan: 'free',
+    featured: false,
     approved: true,
     submitted_at: new Date(Date.now() - 86400000 * 4).toISOString(),
   },
@@ -104,6 +112,8 @@ const TB_SAMPLE_PROFILES = [
     cv_link: '',
     job_type: 'Full-Time',
     salary: 'Negotiable',
+    plan: 'free',
+    featured: false,
     approved: true,
     submitted_at: new Date(Date.now() - 86400000 * 5).toISOString(),
   },
@@ -124,23 +134,56 @@ const TB_SAMPLE_PROFILES = [
     cv_link: '',
     job_type: 'Full-Time',
     salary: 'GMD 15,000 – 20,000',
+    plan: 'free',
+    featured: false,
     approved: true,
     submitted_at: new Date(Date.now() - 86400000 * 6).toISOString(),
   },
 ];
 
 /* ============================================================
-   STATE
+   STATE & CONSTANTS
    ============================================================ */
 let TB_PROFILES = [...TB_SAMPLE_PROFILES];
+
 const TB_STORAGE_KEY  = 'ghj_talent_profiles';
 const TB_ADMIN_WA_NUM = '2206371941';
 
+const TB_PLAN_PRICES = {
+  free:     0,
+  featured: 50,   /* GMD */
+};
+
+/* ============================================================
+   PLAN HELPERS
+   ============================================================ */
+function tbGetSelectedPlan() {
+  return document.querySelector('.tb-plan-card.selected')?.dataset?.plan || 'free';
+}
+
+function tbSelectPlan(card, plan) {
+  document.querySelectorAll('.tb-plan-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  card.dataset.plan = plan;
+
+  const btn    = document.getElementById('tp-submit-btn');
+  const noteEl = document.getElementById('tp-submit-note');
+
+  const labels = {
+    free:     '✦ Post My Profile Free',
+    featured: '💳 Pay GMD ' + TB_PLAN_PRICES.featured + ' & Post Featured Profile',
+  };
+  const notes = {
+    free:     'Free · Unlocked by sharing with 5 contacts on WhatsApp',
+    featured: 'You will be redirected to ModemPay to complete payment securely in GMD.',
+  };
+
+  if (btn)    btn.textContent    = labels[plan] || labels.free;
+  if (noteEl) noteEl.textContent = notes[plan]  || notes.free;
+}
+
 /* ============================================================
    BODY SCROLL LOCK HELPERS
-   A reference-counted lock so nested open/close calls never
-   leave the page stuck. tbForceUnlockScroll() is called on
-   every view change as a safety net.
    ============================================================ */
 let _tbScrollLockCount = 0;
 let _tbSavedScrollY    = 0;
@@ -168,7 +211,6 @@ function tbUnlockScroll() {
   }
 }
 
-/* Hard reset — called on any view change to guarantee no lock persists */
 function tbForceUnlockScroll() {
   _tbScrollLockCount           = 0;
   document.body.style.position = '';
@@ -181,7 +223,6 @@ function tbForceUnlockScroll() {
    INIT
    ============================================================ */
 function initTalentBoard() {
-  /* Release any stale scroll lock from a previous visit to this view */
   tbForceUnlockScroll();
   tbLoadLocalProfiles();
   tbRenderProfiles(TB_PROFILES);
@@ -195,7 +236,11 @@ function tbLoadLocalProfiles() {
   try {
     const local    = JSON.parse(localStorage.getItem(TB_STORAGE_KEY) || '[]');
     const approved = local.filter(p => p.approved !== false);
-    TB_PROFILES    = [...approved, ...TB_SAMPLE_PROFILES];
+
+    /* Featured profiles first, then chronological */
+    const featured = approved.filter(p => p.featured);
+    const standard = approved.filter(p => !p.featured);
+    TB_PROFILES    = [...featured, ...standard, ...TB_SAMPLE_PROFILES];
   } catch(e) {
     TB_PROFILES = [...TB_SAMPLE_PROFILES];
   }
@@ -233,6 +278,7 @@ function tbFilterProfiles() {
 
 /* ============================================================
    RENDER PROFILE GRID
+   Featured profiles always render first within the filtered set.
    ============================================================ */
 function tbRenderProfiles(list) {
   const grid  = document.getElementById('tb-profile-grid');
@@ -249,14 +295,19 @@ function tbRenderProfiles(list) {
     return;
   }
 
+  /* Sort: featured first */
+  const sorted = [
+    ...list.filter(p => p.featured),
+    ...list.filter(p => !p.featured),
+  ];
+
   grid.style.display = '';
   if (empty) empty.style.display = 'none';
   if (meta)  meta.innerHTML =
-    `Showing <strong>${list.length}</strong> of <strong>${TB_PROFILES.length}</strong> professionals`;
+    `Showing <strong>${sorted.length}</strong> of <strong>${TB_PROFILES.length}</strong> professionals`;
 
-  list.forEach(profile => grid.appendChild(tbCreateCard(profile)));
+  sorted.forEach(profile => grid.appendChild(tbCreateCard(profile)));
 
-  /* Stamp IDs so the tour system can target them */
   requestAnimationFrame(() => {
     const firstContact = grid.querySelector('.tb-btn-contact');
     if (firstContact && !firstContact.id) firstContact.id = 'tb-first-contact-btn';
@@ -268,7 +319,7 @@ function tbRenderProfiles(list) {
    ============================================================ */
 function tbCreateCard(profile) {
   const card = document.createElement('div');
-  card.className = 'tb-card';
+  card.className = 'tb-card' + (profile.featured ? ' tb-card-featured' : '');
 
   const initials = (profile.name || 'XX').split(' ')
     .slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -285,6 +336,9 @@ function tbCreateCard(profile) {
   const postedAgo = tbTimeAgo(profile.submitted_at);
 
   card.innerHTML = `
+    ${profile.featured
+      ? '<div class="tb-plan-badge-featured" style="margin-bottom:10px">⭐ Featured</div>'
+      : ''}
     <div class="tb-card-head">
       <div class="tb-avatar" aria-hidden="true">${initials}</div>
       <div class="tb-card-info">
@@ -334,7 +388,7 @@ function tbInitModal() {
     if (e.target === backdrop) tbCloseModal();
   });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { tbCloseModal(); tbClosePostForm(); }
+    if (e.key === 'Escape') tbCloseModal();
   });
 }
 
@@ -357,6 +411,7 @@ function tbOpenProfile(id) {
   }[profile.availability] || 'avail-open';
 
   document.getElementById('tb-modal-chips').innerHTML = `
+    ${profile.featured     ? `<span class="tb-chip tb-chip-featured">⭐ Featured</span>` : ''}
     ${profile.availability ? `<span class="tb-chip ${availClass}">⚡ ${tbEsc(profile.availability)}</span>` : ''}
     ${profile.category     ? `<span class="tb-chip tb-chip-cat">🎯 ${tbEsc(profile.category)}</span>` : ''}
     ${profile.job_type     ? `<span class="tb-chip tb-chip-type">💼 ${tbEsc(profile.job_type)}</span>` : ''}
@@ -446,7 +501,7 @@ function tbContactCandidate(id) {
 }
 
 /* ============================================================
-   POST PROFILE FORM
+   SHOW POST FORM — navigates to dedicated page
    ============================================================ */
 function tbShowPostForm() {
   /* Require auth */
@@ -463,17 +518,31 @@ function tbShowPostForm() {
   if (formEl)    formEl.style.display    = '';
   if (successEl) successEl.style.display = 'none';
 
+  /* Reset plan selection to free */
+  document.querySelectorAll('.tb-plan-card').forEach((c, i) => {
+    c.classList.toggle('selected', i === 0);
+  });
+  const btn    = document.getElementById('tp-submit-btn');
+  const noteEl = document.getElementById('tp-submit-note');
+  if (btn)    btn.textContent    = '✦ Post My Profile Free';
+  if (noteEl) noteEl.textContent = 'Free · Unlocked by sharing with 5 contacts on WhatsApp';
+
   tbAutoFillFromCV();
 
   /* Navigate to the dedicated page */
   if (typeof showView === 'function') showView('talent-post');
 }
 
+/* ============================================================
+   CLOSE POST FORM — no-op, kept so old calls don't throw
+   ============================================================ */
 function tbClosePostForm() {
-  /* No-op — kept so any existing calls don't throw.
-     The page has its own back button. */
+  /* The dedicated page has its own back button — nothing to do */
 }
-/* Auto-fill from CV builder localStorage */
+
+/* ============================================================
+   AUTO-FILL FROM CV BUILDER
+   ============================================================ */
 function tbAutoFillFromCV() {
   try {
     const cv = JSON.parse(localStorage.getItem('gamhubjobs_cv_data') || 'null');
@@ -534,6 +603,8 @@ function tbSubmitProfile() {
   if (!email || !email.includes('@')) { tbToast('Please enter a valid email', 'error');             return; }
   if (summary.length < 80)            { tbToast('Summary must be at least 80 characters', 'error'); return; }
 
+  const plan = tbGetSelectedPlan();
+
   const payload = {
     id:           'local-' + Date.now(),
     name:         tbSanitize(name, 100),
@@ -551,20 +622,89 @@ function tbSubmitProfile() {
     cv_link:      tbSanitizeUrl(document.getElementById('tp-cv-link')?.value.trim()|| ''),
     job_type:     document.querySelector('input[name="tp-jobtype"]:checked')?.value || 'Full-Time',
     salary:       tbSanitize(document.getElementById('tp-salary')?.value.trim()    || '', 80),
+    plan:         plan,
+    featured:     plan === 'featured',
     approved:     true,
     submitted_at: new Date().toISOString(),
   };
 
-  if (typeof showUnlockModal === 'function') {
-    showUnlockModal('job', () => tbFinaliseProfileSubmit(payload));
+  const amount = TB_PLAN_PRICES[plan] || 0;
+
+  if (amount > 0) {
+    /* Paid featured plan — go straight to ModemPay, no share gate */
+    tbSubmitFeaturedPayment(payload, amount);
   } else {
-    tbFinaliseProfileSubmit(payload);
+    /* Free plan — gate behind share-to-unlock */
+    if (typeof showUnlockModal === 'function') {
+      showUnlockModal('talent', () => tbFinaliseProfileSubmit(payload));
+    } else {
+      tbFinaliseProfileSubmit(payload);
+    }
   }
 }
 
+/* ============================================================
+   FEATURED PAYMENT — redirect to ModemPay
+   ============================================================ */
+function tbSubmitFeaturedPayment(payload, amount) {
+  if (typeof rateLimiter !== 'undefined' && !rateLimiter.check('payment')) {
+    const wait = rateLimiter.waitSeconds('payment');
+    tbToast('Too many payment attempts — please wait ' + wait + ' seconds.', 'error', 5000);
+    return;
+  }
+
+  /* Persist payload so we can restore it after redirect */
+  try {
+    localStorage.setItem('tb_pending_profile', JSON.stringify(payload));
+  } catch(e) {}
+
+  const base      = window.location.origin + window.location.pathname;
+  const returnUrl = base + '?tb_payment=success&tb_token=' + encodeURIComponent(payload.id);
+  const cancelUrl = base + '?tb_payment=cancelled';
+
+  const mpTrim = (val, max) => String(val || '').trim().slice(0, max || 255);
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = 'https://checkout.modempay.com/api/pay';
+  form.style.display = 'none';
+
+  const fields = {
+    public_key:     mpTrim(typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.MODEMPAY_PUBLIC_KEY : '', 255),
+    amount:         mpTrim(String(amount), 20),
+    currency:       'GMD',
+    customer_name:  mpTrim(payload.name  || 'GamHub Jobs User', 100),
+    customer_email: mpTrim(payload.email || 'user@gamhubjobs.gm', 100),
+    customer_phone: '7000000',
+    return_url:     mpTrim(returnUrl, 255),
+    cancel_url:     mpTrim(cancelUrl, 255),
+    'metadata[source]':   'gamhubjobs-talent',
+    'metadata[plan]':     'featured',
+    'metadata[tb_token]': mpTrim(payload.id, 80),
+  };
+
+  Object.entries(fields).forEach(([key, val]) => {
+    const input = document.createElement('input');
+    input.type  = 'hidden';
+    input.name  = key;
+    input.value = val;
+    form.appendChild(input);
+  });
+
+  document.body.appendChild(form);
+  tbToast('Redirecting to ModemPay… GMD ' + amount, 'gold', 2000);
+  setTimeout(() => form.submit(), 600);
+}
+
+/* ============================================================
+   FINALISE PROFILE SUBMIT
+   ============================================================ */
 function tbFinaliseProfileSubmit(payload) {
   tbSaveLocalProfile(payload);
   TB_PROFILES.unshift(payload);
+
+  /* Re-sort so featured stays at top */
+  TB_PROFILES.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
   /* Show success state on the post page */
   const formEl    = document.getElementById('tp-page-form');
@@ -573,6 +713,7 @@ function tbFinaliseProfileSubmit(payload) {
   if (successEl) successEl.style.display = '';
 
   tbSendAdminNotification(payload);
+  tbRenderProfiles(TB_PROFILES);
   tbToast('Profile posted! Employers can now find you ✦', 'success', 5000);
 }
 
@@ -585,6 +726,10 @@ function tbSendAdminNotification(profile) {
       day: 'numeric', month: 'long', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
+    const planLabel = profile.featured
+      ? 'FEATURED (GMD ' + TB_PLAN_PRICES.featured + ' — paid)'
+      : 'FREE (share-to-unlock)';
+
     const msg =
       '🌟 *NEW TALENT PROFILE — GamHub Jobs*\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
@@ -596,7 +741,8 @@ function tbSendAdminNotification(profile) {
       '• Location: '     + (profile.location     || '—') + '\n' +
       '• Availability: ' + (profile.availability || '—') + '\n' +
       '• Job Type: '     + (profile.job_type     || '—') + '\n' +
-      '• Salary Exp: '   + (profile.salary       || '—') + '\n\n' +
+      '• Salary Exp: '   + (profile.salary       || '—') + '\n' +
+      '• Plan: '         + planLabel                      + '\n\n' +
       '📧 *CONTACT*\n' +
       '• Email: '        + (profile.email        || '—') + '\n' +
       '• Phone: '        + (profile.phone        || '—') + '\n' +
@@ -605,12 +751,62 @@ function tbSendAdminNotification(profile) {
       '🛠 *SKILLS*\n'   + (profile.skills        || '—') + '\n\n' +
       '🎓 *EDUCATION*\n'+ (profile.education     || '—') + '\n\n' +
       '🕐 Submitted: '  + submittedAt;
+
     const encoded = encodeURIComponent(msg);
     window.open('https://wa.me/' + TB_ADMIN_WA_NUM + '?text=' + encoded, '_blank', 'noopener,noreferrer');
   } catch(e) {
     console.warn('[TalentBoard] Admin notification failed:', e);
   }
 }
+
+/* ============================================================
+   PAYMENT RETURN HANDLER
+   Runs on page load — checks URL params for tb_payment result.
+   ============================================================ */
+(function tbCheckPaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('tb_payment');
+  const token  = params.get('tb_token');
+
+  if (!status) return;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    /* Clean the URL immediately */
+    window.history.replaceState({}, '', window.location.pathname);
+
+    if (status === 'success' && token) {
+      try {
+        const pending = JSON.parse(localStorage.getItem('tb_pending_profile') || 'null');
+
+        if (pending && pending.id === token) {
+          pending.featured = true;
+          pending.plan     = 'featured';
+          localStorage.removeItem('tb_pending_profile');
+
+          /* Initialise board state before finalising */
+          tbLoadLocalProfiles();
+          tbFinaliseProfileSubmit(pending);
+
+          if (typeof showView === 'function') showView('talent-post');
+          tbToast('Payment confirmed! ✦ Your featured profile is now live.', 'success', 6000);
+        } else {
+          tbToast(
+            'Payment received but profile data was not found. Please contact support.',
+            'error', 8000
+          );
+          if (typeof showView === 'function') showView('talent-board');
+        }
+      } catch(e) {
+        console.error('[TalentBoard] Payment return error:', e);
+        tbToast('Payment return error — please contact support.', 'error', 6000);
+      }
+
+    } else if (status === 'cancelled') {
+      if (typeof showView === 'function') showView('talent-post');
+      tbToast('Payment cancelled — your profile was not posted.', 'error', 5000);
+    }
+  });
+})();
 
 /* ============================================================
    UTILITIES
@@ -646,7 +842,7 @@ function tbTimeAgo(iso) {
 /* ============================================================
    HOOK INTO showView()
    Releases scroll lock and collapses any open modals on
-   every navigation — this is the universal safety net.
+   every navigation — universal safety net.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const _originalShowView = window.showView;
@@ -655,14 +851,9 @@ document.addEventListener('DOMContentLoaded', () => {
     /* 1. Hard-release any scroll lock before switching views */
     tbForceUnlockScroll();
 
-    /* 2. Collapse TB modals without going through close logic
-          (avoids double unlock calls) */
-    const postBackdrop = document.getElementById('tb-post-backdrop');
+    /* 2. Collapse the profile detail modal without going through
+          close logic (avoids double unlock calls) */
     const viewBackdrop = document.getElementById('tb-modal-backdrop');
-    if (postBackdrop) {
-      postBackdrop.classList.remove('tb-open');
-      setTimeout(() => { postBackdrop.style.display = 'none'; }, 320);
-    }
     if (viewBackdrop) {
       viewBackdrop.classList.remove('tb-open');
       setTimeout(() => { viewBackdrop.style.display = 'none'; }, 320);
@@ -674,6 +865,11 @@ document.addEventListener('DOMContentLoaded', () => {
     /* 4. Init talent board when navigating to it */
     if (id === 'talent-board') {
       requestAnimationFrame(() => initTalentBoard());
+    }
+
+    /* 5. Auto-fill form when navigating to post page */
+    if (id === 'talent-post') {
+      requestAnimationFrame(() => tbAutoFillFromCV());
     }
   };
 });
