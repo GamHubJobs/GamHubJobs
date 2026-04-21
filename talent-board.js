@@ -144,7 +144,8 @@ const TB_SAMPLE_PROFILES = [
 /* ============================================================
    STATE & CONSTANTS
    ============================================================ */
-let TB_PROFILES = [...TB_SAMPLE_PROFILES];
+let TB_PROFILES        = [...TB_SAMPLE_PROFILES];
+let _tbSelectedProfile = null;   // currently open profile page
 
 const TB_STORAGE_KEY  = 'ghj_talent_profiles';
 const TB_ADMIN_WA_NUM = '2206371941';
@@ -261,7 +262,6 @@ function initTalentBoard() {
   tbForceUnlockScroll();
   tbLoadLocalProfiles();
   tbRenderProfiles(TB_PROFILES);
-  tbInitModal();
 }
 
 /* ============================================================
@@ -338,19 +338,19 @@ function tbRenderProfiles(list) {
     `Showing <strong>${sorted.length}</strong> of <strong>${TB_PROFILES.length}</strong> professionals`;
 
   sorted.forEach(profile => grid.appendChild(tbCreateCard(profile)));
-
-  requestAnimationFrame(() => {
-    const firstContact = grid.querySelector('.tb-btn-contact');
-    if (firstContact && !firstContact.id) firstContact.id = 'tb-first-contact-btn';
-  });
 }
 
 /* ============================================================
    CREATE PROFILE CARD
+   Entire card is clickable — matches job search card pattern.
    ============================================================ */
 function tbCreateCard(profile) {
   const card = document.createElement('div');
   card.className = 'tb-card' + (profile.featured ? ' tb-card-featured' : '');
+
+  /* Whole card is a button — matches openJobPage() pattern */
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => tbOpenProfilePage(profile));
 
   const initials = (profile.name || 'XX').split(' ')
     .slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -364,6 +364,7 @@ function tbCreateCard(profile) {
 
   const skills    = (profile.skills || '')
     .split(',').map(s => s.trim()).filter(Boolean).slice(0, 4);
+  const extraCount = (profile.skills || '').split(',').filter(s => s.trim()).length - 4;
   const postedAgo = tbTimeAgo(profile.submitted_at);
 
   card.innerHTML = `
@@ -388,17 +389,17 @@ function tbCreateCard(profile) {
     ${skills.length ? `
       <div class="tb-card-skills">
         ${skills.map(s => `<span class="tb-skill-tag">${tbEsc(s)}</span>`).join('')}
-        ${(profile.skills || '').split(',').length > 4
-          ? `<span class="tb-skill-more">+${(profile.skills || '').split(',').length - 4} more</span>`
-          : ''}
+        ${extraCount > 0 ? `<span class="tb-skill-more">+${extraCount} more</span>` : ''}
       </div>` : ''}
     <div class="tb-card-footer">
       <span class="tb-posted-ago">${postedAgo}</span>
       <div class="tb-card-actions">
-        <button class="tb-btn-view" onclick="tbOpenProfile('${tbEsc(profile.id)}')">
+        <button class="tb-btn-view"
+          onclick="event.stopPropagation();tbOpenProfilePage(TB_PROFILES.find(p=>p.id==='${tbEsc(profile.id)}'))">
           View Profile →
         </button>
-        <button class="tb-btn-contact" onclick="tbContactCandidate('${tbEsc(profile.id)}')">
+        <button class="tb-btn-contact"
+          onclick="event.stopPropagation();tbContactCandidate('${tbEsc(profile.id)}')">
           Contact →
         </button>
       </div>
@@ -409,31 +410,27 @@ function tbCreateCard(profile) {
 }
 
 /* ============================================================
-   PROFILE DETAIL MODAL
+   OPEN PROFILE PAGE — full page view, mirrors openJobPage()
    ============================================================ */
-function tbInitModal() {
-  const backdrop = document.getElementById('tb-modal-backdrop');
-  const closeBtn = document.getElementById('tb-modal-close');
-  if (closeBtn) closeBtn.addEventListener('click', tbCloseModal);
-  if (backdrop) backdrop.addEventListener('click', e => {
-    if (e.target === backdrop) tbCloseModal();
-  });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') tbCloseModal();
-  });
-}
-
-function tbOpenProfile(id) {
-  const profile = TB_PROFILES.find(p => String(p.id) === String(id));
+function tbOpenProfilePage(profile) {
   if (!profile) return;
+  _tbSelectedProfile = profile;
 
   const initials = (profile.name || 'XX').split(' ')
     .slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
-  document.getElementById('tb-modal-avatar').textContent = initials;
-  document.getElementById('tb-modal-name').textContent   = profile.name  || '';
-  document.getElementById('tb-modal-role').textContent   = profile.title || '';
+  /* Avatar */
+  const avatarEl = document.getElementById('tp-profile-avatar');
+  if (avatarEl) avatarEl.textContent = initials;
 
+  /* Name & role */
+  const nameEl = document.getElementById('tp-profile-name');
+  const roleEl = document.getElementById('tp-profile-role');
+  if (nameEl) nameEl.textContent = profile.name  || '';
+  if (roleEl) roleEl.textContent = (profile.title || '') +
+    (profile.category ? ' · ' + profile.category : '');
+
+  /* Chips row */
   const availClass = {
     'Immediately':    'avail-now',
     '2 Weeks':        'avail-soon',
@@ -441,75 +438,87 @@ function tbOpenProfile(id) {
     'Open to Offers': 'avail-open',
   }[profile.availability] || 'avail-open';
 
-  document.getElementById('tb-modal-chips').innerHTML = `
-    ${profile.featured     ? `<span class="tb-chip tb-chip-featured">⭐ Featured</span>` : ''}
-    ${profile.availability ? `<span class="tb-chip ${availClass}">⚡ ${tbEsc(profile.availability)}</span>` : ''}
-    ${profile.category     ? `<span class="tb-chip tb-chip-cat">🎯 ${tbEsc(profile.category)}</span>` : ''}
-    ${profile.job_type     ? `<span class="tb-chip tb-chip-type">💼 ${tbEsc(profile.job_type)}</span>` : ''}
-    ${profile.salary       ? `<span class="tb-chip tb-chip-salary">💰 ${tbEsc(profile.salary)}</span>` : ''}
-  `;
+  const chipsEl = document.getElementById('tp-profile-chips');
+  if (chipsEl) chipsEl.innerHTML = [
+    profile.featured     && `<span class="jd-chip" style="background:rgba(212,168,83,0.12);border:1px solid rgba(212,168,83,0.35);color:var(--gold2)">⭐ Featured</span>`,
+    profile.availability && `<span class="jd-chip jd-chip-type ${availClass}">⚡ ${tbEsc(profile.availability)}</span>`,
+    profile.job_type     && `<span class="jd-chip jd-chip-type">💼 ${tbEsc(profile.job_type)}</span>`,
+    profile.salary       && `<span class="jd-chip jd-chip-salary">💰 ${tbEsc(profile.salary)}</span>`,
+  ].filter(Boolean).join('');
 
-  const skills = (profile.skills || '').split(',').map(s => s.trim()).filter(Boolean);
+  /* Details grid */
+  const detailItems = [
+    { label: 'Experience', value: profile.experience },
+    { label: 'Location',   value: profile.location   },
+    { label: 'Education',  value: profile.education  },
+    { label: 'Salary Expectation', value: profile.salary },
+  ].filter(i => i.value);
 
-  document.getElementById('tb-modal-body').innerHTML = `
-    <div class="tb-modal-section">
-      <div class="tb-modal-section-title">📋 Details</div>
-      <div class="tb-detail-grid">
-        ${profile.experience ? `<div class="tb-detail-item"><div class="tb-detail-label">Experience</div><div class="tb-detail-val">${tbEsc(profile.experience)}</div></div>` : ''}
-        ${profile.location   ? `<div class="tb-detail-item"><div class="tb-detail-label">Location</div><div class="tb-detail-val">${tbEsc(profile.location)}</div></div>` : ''}
-        ${profile.education  ? `<div class="tb-detail-item"><div class="tb-detail-label">Education</div><div class="tb-detail-val">${tbEsc(profile.education)}</div></div>` : ''}
-        ${profile.salary     ? `<div class="tb-detail-item"><div class="tb-detail-label">Salary Expectation</div><div class="tb-detail-val">${tbEsc(profile.salary)}</div></div>` : ''}
+  const detailsGrid = document.getElementById('tp-profile-details-grid');
+  if (detailsGrid) {
+    detailsGrid.innerHTML = detailItems.map(i => `
+      <div class="jd-detail-item">
+        <div class="jd-detail-label">${tbEsc(i.label)}</div>
+        <div class="jd-detail-value">${tbEsc(i.value)}</div>
       </div>
-    </div>
-    ${profile.summary ? `
-    <div class="tb-modal-section">
-      <div class="tb-modal-section-title">👤 About</div>
-      <p class="tb-modal-body-text">${tbEsc(profile.summary)}</p>
-    </div>` : ''}
-    ${skills.length ? `
-    <div class="tb-modal-section">
-      <div class="tb-modal-section-title">🛠 Skills</div>
-      <div class="tb-skills-wrap">
-        ${skills.map(s => `<span class="tb-skill-tag">${tbEsc(s)}</span>`).join('')}
-      </div>
-    </div>` : ''}
-    ${(profile.link || profile.cv_link) ? `
-    <div class="tb-modal-section">
-      <div class="tb-modal-section-title">🔗 Links</div>
-      <div class="tb-links-wrap">
-        ${profile.link    ? `<a href="${tbEsc(profile.link)}" target="_blank" rel="noopener noreferrer" class="tb-link-btn">LinkedIn / Portfolio ↗</a>` : ''}
-        ${profile.cv_link ? `<a href="${tbEsc(profile.cv_link)}" target="_blank" rel="noopener noreferrer" class="tb-link-btn">View CV ↗</a>` : ''}
-      </div>
-    </div>` : ''}
-    <div class="tb-modal-section tb-modal-contact-section">
-      <div class="tb-modal-section-title">🚀 Contact This Candidate</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7">
-        Reach out directly via email to start a conversation.
-      </p>
-      <div class="tb-contact-actions">
-        <button class="tb-apply-btn tb-apply-primary"
-          onclick="tbContactCandidate('${tbEsc(profile.id)}')">
-          ✉ Send Email →
-        </button>
-        <button class="tb-apply-btn tb-apply-ghost"
-          onclick="tbCloseModal()">← Back</button>
-      </div>
-    </div>
-  `;
+    `).join('');
+  }
+  const secDetails = document.getElementById('tp-profile-sec-details');
+  if (secDetails) secDetails.style.display = detailItems.length ? '' : 'none';
 
-  const backdrop = document.getElementById('tb-modal-backdrop');
-  if (!backdrop) return;
-  backdrop.style.display = 'flex';
-  tbLockScroll();
-  requestAnimationFrame(() => requestAnimationFrame(() => backdrop.classList.add('tb-open')));
+  /* About / Summary */
+  const summaryEl    = document.getElementById('tp-profile-summary');
+  const secAbout     = document.getElementById('tp-profile-sec-about');
+  if (summaryEl) summaryEl.textContent = profile.summary || '';
+  if (secAbout)  secAbout.style.display = profile.summary ? '' : 'none';
+
+  /* Skills */
+  const skills    = (profile.skills || '').split(',').map(s => s.trim()).filter(Boolean);
+  const skillsEl  = document.getElementById('tp-profile-skills');
+  const secSkills = document.getElementById('tp-profile-sec-skills');
+  if (skillsEl)  skillsEl.innerHTML  = skills.map(s =>
+    `<span class="tb-skill-tag">${tbEsc(s)}</span>`).join('');
+  if (secSkills) secSkills.style.display = skills.length ? '' : 'none';
+
+  /* Links */
+  const linksEl  = document.getElementById('tp-profile-links');
+  const secLinks = document.getElementById('tp-profile-sec-links');
+  if (linksEl) {
+    linksEl.innerHTML = [
+      profile.link    && `<a href="${tbEsc(profile.link)}" target="_blank" rel="noopener noreferrer" class="tb-link-btn">LinkedIn / Portfolio ↗</a>`,
+      profile.cv_link && `<a href="${tbEsc(profile.cv_link)}" target="_blank" rel="noopener noreferrer" class="tb-link-btn">View CV ↗</a>`,
+    ].filter(Boolean).join('');
+  }
+  if (secLinks) secLinks.style.display = (profile.link || profile.cv_link) ? '' : 'none';
+
+  /* Contact actions */
+  const actionsEl = document.getElementById('tp-profile-actions');
+  if (actionsEl) {
+    actionsEl.innerHTML = '';
+
+    const contactBtn = document.createElement('button');
+    contactBtn.className   = 'jd-apply-btn jd-apply-btn-primary';
+    contactBtn.textContent = '✉ Send Email →';
+    contactBtn.addEventListener('click', () => tbContactCandidate(profile.id));
+    actionsEl.appendChild(contactBtn);
+
+    const backBtn = document.createElement('button');
+    backBtn.className   = 'jd-apply-btn jd-apply-btn-ghost';
+    backBtn.textContent = '← Back to Talent Board';
+    backBtn.addEventListener('click', tbCloseProfilePage);
+    actionsEl.appendChild(backBtn);
+  }
+
+  /* Navigate */
+  if (typeof showView === 'function') showView('talent-profile');
 }
 
-function tbCloseModal() {
-  const backdrop = document.getElementById('tb-modal-backdrop');
-  if (!backdrop || !backdrop.classList.contains('tb-open')) return;
-  backdrop.classList.remove('tb-open');
-  tbUnlockScroll();
-  setTimeout(() => { backdrop.style.display = 'none'; }, 320);
+/* ============================================================
+   CLOSE PROFILE PAGE — back to talent board
+   ============================================================ */
+function tbCloseProfilePage() {
+  _tbSelectedProfile = null;
+  if (typeof showView === 'function') showView('talent-board');
 }
 
 /* ============================================================
@@ -588,7 +597,6 @@ function tbAutoFillFromCV() {
     setVal('tpp-phone',   cv.phone);
     setVal('tpp-summary', cv.summary);
 
-    /* Populate skill blocks from CV */
     if (cv.skills && cv.skills.length) {
       const list = document.getElementById('tpp-skills-list');
       if (list && list.children.length <= 2) {
@@ -625,7 +633,7 @@ function tbCharCount(inputId, countId, max) {
 }
 
 /* ============================================================
-   SUBMIT PROFILE — reads from tpp- prefixed IDs (no duplicates)
+   SUBMIT PROFILE
    ============================================================ */
 function tbSubmitProfile() {
   const name     = document.getElementById('tpp-name')?.value.trim()    || '';
@@ -688,9 +696,7 @@ function tbSubmitFeaturedPayment(payload, amount) {
     return;
   }
 
-  try {
-    localStorage.setItem('tb_pending_profile', JSON.stringify(payload));
-  } catch(e) {}
+  try { localStorage.setItem('tb_pending_profile', JSON.stringify(payload)); } catch(e) {}
 
   const base      = window.location.origin + window.location.pathname;
   const returnUrl = base + '?tb_payment=success&tb_token=' + encodeURIComponent(payload.id);
@@ -792,10 +798,8 @@ function tbSendAdminNotification(profile) {
 /* ============================================================
    TB SUMMARY QA HELPER
    3-step modal with Talent Board-specific questions.
-   Same UX pattern as CV builder QA, different questions.
    ============================================================ */
 function tbOpenSummaryHelper() {
-  /* Reset all fields */
   ['tb-qa-jobtitle','tb-qa-years','tb-qa-industry','tb-qa-rolelooking',
    'tb-qa-skills','tb-qa-orgtypes','tb-qa-strength',
    'tb-qa-achievement','tb-qa-certs'].forEach(id => {
@@ -820,15 +824,11 @@ function tbQaGoTo(step) {
     const el = document.getElementById('tb-qa-step' + n);
     if (el) el.style.display = n === step ? '' : 'none';
   });
-
   ['tb-qa-d1','tb-qa-d2','tb-qa-d3'].forEach((id, i) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.style.background = (i + 1) <= step
-      ? 'var(--gold)'
-      : 'rgba(255,255,255,0.1)';
+    el.style.background = (i + 1) <= step ? 'var(--gold)' : 'rgba(255,255,255,0.1)';
   });
-
   const labels = [
     'Step 1 of 3 — Who you are',
     'Step 2 of 3 — Your strengths',
@@ -847,24 +847,22 @@ const TB_QA_TONES = {
 };
 
 function tbQaBuildSummary() {
-  const jobTitle    = (document.getElementById('tb-qa-jobtitle')?.value.trim()    || 'professional');
-  const years       = (document.getElementById('tb-qa-years')?.value.trim()       || 'several years');
-  const industry    = (document.getElementById('tb-qa-industry')?.value.trim()    || 'my field');
-  const roleLooking = (document.getElementById('tb-qa-rolelooking')?.value.trim() || '');
-  const skillsRaw   = (document.getElementById('tb-qa-skills')?.value.trim()      || '');
-  const orgTypes    = (document.getElementById('tb-qa-orgtypes')?.value.trim()    || 'a range of organisations');
-  const strength    = (document.getElementById('tb-qa-strength')?.value.trim()    || 'commitment to excellence');
-  const achievement = (document.getElementById('tb-qa-achievement')?.value.trim() || '');
-  const toneKey     = (document.getElementById('tb-qa-tone')?.value               || 'confident');
-  const certs       = (document.getElementById('tb-qa-certs')?.value.trim()       || '');
+  const jobTitle    = document.getElementById('tb-qa-jobtitle')?.value.trim()    || 'professional';
+  const years       = document.getElementById('tb-qa-years')?.value.trim()       || 'several years';
+  const industry    = document.getElementById('tb-qa-industry')?.value.trim()    || 'my field';
+  const roleLooking = document.getElementById('tb-qa-rolelooking')?.value.trim() || '';
+  const skillsRaw   = document.getElementById('tb-qa-skills')?.value.trim()      || '';
+  const orgTypes    = document.getElementById('tb-qa-orgtypes')?.value.trim()    || 'a range of organisations';
+  const strength    = document.getElementById('tb-qa-strength')?.value.trim()    || 'commitment to excellence';
+  const achievement = document.getElementById('tb-qa-achievement')?.value.trim() || '';
+  const toneKey     = document.getElementById('tb-qa-tone')?.value               || 'confident';
+  const certs       = document.getElementById('tb-qa-certs')?.value.trim()       || '';
 
-  const adj = TB_QA_TONES[toneKey] || TB_QA_TONES.confident;
-
+  const adj        = TB_QA_TONES[toneKey] || TB_QA_TONES.confident;
   const skillsList = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
   const skillStr   = skillsList.length >= 2
     ? skillsList.slice(0, 2).join(' and ')
     : (skillsList[0] || 'strong professional skills');
-
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
   const openers = [
@@ -874,23 +872,12 @@ function tbQaBuildSummary() {
   ];
   const opener = openers[Math.floor(Math.random() * openers.length)];
 
-  const achieveSentence = achievement
-    ? ` Most recently, ${achievement.toLowerCase().replace(/\.$/, '')}.`
-    : '';
-
-  const certSentence = certs
-    ? ` Holds ${certs}.`
-    : '';
-
-  const roleSentence = roleLooking
-    ? ` Currently seeking ${roleLooking.toLowerCase().replace(/\.$/, '')}.`
-    : '';
-
   return (
     `${opener} Specialising in ${skillStr}, with a proven track record of delivering results at ${orgTypes}.` +
-    `${achieveSentence}${certSentence}` +
+    (achievement ? ` Most recently, ${achievement.toLowerCase().replace(/\.$/, '')}.` : '') +
+    (certs       ? ` Holds ${certs}.` : '') +
     ` Recognised for ${strength.toLowerCase().replace(/\.$/, '')} and a commitment to continuous professional growth.` +
-    `${roleSentence}`
+    (roleLooking ? ` Currently seeking ${roleLooking.toLowerCase().replace(/\.$/, '')}.` : '')
   ).trim();
 }
 
@@ -901,7 +888,6 @@ async function tbQaGenerate() {
   const ta = document.getElementById('tpp-summary');
   if (!ta) return;
 
-  /* Typewriter fill — identical feel to CV builder */
   ta.value = '';
   for (let i = 0; i < text.length; i++) {
     ta.value += text[i];
@@ -922,7 +908,6 @@ async function tbQaGenerate() {
   const params = new URLSearchParams(window.location.search);
   const status = params.get('tb_payment');
   const token  = params.get('tb_token');
-
   if (!status) return;
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -989,17 +974,14 @@ function tbTimeAgo(iso) {
    HOOK INTO showView() — universal safety net
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+  /* Wire up back button on profile page */
+  const backBtn = document.getElementById('tp-profile-back-btn');
+  if (backBtn) backBtn.addEventListener('click', tbCloseProfilePage);
+
   const _originalShowView = window.showView;
 
   window.showView = function(id) {
     tbForceUnlockScroll();
-
-    /* Collapse profile detail modal */
-    const viewBackdrop = document.getElementById('tb-modal-backdrop');
-    if (viewBackdrop) {
-      viewBackdrop.classList.remove('tb-open');
-      setTimeout(() => { viewBackdrop.style.display = 'none'; }, 320);
-    }
 
     if (typeof _originalShowView === 'function') _originalShowView(id);
 
