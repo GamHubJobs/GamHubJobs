@@ -183,6 +183,41 @@ function tbSelectPlan(card, plan) {
 }
 
 /* ============================================================
+   SKILL BLOCKS — dynamic list identical to CV builder
+   ============================================================ */
+function tbAddSkill(name) {
+  const list = document.getElementById('tpp-skills-list');
+  if (!list) return;
+  const div  = document.createElement('div');
+  div.className = 'dynamic-item skill-entry';
+  div.innerHTML = `
+    <div class="skill-row">
+      <input type="text" class="form-control skill-name-input"
+        value="${tbEsc(name || '')}"
+        placeholder="e.g. Microsoft Excel, Photoshop, Public Speaking">
+      <button class="btn-remove"
+        onclick="this.closest('.skill-entry').remove()">✕</button>
+    </div>
+  `;
+  list.appendChild(div);
+}
+
+function tbInitSkillBlocks() {
+  const list = document.getElementById('tpp-skills-list');
+  if (!list) return;
+  if (list.children.length === 0) {
+    tbAddSkill();
+    tbAddSkill();
+  }
+}
+
+function tbCollectSkills() {
+  return Array.from(
+    document.querySelectorAll('#tpp-skills-list .skill-name-input')
+  ).map(i => i.value.trim()).filter(Boolean).join(', ');
+}
+
+/* ============================================================
    BODY SCROLL LOCK HELPERS
    ============================================================ */
 let _tbScrollLockCount = 0;
@@ -236,8 +271,6 @@ function tbLoadLocalProfiles() {
   try {
     const local    = JSON.parse(localStorage.getItem(TB_STORAGE_KEY) || '[]');
     const approved = local.filter(p => p.approved !== false);
-
-    /* Featured profiles first, then chronological */
     const featured = approved.filter(p => p.featured);
     const standard = approved.filter(p => !p.featured);
     TB_PROFILES    = [...featured, ...standard, ...TB_SAMPLE_PROFILES];
@@ -277,8 +310,7 @@ function tbFilterProfiles() {
 }
 
 /* ============================================================
-   RENDER PROFILE GRID
-   Featured profiles always render first within the filtered set.
+   RENDER PROFILE GRID — featured profiles always first
    ============================================================ */
 function tbRenderProfiles(list) {
   const grid  = document.getElementById('tb-profile-grid');
@@ -295,7 +327,6 @@ function tbRenderProfiles(list) {
     return;
   }
 
-  /* Sort: featured first */
   const sorted = [
     ...list.filter(p => p.featured),
     ...list.filter(p => !p.featured),
@@ -504,7 +535,6 @@ function tbContactCandidate(id) {
    SHOW POST FORM — navigates to dedicated page
    ============================================================ */
 function tbShowPostForm() {
-  /* Require auth */
   if (typeof currentUser !== 'undefined' && !currentUser) {
     if (typeof showAuthModal === 'function') {
       showAuthModal(() => tbShowPostForm());
@@ -512,13 +542,12 @@ function tbShowPostForm() {
     }
   }
 
-  /* Reset form / success state */
   const formEl    = document.getElementById('tp-page-form');
   const successEl = document.getElementById('tp-page-success');
   if (formEl)    formEl.style.display    = '';
   if (successEl) successEl.style.display = 'none';
 
-  /* Reset plan selection to free */
+  /* Reset plan to free */
   document.querySelectorAll('.tb-plan-card').forEach((c, i) => {
     c.classList.toggle('selected', i === 0);
   });
@@ -527,18 +556,18 @@ function tbShowPostForm() {
   if (btn)    btn.textContent    = '✦ Post My Profile Free';
   if (noteEl) noteEl.textContent = 'Free · Unlocked by sharing with 5 contacts on WhatsApp';
 
-  tbAutoFillFromCV();
-
-  /* Navigate to the dedicated page */
   if (typeof showView === 'function') showView('talent-post');
+
+  requestAnimationFrame(() => {
+    tbInitSkillBlocks();
+    tbAutoFillFromCV();
+  });
 }
 
 /* ============================================================
-   CLOSE POST FORM — no-op, kept so old calls don't throw
+   CLOSE POST FORM — no-op, kept so stale calls don't throw
    ============================================================ */
-function tbClosePostForm() {
-  /* The dedicated page has its own back button — nothing to do */
-}
+function tbClosePostForm() {}
 
 /* ============================================================
    AUTO-FILL FROM CV BUILDER
@@ -547,22 +576,30 @@ function tbAutoFillFromCV() {
   try {
     const cv = JSON.parse(localStorage.getItem('gamhubjobs_cv_data') || 'null');
     if (!cv) return;
+
     const setVal = (id, val) => {
       const el = document.getElementById(id);
       if (el && val && !el.value) el.value = val;
     };
-    setVal('tp-name',    cv.fullname);
-    setVal('tp-title',   cv.title);
-    setVal('tp-email',   cv.email);
-    setVal('tp-phone',   cv.phone);
-    setVal('tp-summary', cv.summary);
+
+    setVal('tpp-name',    cv.fullname);
+    setVal('tpp-title',   cv.title);
+    setVal('tpp-email',   cv.email);
+    setVal('tpp-phone',   cv.phone);
+    setVal('tpp-summary', cv.summary);
+
+    /* Populate skill blocks from CV */
     if (cv.skills && cv.skills.length) {
-      const skillsEl = document.getElementById('tp-skills');
-      if (skillsEl && !skillsEl.value)
-        skillsEl.value = cv.skills.map(s => s.name).filter(Boolean).join(', ');
+      const list = document.getElementById('tpp-skills-list');
+      if (list && list.children.length <= 2) {
+        list.innerHTML = '';
+        cv.skills.forEach(s => { if (s.name) tbAddSkill(s.name); });
+        if (list.children.length === 0) tbAddSkill();
+      }
     }
+
     if (cv.education && cv.education.length) {
-      const eduEl    = document.getElementById('tp-education');
+      const eduEl    = document.getElementById('tpp-education');
       const firstEdu = cv.education[0];
       if (eduEl && !eduEl.value && firstEdu)
         eduEl.value = [firstEdu.qualification, firstEdu.institution, firstEdu.year]
@@ -588,14 +625,14 @@ function tbCharCount(inputId, countId, max) {
 }
 
 /* ============================================================
-   SUBMIT PROFILE
+   SUBMIT PROFILE — reads from tpp- prefixed IDs (no duplicates)
    ============================================================ */
 function tbSubmitProfile() {
-  const name     = document.getElementById('tp-name')?.value.trim()    || '';
-  const title    = document.getElementById('tp-title')?.value.trim()   || '';
-  const category = document.getElementById('tp-category')?.value       || '';
-  const email    = document.getElementById('tp-email')?.value.trim()   || '';
-  const summary  = document.getElementById('tp-summary')?.value.trim() || '';
+  const name     = document.getElementById('tpp-name')?.value.trim()    || '';
+  const title    = document.getElementById('tpp-title')?.value.trim()   || '';
+  const category = document.getElementById('tpp-category')?.value       || '';
+  const email    = document.getElementById('tpp-email')?.value.trim()   || '';
+  const summary  = document.getElementById('tpp-summary')?.value.trim() || '';
 
   if (!name)                          { tbToast('Please enter your full name', 'error');            return; }
   if (!title)                         { tbToast('Please enter your professional title', 'error');   return; }
@@ -610,18 +647,18 @@ function tbSubmitProfile() {
     name:         tbSanitize(name, 100),
     title:        tbSanitize(title, 120),
     category:     tbSanitize(category, 80),
-    experience:   tbSanitize(document.getElementById('tp-experience')?.value || '', 50),
-    location:     tbSanitize(document.getElementById('tp-location')?.value   || '', 100),
-    availability: document.querySelector('input[name="tp-avail"]:checked')?.value || 'Open to Offers',
+    experience:   tbSanitize(document.getElementById('tpp-experience')?.value || '', 50),
+    location:     tbSanitize(document.getElementById('tpp-location')?.value   || '', 100),
+    availability: document.querySelector('input[name="tpp-avail"]:checked')?.value || 'Open to Offers',
     summary:      tbSanitize(summary, 1000),
-    skills:       tbSanitize(document.getElementById('tp-skills')?.value.trim()    || '', 300),
-    education:    tbSanitize(document.getElementById('tp-education')?.value.trim() || '', 200),
+    skills:       tbSanitize(tbCollectSkills(), 300),
+    education:    tbSanitize(document.getElementById('tpp-education')?.value.trim() || '', 200),
     email:        tbSanitize(email, 254),
-    phone:        tbSanitize(document.getElementById('tp-phone')?.value.trim()     || '', 30),
-    link:         tbSanitizeUrl(document.getElementById('tp-link')?.value.trim()   || ''),
-    cv_link:      tbSanitizeUrl(document.getElementById('tp-cv-link')?.value.trim()|| ''),
-    job_type:     document.querySelector('input[name="tp-jobtype"]:checked')?.value || 'Full-Time',
-    salary:       tbSanitize(document.getElementById('tp-salary')?.value.trim()    || '', 80),
+    phone:        tbSanitize(document.getElementById('tpp-phone')?.value.trim()     || '', 30),
+    link:         tbSanitizeUrl(document.getElementById('tpp-link')?.value.trim()   || ''),
+    cv_link:      tbSanitizeUrl(document.getElementById('tpp-cv-link')?.value.trim()|| ''),
+    job_type:     document.querySelector('input[name="tpp-jobtype"]:checked')?.value || 'Full-Time',
+    salary:       tbSanitize(document.getElementById('tpp-salary')?.value.trim()    || '', 80),
     plan:         plan,
     featured:     plan === 'featured',
     approved:     true,
@@ -631,10 +668,8 @@ function tbSubmitProfile() {
   const amount = TB_PLAN_PRICES[plan] || 0;
 
   if (amount > 0) {
-    /* Paid featured plan — go straight to ModemPay, no share gate */
     tbSubmitFeaturedPayment(payload, amount);
   } else {
-    /* Free plan — gate behind share-to-unlock */
     if (typeof showUnlockModal === 'function') {
       showUnlockModal('talent', () => tbFinaliseProfileSubmit(payload));
     } else {
@@ -653,7 +688,6 @@ function tbSubmitFeaturedPayment(payload, amount) {
     return;
   }
 
-  /* Persist payload so we can restore it after redirect */
   try {
     localStorage.setItem('tb_pending_profile', JSON.stringify(payload));
   } catch(e) {}
@@ -661,8 +695,7 @@ function tbSubmitFeaturedPayment(payload, amount) {
   const base      = window.location.origin + window.location.pathname;
   const returnUrl = base + '?tb_payment=success&tb_token=' + encodeURIComponent(payload.id);
   const cancelUrl = base + '?tb_payment=cancelled';
-
-  const mpTrim = (val, max) => String(val || '').trim().slice(0, max || 255);
+  const mpTrim    = (val, max) => String(val || '').trim().slice(0, max || 255);
 
   const form = document.createElement('form');
   form.method = 'POST';
@@ -702,11 +735,8 @@ function tbSubmitFeaturedPayment(payload, amount) {
 function tbFinaliseProfileSubmit(payload) {
   tbSaveLocalProfile(payload);
   TB_PROFILES.unshift(payload);
-
-  /* Re-sort so featured stays at top */
   TB_PROFILES.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
-  /* Show success state on the post page */
   const formEl    = document.getElementById('tp-page-form');
   const successEl = document.getElementById('tp-page-success');
   if (formEl)    formEl.style.display    = 'none';
@@ -760,8 +790,133 @@ function tbSendAdminNotification(profile) {
 }
 
 /* ============================================================
+   TB SUMMARY QA HELPER
+   3-step modal with Talent Board-specific questions.
+   Same UX pattern as CV builder QA, different questions.
+   ============================================================ */
+function tbOpenSummaryHelper() {
+  /* Reset all fields */
+  ['tb-qa-jobtitle','tb-qa-years','tb-qa-industry','tb-qa-rolelooking',
+   'tb-qa-skills','tb-qa-orgtypes','tb-qa-strength',
+   'tb-qa-achievement','tb-qa-certs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const toneEl = document.getElementById('tb-qa-tone');
+  if (toneEl) toneEl.selectedIndex = 0;
+
+  tbQaGoTo(1);
+  const overlay = document.getElementById('tb-qa-overlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function tbCloseQA() {
+  const overlay = document.getElementById('tb-qa-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function tbQaGoTo(step) {
+  [1, 2, 3].forEach(n => {
+    const el = document.getElementById('tb-qa-step' + n);
+    if (el) el.style.display = n === step ? '' : 'none';
+  });
+
+  ['tb-qa-d1','tb-qa-d2','tb-qa-d3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.background = (i + 1) <= step
+      ? 'var(--gold)'
+      : 'rgba(255,255,255,0.1)';
+  });
+
+  const labels = [
+    'Step 1 of 3 — Who you are',
+    'Step 2 of 3 — Your strengths',
+    'Step 3 of 3 — What you bring',
+  ];
+  const labelEl = document.getElementById('tb-qa-step-label');
+  if (labelEl) labelEl.textContent = labels[step - 1] || '';
+}
+
+const TB_QA_TONES = {
+  confident: ['accomplished', 'results-driven', 'confident'],
+  warm:      ['collaborative', 'people-focused', 'approachable'],
+  precise:   ['detail-oriented', 'methodical', 'analytical'],
+  dynamic:   ['dynamic', 'high-impact', 'proactive'],
+  seasoned:  ['experienced', 'trusted', 'dependable'],
+};
+
+function tbQaBuildSummary() {
+  const jobTitle    = (document.getElementById('tb-qa-jobtitle')?.value.trim()    || 'professional');
+  const years       = (document.getElementById('tb-qa-years')?.value.trim()       || 'several years');
+  const industry    = (document.getElementById('tb-qa-industry')?.value.trim()    || 'my field');
+  const roleLooking = (document.getElementById('tb-qa-rolelooking')?.value.trim() || '');
+  const skillsRaw   = (document.getElementById('tb-qa-skills')?.value.trim()      || '');
+  const orgTypes    = (document.getElementById('tb-qa-orgtypes')?.value.trim()    || 'a range of organisations');
+  const strength    = (document.getElementById('tb-qa-strength')?.value.trim()    || 'commitment to excellence');
+  const achievement = (document.getElementById('tb-qa-achievement')?.value.trim() || '');
+  const toneKey     = (document.getElementById('tb-qa-tone')?.value               || 'confident');
+  const certs       = (document.getElementById('tb-qa-certs')?.value.trim()       || '');
+
+  const adj = TB_QA_TONES[toneKey] || TB_QA_TONES.confident;
+
+  const skillsList = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  const skillStr   = skillsList.length >= 2
+    ? skillsList.slice(0, 2).join(' and ')
+    : (skillsList[0] || 'strong professional skills');
+
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const openers = [
+    `A ${adj[0]} ${jobTitle} with ${years} of experience in the ${industry} sector.`,
+    `An ${adj[1]} ${jobTitle} bringing ${years} of hands-on experience across ${industry}.`,
+    `${cap(years)} ${industry} professional specialising as a ${jobTitle}.`,
+  ];
+  const opener = openers[Math.floor(Math.random() * openers.length)];
+
+  const achieveSentence = achievement
+    ? ` Most recently, ${achievement.toLowerCase().replace(/\.$/, '')}.`
+    : '';
+
+  const certSentence = certs
+    ? ` Holds ${certs}.`
+    : '';
+
+  const roleSentence = roleLooking
+    ? ` Currently seeking ${roleLooking.toLowerCase().replace(/\.$/, '')}.`
+    : '';
+
+  return (
+    `${opener} Specialising in ${skillStr}, with a proven track record of delivering results at ${orgTypes}.` +
+    `${achieveSentence}${certSentence}` +
+    ` Recognised for ${strength.toLowerCase().replace(/\.$/, '')} and a commitment to continuous professional growth.` +
+    `${roleSentence}`
+  ).trim();
+}
+
+async function tbQaGenerate() {
+  const text = tbQaBuildSummary();
+  tbCloseQA();
+
+  const ta = document.getElementById('tpp-summary');
+  if (!ta) return;
+
+  /* Typewriter fill — identical feel to CV builder */
+  ta.value = '';
+  for (let i = 0; i < text.length; i++) {
+    ta.value += text[i];
+    if (i % 3 === 0) await new Promise(r => setTimeout(r, 12));
+  }
+  ta.value = text;
+  tbCharCount('tpp-summary', 'tpp-sum-count', 600);
+
+  if (typeof toast === 'function') {
+    toast('Summary generated ✦ Edit it to make it your own.', 'gold', 4000);
+  }
+}
+
+/* ============================================================
    PAYMENT RETURN HANDLER
-   Runs on page load — checks URL params for tb_payment result.
    ============================================================ */
 (function tbCheckPaymentReturn() {
   const params = new URLSearchParams(window.location.search);
@@ -771,36 +926,27 @@ function tbSendAdminNotification(profile) {
   if (!status) return;
 
   window.addEventListener('DOMContentLoaded', () => {
-    /* Clean the URL immediately */
     window.history.replaceState({}, '', window.location.pathname);
 
     if (status === 'success' && token) {
       try {
         const pending = JSON.parse(localStorage.getItem('tb_pending_profile') || 'null');
-
         if (pending && pending.id === token) {
           pending.featured = true;
           pending.plan     = 'featured';
           localStorage.removeItem('tb_pending_profile');
-
-          /* Initialise board state before finalising */
           tbLoadLocalProfiles();
           tbFinaliseProfileSubmit(pending);
-
           if (typeof showView === 'function') showView('talent-post');
           tbToast('Payment confirmed! ✦ Your featured profile is now live.', 'success', 6000);
         } else {
-          tbToast(
-            'Payment received but profile data was not found. Please contact support.',
-            'error', 8000
-          );
+          tbToast('Payment received but profile data was not found. Please contact support.', 'error', 8000);
           if (typeof showView === 'function') showView('talent-board');
         }
       } catch(e) {
         console.error('[TalentBoard] Payment return error:', e);
         tbToast('Payment return error — please contact support.', 'error', 6000);
       }
-
     } else if (status === 'cancelled') {
       if (typeof showView === 'function') showView('talent-post');
       tbToast('Payment cancelled — your profile was not posted.', 'error', 5000);
@@ -840,36 +986,32 @@ function tbTimeAgo(iso) {
 }
 
 /* ============================================================
-   HOOK INTO showView()
-   Releases scroll lock and collapses any open modals on
-   every navigation — universal safety net.
+   HOOK INTO showView() — universal safety net
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const _originalShowView = window.showView;
 
   window.showView = function(id) {
-    /* 1. Hard-release any scroll lock before switching views */
     tbForceUnlockScroll();
 
-    /* 2. Collapse the profile detail modal without going through
-          close logic (avoids double unlock calls) */
+    /* Collapse profile detail modal */
     const viewBackdrop = document.getElementById('tb-modal-backdrop');
     if (viewBackdrop) {
       viewBackdrop.classList.remove('tb-open');
       setTimeout(() => { viewBackdrop.style.display = 'none'; }, 320);
     }
 
-    /* 3. Call the original routing function */
     if (typeof _originalShowView === 'function') _originalShowView(id);
 
-    /* 4. Init talent board when navigating to it */
     if (id === 'talent-board') {
       requestAnimationFrame(() => initTalentBoard());
     }
 
-    /* 5. Auto-fill form when navigating to post page */
     if (id === 'talent-post') {
-      requestAnimationFrame(() => tbAutoFillFromCV());
+      requestAnimationFrame(() => {
+        tbInitSkillBlocks();
+        tbAutoFillFromCV();
+      });
     }
   };
 });
