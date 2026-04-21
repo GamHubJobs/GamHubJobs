@@ -580,3 +580,8 @@
 
 /* plan-card re-use — scope to talent board page */
 .tb-plan-card { cursor: pointer; }
+/* ── Talent Profile page ── */
+#view-talent-profile {
+  padding-top: 68px;
+  min-height: 100vh;
+}
