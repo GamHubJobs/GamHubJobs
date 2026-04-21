@@ -466,17 +466,28 @@ function tbShowPostForm() {
   if (formEl)    formEl.style.display    = '';
   if (successEl) successEl.style.display = 'none';
 
-  backdrop.style.display = 'flex';
+  /*
+   * MOBILE FIX: On mobile browsers (especially Safari/Chrome on iOS/Android),
+   * setting display:flex and immediately adding a class in the same paint frame
+   * means the opacity transition never fires — the browser batches both changes
+   * and skips the transition entirely, leaving only the dark backdrop visible.
+   *
+   * Fix: force display:flex first with opacity:0 locked, then use a 50ms
+   * setTimeout (longer than a single frame) to guarantee the browser has
+   * fully committed the layout before we trigger the opacity transition.
+   */
+  backdrop.style.display  = 'flex';
+  backdrop.style.opacity  = '0';
+  backdrop.style.pointerEvents = 'none';
+
   tbLockScroll();
-
-  /* Double rAF: first frame paints display:flex, second triggers the CSS opacity transition */
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      backdrop.classList.add('tb-open');
-    });
-  });
-
   tbAutoFillFromCV();
+
+  setTimeout(() => {
+    backdrop.style.opacity      = '';
+    backdrop.style.pointerEvents = '';
+    backdrop.classList.add('tb-open');
+  }, 50);
 }
 
 function tbClosePostForm() {
