@@ -457,51 +457,22 @@ function tbShowPostForm() {
     }
   }
 
-  const backdrop = document.getElementById('tb-post-backdrop');
-  if (!backdrop) return;
-
-  /* Reset to form state */
-  const formEl    = document.getElementById('tb-post-form');
-  const successEl = document.getElementById('tb-post-success');
+  /* Reset form / success state */
+  const formEl    = document.getElementById('tp-page-form');
+  const successEl = document.getElementById('tp-page-success');
   if (formEl)    formEl.style.display    = '';
   if (successEl) successEl.style.display = 'none';
 
-  /*
-   * MOBILE FIX: On mobile browsers (especially Safari/Chrome on iOS/Android),
-   * setting display:flex and immediately adding a class in the same paint frame
-   * means the opacity transition never fires — the browser batches both changes
-   * and skips the transition entirely, leaving only the dark backdrop visible.
-   *
-   * Fix: force display:flex first with opacity:0 locked, then use a 50ms
-   * setTimeout (longer than a single frame) to guarantee the browser has
-   * fully committed the layout before we trigger the opacity transition.
-   */
-  backdrop.style.display  = 'flex';
-  backdrop.style.opacity  = '0';
-  backdrop.style.pointerEvents = 'none';
-
-  tbLockScroll();
   tbAutoFillFromCV();
 
-  setTimeout(() => {
-    backdrop.style.opacity      = '';
-    backdrop.style.pointerEvents = '';
-    backdrop.classList.add('tb-open');
-  }, 50);
+  /* Navigate to the dedicated page */
+  if (typeof showView === 'function') showView('talent-post');
 }
 
 function tbClosePostForm() {
-  const backdrop = document.getElementById('tb-post-backdrop');
-  if (!backdrop) return;
-
-  const wasOpen = backdrop.classList.contains('tb-open');
-  backdrop.classList.remove('tb-open');
-
-  if (wasOpen) tbUnlockScroll();
-
-  setTimeout(() => { backdrop.style.display = 'none'; }, 320);
+  /* No-op — kept so any existing calls don't throw.
+     The page has its own back button. */
 }
-
 /* Auto-fill from CV builder localStorage */
 function tbAutoFillFromCV() {
   try {
@@ -595,13 +566,13 @@ function tbFinaliseProfileSubmit(payload) {
   tbSaveLocalProfile(payload);
   TB_PROFILES.unshift(payload);
 
-  const formEl    = document.getElementById('tb-post-form');
-  const successEl = document.getElementById('tb-post-success');
+  /* Show success state on the post page */
+  const formEl    = document.getElementById('tp-page-form');
+  const successEl = document.getElementById('tp-page-success');
   if (formEl)    formEl.style.display    = 'none';
   if (successEl) successEl.style.display = '';
 
   tbSendAdminNotification(payload);
-  tbRenderProfiles(TB_PROFILES);
   tbToast('Profile posted! Employers can now find you ✦', 'success', 5000);
 }
 
