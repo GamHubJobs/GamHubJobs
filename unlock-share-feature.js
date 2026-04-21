@@ -118,6 +118,14 @@ function showUnlockModal(type, onUnlock) {
       benefitSub: 'Submits after 5 WhatsApp shares',
       proceedLabel: 'Submit My Job Listing →',
     },
+    talent: {
+      icon: '🌟',
+      title: 'Post Your Free Profile',
+      subtitle: 'Share GamHub Jobs with 5 contacts on WhatsApp to publish your free talent profile.',
+      benefit: 'Free Talent Profile — Visible to employers',
+      benefitSub: 'Posts after 5 WhatsApp shares',
+      proceedLabel: 'Post My Profile →',
+    },
   };
 
   const cfg          = typeConfig[type] || typeConfig.cv;
