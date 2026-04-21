@@ -105,7 +105,7 @@ function slug(s) {
 /* ============================================================
    VIEW ROUTING
    ============================================================ */
-const VIEWS = ['landing','wizard','builder','preview','job-search','job-details','employer','coverletter','privacy','terms','talent-board','talent-post'];
+const VIEWS = ['landing','wizard','builder','preview','job-search','job-details','employer','coverletter','privacy','terms','talent-board','talent-post','talent-profile'];
 let currentView = 'landing';
 
 function showView(id) {
