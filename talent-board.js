@@ -152,7 +152,7 @@ const TB_ADMIN_WA_NUM = '2206371941';
 
 const TB_PLAN_PRICES = {
   free:     0,
-  featured: 50,   /* GMD */
+  featured: 10,   /* GMD */
 };
 
 /* ============================================================
