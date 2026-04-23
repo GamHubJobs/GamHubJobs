@@ -1891,6 +1891,7 @@ async function saveJobDirectly(jobPayload) {
 async function finalisePaidJob(jobId) {
   showView('employer');
 
+  // Try to mark as paid in DB (non-critical)
   try {
     if (SB_CONNECTED) {
       await sbUpdateJob(jobId, { paid: true, payment_confirmed: true });
@@ -1899,24 +1900,98 @@ async function finalisePaidJob(jobId) {
     console.warn('[Payment] Could not mark job paid in DB:', err.message);
   }
 
-  const formEl    = document.getElementById('post-job-form');
-  const successEl = document.getElementById('submission-success');
-  if (formEl)    formEl.style.display = 'none';
-  if (successEl) successEl.classList.add('show');
-  toast('Payment confirmed! ✦ Your job listing has been submitted for review.', 'success', 6000);
-
+  // Retrieve the pending job payload saved before payment redirect
   const pending = loadData_raw('folio_pending_job');
+
   if (pending) {
+    // Save locally
     const localJobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
     localJobs.unshift({ ...pending, id: jobId, paid: true, _pendingId: undefined });
     saveData_raw(EMPLOYER_STORAGE.myJobs, localJobs);
 
-    await sendJobNotificationWhatsApp(pending, pending.plan || 'free');
+    // Show success UI
+    const formEl    = document.getElementById('post-job-form');
+    const successEl = document.getElementById('submission-success');
+    if (formEl)    formEl.style.display = 'none';
+    if (successEl) successEl.classList.add('show');
 
     localStorage.removeItem('folio_pending_job');
+
+    // Send WhatsApp notification — same structure as free listing
+    // but with FEATURED/PREMIUM label so you know it's paid
+    sendJobNotificationWhatsAppPaid(pending, pending.plan || 'featured');
+
+  } else {
+    // No pending data — show generic success and send generic WhatsApp
+    const formEl    = document.getElementById('post-job-form');
+    const successEl = document.getElementById('submission-success');
+    if (formEl)    formEl.style.display = 'none';
+    if (successEl) successEl.classList.add('show');
+
+    const genericMsg = encodeURIComponent(
+      '🆕 *PAID JOB SUBMISSION — GamHub Jobs*\n\n' +
+      'Payment received for a Featured/Premium job listing.\n' +
+      'Job ID: ' + jobId + '\n' +
+      'Job data could not be loaded. Please check the database.\n\n' +
+      '🕐 ' + new Date().toLocaleString('en-GB')
+    );
+    window.open('https://wa.me/2206371941?text=' + genericMsg, '_blank', 'noopener,noreferrer');
   }
 
   updatePortalStats();
+}
+/* ============================================================
+   PAID JOB — WhatsApp admin notification
+   Mirrors sendJobNotificationWhatsApp but marks plan as PAID
+   ============================================================ */
+function sendJobNotificationWhatsAppPaid(jobPayload, plan) {
+  try {
+    const perks = (() => {
+      try { return JSON.parse(jobPayload.perks || '[]').join(', '); }
+      catch { return ''; }
+    })();
+
+    const submittedAt = new Date().toLocaleString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    const planLabel = plan === 'premium'
+      ? 'PREMIUM — GMD 10 PAID ✅'
+      : 'FEATURED — GMD 10 PAID ✅';
+
+    const msg =
+      '🆕 *NEW PAID JOB SUBMISSION — GamHub Jobs*\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '🏢 *COMPANY DETAILS*\n' +
+      '• Company: '  + (jobPayload.company  || '—') + '\n' +
+      '• Industry: ' + (jobPayload.industry || '—') + '\n' +
+      '• Contact Email: ' + (jobPayload.email || '—') + '\n' +
+      '• Website: '  + (jobPayload.website  || '—') + '\n\n' +
+      '📋 *JOB DETAILS*\n' +
+      '• Title: '      + (jobPayload.title      || '—') + '\n' +
+      '• Location: '   + (jobPayload.location   || '—') + '\n' +
+      '• Type: '       + (jobPayload.type       || '—') + '\n' +
+      '• Salary: '     + (jobPayload.salary     || 'Not specified') + '\n' +
+      '• Experience: ' + (jobPayload.experience || '—') + '\n' +
+      '• Deadline: '   + (jobPayload.deadline   || '—') + '\n' +
+      '• Plan: '       + planLabel + '\n\n' +
+      '📝 *DESCRIPTION*\n' +
+      (jobPayload.description  || '—') + '\n\n' +
+      '✅ *REQUIREMENTS*\n' +
+      (jobPayload.requirements || '—') + '\n\n' +
+      '🎁 *PERKS*\n' +
+      (perks || '—') + '\n\n' +
+      '🔗 *APPLY URL*\n' +
+      (jobPayload.apply_url || '—') + '\n\n' +
+      '🕐 Submitted: ' + submittedAt;
+
+    const encoded = encodeURIComponent(msg);
+    window.open('https://wa.me/2206371941?text=' + encoded, '_blank', 'noopener,noreferrer');
+
+  } catch(err) {
+    console.error('[WhatsApp paid job notify] Failed:', err);
+  }
 }
 
 /* ============================================================
