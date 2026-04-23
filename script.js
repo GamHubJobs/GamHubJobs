@@ -3047,29 +3047,41 @@ const CL_PLACEHOLDERS = {
 
 function generateParagraph(type, data) {
   const tone = CL_TONES[data.tone] || CL_TONES.professional;
-  const jobTitle  = data.jobTitle  || 'this position';
-  const company   = data.company   || 'your organisation';
-  const myTitle   = data.myTitle   || 'professional';
-  const source    = data.jobSource ? `which I discovered through ${data.jobSource}` : 'advertised on GamHubJobs.com';
-  const topSkills = data.skills?.slice(0,3).map(s=>s.name).join(', ') || 'communication, organisation, and leadership';
-  const topExp    = data.experience?.[0] || null;
-  const topAch    = data.achievements?.[0] || null;
-  const summary   = data.summary || '';
+  const jobTitle  = (data.jobTitle  && data.jobTitle.trim())  ? data.jobTitle.trim()  : 'this position';
+  const company   = (data.company   && data.company.trim())   ? data.company.trim()   : 'your organisation';
+  const myTitle   = (data.myTitle   && data.myTitle.trim())   ? data.myTitle.trim()   : 'professional';
+  const source    = (data.jobSource && data.jobSource.trim()) ? `which I discovered through ${data.jobSource.trim()}` : 'advertised on GamHubJobs.com';
+  const topSkills = (data.skills && data.skills.length)
+    ? data.skills.slice(0,3).map(s => s.name).filter(Boolean).join(', ') || 'communication, organisation, and leadership'
+    : 'communication, organisation, and leadership';
+  const topExp    = (data.experience && data.experience.length) ? data.experience[0] : null;
+  const topAch    = (data.achievements && data.achievements.length) ? data.achievements[0] : null;
+  const summary   = (data.summary && data.summary.trim()) ? data.summary.trim() : '';
+  const email     = (data.email && data.email.trim()) ? data.email.trim() : 'the contact details provided above';
 
   switch(type) {
     case 'opening':
-      return `${tone.opener} the role of ${jobTitle} at ${company}, ${source}. As an experienced ${myTitle}, I am confident that my skills and background make me a strong candidate for this opportunity. ${summary ? summary.split('.')[0] + '.' : `I am ${tone.energy} and eager to bring genuine value to your team.`}`;
+      return `${tone.opener} the role of ${jobTitle} at ${company}, ${source}. As an experienced ${myTitle}, I am confident that my skills and background make me a strong candidate for this opportunity. ${summary ? summary.split('.')[0].trim() + '.' : `I am ${tone.energy} and eager to bring genuine value to your team.`}`;
+
     case 'skills':
-      return `${tone.fit} ${topSkills}. ${topExp ? `In my role as ${topExp.title} at ${topExp.org}, I was responsible for ${topExp.desc?.split('.')[0]?.toLowerCase() || 'delivering key outcomes and building strong stakeholder relationships'}.` : 'My professional journey has given me a hands-on understanding of what drives results in fast-paced environments.'} I am adept at working both independently and within teams, and I consistently prioritise quality, accuracy, and timely delivery.`;
+      return `${tone.fit} ${topSkills}. ${
+        topExp && topExp.title && topExp.org
+          ? `In my role as ${topExp.title} at ${topExp.org}, I was responsible for ${(topExp.desc || '').split('.')[0].toLowerCase() || 'delivering key outcomes and building strong stakeholder relationships'}.`
+          : 'My professional journey has given me a hands-on understanding of what drives results in fast-paced environments.'
+      } I am adept at working both independently and within teams, and I consistently prioritise quality, accuracy, and timely delivery.`;
+
     case 'achievement':
-      if (topAch) {
-        return `One achievement I am particularly proud of is ${topAch.title?.toLowerCase()}. ${topAch.desc ? topAch.desc.split('.')[0] + '.' : ''} This experience reinforced my ability to take initiative, manage complexity, and deliver outcomes that matter — skills I am eager to apply at ${company}.`;
+      if (topAch && topAch.title && topAch.title.trim()) {
+        return `One achievement I am particularly proud of is ${topAch.title.toLowerCase().trim()}. ${topAch.desc ? topAch.desc.split('.')[0].trim() + '.' : ''} This experience reinforced my ability to take initiative, manage complexity, and deliver outcomes that matter — skills I am eager to apply at ${company}.`;
       }
       return `Throughout my career, I have consistently delivered results that exceed expectations. I am recognised for my ability to identify opportunities, mobilise resources, and execute with precision — an approach I will bring with me to ${company}.`;
+
     case 'company':
       return `I am especially drawn to ${company} because of the meaningful impact your work has in The Gambia and the wider region. I admire your commitment to excellence and believe that joining your team would allow me to grow while contributing to goals I genuinely care about.`;
+
     case 'closing':
-      return `Thank you sincerely for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to ${company}'s continued success. I am available for an interview at your earliest convenience and can be reached at ${data.email || 'the contact details above'}. I look forward to the possibility of joining your team.`;
+      return `Thank you sincerely for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to ${company}'s continued success. I am available for an interview at your earliest convenience and can be reached at ${email}. I look forward to the possibility of joining your team.`;
+
     default: return '';
   }
 }
