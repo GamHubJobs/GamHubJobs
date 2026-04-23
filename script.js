@@ -1891,7 +1891,6 @@ async function saveJobDirectly(jobPayload) {
 async function finalisePaidJob(jobId) {
   showView('employer');
 
-  // Try to mark as paid in DB (non-critical)
   try {
     if (SB_CONNECTED) {
       await sbUpdateJob(jobId, { paid: true, payment_confirmed: true });
@@ -1900,45 +1899,191 @@ async function finalisePaidJob(jobId) {
     console.warn('[Payment] Could not mark job paid in DB:', err.message);
   }
 
-  // Retrieve the pending job payload saved before payment redirect
   const pending = loadData_raw('folio_pending_job');
 
   if (pending) {
-    // Save locally
     const localJobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
     localJobs.unshift({ ...pending, id: jobId, paid: true, _pendingId: undefined });
     saveData_raw(EMPLOYER_STORAGE.myJobs, localJobs);
-
-    // Show success UI
-    const formEl    = document.getElementById('post-job-form');
-    const successEl = document.getElementById('submission-success');
-    if (formEl)    formEl.style.display = 'none';
-    if (successEl) successEl.classList.add('show');
-
     localStorage.removeItem('folio_pending_job');
 
-    // Send WhatsApp notification — same structure as free listing
-    // but with FEATURED/PREMIUM label so you know it's paid
-    sendJobNotificationWhatsAppPaid(pending, pending.plan || 'featured');
+    // Show the WhatsApp submission screen instead of auto-opening
+    showPaidJobWhatsAppScreen(pending, pending.plan || 'featured');
 
   } else {
-    // No pending data — show generic success and send generic WhatsApp
-    const formEl    = document.getElementById('post-job-form');
-    const successEl = document.getElementById('submission-success');
-    if (formEl)    formEl.style.display = 'none';
-    if (successEl) successEl.classList.add('show');
-
-    const genericMsg = encodeURIComponent(
-      '🆕 *PAID JOB SUBMISSION — GamHub Jobs*\n\n' +
-      'Payment received for a Featured/Premium job listing.\n' +
-      'Job ID: ' + jobId + '\n' +
-      'Job data could not be loaded. Please check the database.\n\n' +
-      '🕐 ' + new Date().toLocaleString('en-GB')
-    );
-    window.open('https://wa.me/2206371941?text=' + genericMsg, '_blank', 'noopener,noreferrer');
+    // No pending data — show generic WhatsApp screen
+    showPaidJobWhatsAppScreen(null, 'featured', jobId);
   }
 
   updatePortalStats();
+}
+
+function showPaidJobWhatsAppScreen(jobPayload, plan, fallbackJobId) {
+  // Hide the post form, show a custom fullscreen prompt instead
+  const formEl    = document.getElementById('post-job-form');
+  const successEl = document.getElementById('submission-success');
+  if (formEl)    formEl.style.display = 'none';
+  if (successEl) successEl.classList.remove('show');
+
+  // Remove any existing screen
+  document.getElementById('ghj-wa-submit-screen')?.remove();
+
+  // Build the WhatsApp message
+  let waMessage = '';
+  if (jobPayload) {
+    const perks = (() => {
+      try { return JSON.parse(jobPayload.perks || '[]').join(', '); }
+      catch { return ''; }
+    })();
+    const submittedAt = new Date().toLocaleString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    const planLabel = plan === 'premium'
+      ? 'PREMIUM — GMD 10 PAID ✅'
+      : 'FEATURED — GMD 10 PAID ✅';
+
+    waMessage =
+      '🆕 *NEW PAID JOB SUBMISSION — GamHub Jobs*\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '🏢 *COMPANY DETAILS*\n' +
+      '• Company: '  + (jobPayload.company  || '—') + '\n' +
+      '• Industry: ' + (jobPayload.industry || '—') + '\n' +
+      '• Contact Email: ' + (jobPayload.email || '—') + '\n' +
+      '• Website: '  + (jobPayload.website  || '—') + '\n\n' +
+      '📋 *JOB DETAILS*\n' +
+      '• Title: '      + (jobPayload.title      || '—') + '\n' +
+      '• Location: '   + (jobPayload.location   || '—') + '\n' +
+      '• Type: '       + (jobPayload.type       || '—') + '\n' +
+      '• Salary: '     + (jobPayload.salary     || 'Not specified') + '\n' +
+      '• Experience: ' + (jobPayload.experience || '—') + '\n' +
+      '• Deadline: '   + (jobPayload.deadline   || '—') + '\n' +
+      '• Plan: '       + planLabel + '\n\n' +
+      '📝 *DESCRIPTION*\n' +
+      (jobPayload.description  || '—') + '\n\n' +
+      '✅ *REQUIREMENTS*\n' +
+      (jobPayload.requirements || '—') + '\n\n' +
+      '🎁 *PERKS*\n' +
+      (perks || '—') + '\n\n' +
+      '🔗 *APPLY URL*\n' +
+      (jobPayload.apply_url || '—') + '\n\n' +
+      '🕐 Submitted: ' + submittedAt;
+  } else {
+    waMessage =
+      '🆕 *PAID JOB SUBMISSION — GamHub Jobs*\n\n' +
+      'Payment received for a ' + plan.toUpperCase() + ' job listing.\n' +
+      'Job ID: ' + (fallbackJobId || '—') + '\n' +
+      '🕐 ' + new Date().toLocaleString('en-GB');
+  }
+
+  const encoded = encodeURIComponent(waMessage);
+  const waUrl   = 'https://wa.me/2206371941?text=' + encoded;
+
+  // Build the screen element
+  const screen = document.createElement('div');
+  screen.id = 'ghj-wa-submit-screen';
+  screen.style.cssText = [
+    'position:fixed', 'inset:0', 'z-index:20000',
+    'background:linear-gradient(160deg,#0d1117 0%,#0a1a0f 60%,#0d1117 100%)',
+    'display:flex', 'align-items:center', 'justify-content:center',
+    'padding:24px', 'flex-direction:column', 'text-align:center',
+    'font-family:var(--font-body,sans-serif)'
+  ].join(';');
+
+  const planLabel = plan === 'premium' ? '🏆 Premium' : '⭐ Featured';
+
+  screen.innerHTML = `
+    <div style="max-width:460px;width:100%;">
+
+      <div style="font-size:52px;margin-bottom:16px">🎉</div>
+
+      <div style="
+        display:inline-flex;align-items:center;gap:6px;
+        background:rgba(37,211,102,0.12);
+        border:1px solid rgba(37,211,102,0.3);
+        border-radius:100px;padding:6px 16px;
+        font-size:12px;font-weight:700;color:#4ade80;
+        letter-spacing:0.08em;text-transform:uppercase;
+        margin-bottom:20px;
+      ">✅ Payment Confirmed — ${planLabel}</div>
+
+      <h2 style="
+        font-family:var(--font-display,serif);
+        font-size:clamp(22px,5vw,28px);
+        font-weight:700;color:#fff;
+        margin:0 0 12px;line-height:1.3;
+      ">One last step — submit via WhatsApp</h2>
+
+      <p style="
+        font-size:14px;color:rgba(255,255,255,0.6);
+        line-height:1.75;margin:0 0 28px;
+      ">
+        Your payment is confirmed ✦<br>
+        Tap the button below to send your job details to GamHub Jobs.<br>
+        <strong style="color:rgba(255,255,255,0.85)">
+          Your listing goes live within 24 hours of WhatsApp submission.
+        </strong>
+      </p>
+
+      
+        id="ghj-wa-job-btn"
+        href="${waUrl}"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="
+          display:flex;align-items:center;justify-content:center;gap:10px;
+          width:100%;padding:18px 24px;
+          background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);
+          color:#fff;font-family:inherit;font-size:16px;font-weight:800;
+          border:none;border-radius:14px;cursor:pointer;
+          text-decoration:none;letter-spacing:0.02em;
+          box-shadow:0 8px 28px rgba(37,211,102,0.4);
+          margin-bottom:14px;
+        "
+        onclick="document.getElementById('ghj-wa-submit-screen').remove();
+                 document.getElementById('submission-success').classList.add('show');"
+      >
+        <svg width="22" height="22" viewBox="0 0 32 32"
+          fill="#fff" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 2C8.28 2 2 8.28 2 16c0 2.46.66 4.77 1.8
+            6.77L2 30l7.43-1.75A13.93 13.93 0 0 0 16 30c7.72 0
+            14-6.28 14-14S23.72 2 16 2zm6.35 19.9c-.35-.17-2.06-1.02
+            -2.38-1.13-.32-.12-.55-.17-.78.17-.23.35-.9 1.13-1.1
+            1.36-.2.23-.4.26-.75.09-.35-.17-1.48-.55-2.82-1.74-1.04
+            -.93-1.75-2.08-1.95-2.43-.2-.35-.02-.54.15-.71.16-.16.35
+            -.4.52-.6.17-.2.23-.35.35-.58.12-.23.06-.43-.03-.6-.09-.17
+            -.78-1.88-1.07-2.57-.28-.67-.57-.58-.78-.59h-.67c-.23
+            0-.6.09-.91.43-.32.35-1.2 1.17-1.2 2.85s1.23 3.3 1.4
+            3.53c.17.23 2.42 3.7 5.86 5.19.82.35 1.46.56 1.96.72.82
+            .26 1.57.22 2.16.13.66-.1 2.06-.84 2.35-1.66.29-.81.29
+            -1.51.2-1.66-.08-.14-.31-.23-.66-.4z"/>
+        </svg>
+        Submit Job on WhatsApp Now →
+      </a>
+
+      <p style="font-size:12px;color:rgba(255,255,255,0.3);margin:0 0 20px;">
+        Opens WhatsApp with your full job details pre-filled and ready to send.
+      </p>
+
+      <button
+        onclick="
+          document.getElementById('ghj-wa-submit-screen').remove();
+          document.getElementById('submission-success').classList.add('show');
+        "
+        style="
+          background:none;border:1px solid rgba(255,255,255,0.12);
+          color:rgba(255,255,255,0.4);border-radius:100px;
+          padding:10px 20px;font-size:13px;cursor:pointer;
+          font-family:inherit;transition:all 0.2s;
+        "
+      >
+        I already sent it — skip this step
+      </button>
+
+    </div>
+  `;
+
+  document.body.appendChild(screen);
 }
 /* ============================================================
    PAID JOB — WhatsApp admin notification
