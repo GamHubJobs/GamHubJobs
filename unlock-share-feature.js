@@ -600,3 +600,27 @@ async function _saveJobAndNotify(jobPayload) {
 async function saveJobDirectly(jobPayload) {
   console.log('[GHJ] saveJobDirectly() suppressed — share gate is active');
 }
+async function downloadBundle() {
+  if (!currentUser) {
+    showAuthModal(() => downloadBundle());
+    return;
+  }
+  if (currentView !== 'preview') {
+    showView('preview');
+    setTimeout(() => downloadBundle(), 600);
+    return;
+  }
+
+  showUnlockModal('cv', async () => {
+    toast('Checking your download allowance…', 'default', 2000);
+    const freeLeft = await getFreeDownloadsLeftFixed();
+
+    if (freeLeft > 0) {
+      await useFreeDownloadFixed();
+      toast('Free bundle download ✦ Preparing both documents…', 'gold', 5000);
+      safePDFDownload('bundle');
+    } else {
+      showDownloadPaymentModal('bundle');
+    }
+  });
+}
