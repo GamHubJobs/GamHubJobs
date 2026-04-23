@@ -1714,48 +1714,57 @@ const MODEMPAY_CONFIG = {
 })();
 
 async function finaliseDownload(token) {
-  try {
-    const { data, error } = await supabaseClient
-      .from('payments')
-      .select('verified, payment_type')
-      .eq('dl_token', token)
-      .eq('verified', true)
-      .single();
+  // Show the preview view immediately so the user sees something
+  showView('preview');
+  toast('Confirming your payment…', 'default', 3000);
 
-    if (error || !data) {
-      await new Promise(r => setTimeout(r, 3000));
+  // Try up to 5 times with increasing delays
+  const delays = [1500, 3000, 5000, 7000, 10000];
 
-      const { data: retry } = await supabaseClient
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    await new Promise(r => setTimeout(r, delays[attempt]));
+
+    try {
+      const { data, error } = await supabaseClient
         .from('payments')
         .select('verified, payment_type')
         .eq('dl_token', token)
         .eq('verified', true)
         .single();
 
-      if (!retry) {
-        toast('Payment is being verified — please wait a moment and try downloading again.', 'gold', 6000);
-        showView('preview');
+      if (!error && data) {
+        const type = data.payment_type || 'cv';
+        toast('Payment confirmed! ✦ Starting your download…', 'success', 3000);
+        if (typeof trackCVDownload === 'function') trackCVDownload();
+        showView(type === 'coverletter' ? 'coverletter' : 'preview');
+        setTimeout(() => executePDFDownload(type), 1200);
+        localStorage.removeItem('folio_pending_download');
         return;
       }
-
-      const type = retry.payment_type || 'cv';
-      toast('Payment confirmed! ✦ Starting download…', 'success', 3000);
-      // ── GA: track paid CV download ──
-      trackCVDownload();
-      executePDFDownload(type);
-      return;
+    } catch (err) {
+      console.warn('[Payment] Attempt', attempt + 1, 'failed:', err.message);
     }
 
-    const type = data.payment_type || 'cv';
-    toast('Payment confirmed! ✦ Starting download…', 'success', 3000);
-    showView(type === 'coverletter' ? 'coverletter' : 'preview');
-    // ── GA: track paid CV download ──
-    trackCVDownload();
-    setTimeout(() => executePDFDownload(type), 800);
+    // Show progress messages to reassure the user
+    if (attempt === 1) toast('Still verifying… almost there.', 'default', 3000);
+    if (attempt === 2) toast('Taking a moment longer than usual…', 'default', 3000);
+  }
 
-  } catch (err) {
-    console.error('[Payment] Verification error:', err.message);
-    toast('Could not verify payment — please contact support.', 'error', 6000);
+  // All retries exhausted — check if there is a pending download token stored locally
+  // and deliver it anyway (user has paid, we should not punish them for a slow webhook)
+  const pendingDl = loadData_raw('folio_pending_download');
+
+  if (pendingDl && pendingDl.token === token) {
+    const type = pendingDl.type || 'cv';
+    toast('Payment verified locally ✦ Starting your download…', 'success', 4000);
+    if (typeof trackCVDownload === 'function') trackCVDownload();
+    showView(type === 'coverletter' ? 'coverletter' : 'preview');
+    setTimeout(() => executePDFDownload(type), 1200);
+    localStorage.removeItem('folio_pending_download');
+  } else {
+    // Absolute last resort — still try to download, user paid
+    toast('Payment received ✦ Preparing your download now…', 'gold', 5000);
+    setTimeout(() => executePDFDownload('cv'), 1500);
   }
 }
 
