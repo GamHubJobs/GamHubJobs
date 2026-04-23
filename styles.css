@@ -3451,3 +3451,25 @@ body.cookie-visible .wa-widget { bottom: 100px; }
   opacity: 1;
   background: rgba(0, 0, 0, 0.48);
 }
+
+
+/* ── QA Modal centering fix for all mobile browsers ── */
+#qa-overlay,
+#tb-qa-overlay {
+  display: none;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  box-sizing: border-box;
+}
+#qa-overlay[style*="flex"],
+#tb-qa-overlay[style*="flex"] {
+  display: flex !important;
+}
