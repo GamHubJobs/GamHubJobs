@@ -1089,6 +1089,35 @@ async function downloadCoverLetter() {
   showDownloadPaymentModal('coverletter');
 }
 
+async function downloadBundle() {
+  if (!currentUser) {
+    showAuthModal(() => downloadBundle());
+    return;
+  }
+
+  // Make sure we are on the preview view
+  if (currentView !== 'preview') {
+    showView('preview');
+    setTimeout(() => downloadBundle(), 600);
+    return;
+  }
+
+  // Check if user has a free download left
+  toast('Checking your download allowance…', 'default', 2000);
+  const freeLeft = await getFreeDownloadsLeft();
+
+  if (freeLeft > 0) {
+    await useFreeDownload();
+    toast('Free bundle download ✦ Preparing both documents…', 'gold', 5000);
+    if (typeof trackCVDownload === 'function') trackCVDownload();
+    executePDFDownload('bundle');
+    return;
+  }
+
+  // No free downloads — show payment modal for bundle
+  showDownloadPaymentModal('bundle');
+}
+
 function showDownloadPaymentModal(type) {
   var prices    = MODEMPAY_CONFIG.DOWNLOAD_PRICES;
   var typeLabel = { cv:'CV', coverletter:'Cover Letter', bundle:'CV + Cover Letter Bundle' };
