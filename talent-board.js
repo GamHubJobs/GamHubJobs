@@ -904,7 +904,45 @@ async function tbQaGenerate() {
     toast('Summary generated ✦ Edit it to make it your own.', 'gold', 4000);
   }
 }
+/* ============================================================
+   FEATURED PROFILE — WhatsApp admin notification
+   Mirrors tbSendAdminNotification but marks plan as FEATURED PAID
+   ============================================================ */
+function tbSendAdminNotificationFeatured(profile) {
+  try {
+    const submittedAt = new Date().toLocaleString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
 
+    const msg =
+      '🌟 *NEW FEATURED TALENT PROFILE — GamHub Jobs*\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '👤 *CANDIDATE DETAILS*\n' +
+      '• Name: '         + (profile.name         || '—') + '\n' +
+      '• Title: '        + (profile.title        || '—') + '\n' +
+      '• Category: '     + (profile.category     || '—') + '\n' +
+      '• Experience: '   + (profile.experience   || '—') + '\n' +
+      '• Location: '     + (profile.location     || '—') + '\n' +
+      '• Availability: ' + (profile.availability || '—') + '\n' +
+      '• Job Type: '     + (profile.job_type     || '—') + '\n' +
+      '• Salary Exp: '   + (profile.salary       || '—') + '\n' +
+      '• Plan: FEATURED (GMD 10 — PAID ✅)\n\n' +
+      '📧 *CONTACT*\n' +
+      '• Email: '        + (profile.email        || '—') + '\n' +
+      '• Phone: '        + (profile.phone        || '—') + '\n' +
+      '• Link: '         + (profile.link         || '—') + '\n\n' +
+      '📝 *SUMMARY*\n'  + (profile.summary       || '—') + '\n\n' +
+      '🛠 *SKILLS*\n'   + (profile.skills        || '—') + '\n\n' +
+      '🎓 *EDUCATION*\n'+ (profile.education     || '—') + '\n\n' +
+      '🕐 Submitted: '  + submittedAt;
+
+    const encoded = encodeURIComponent(msg);
+    window.open('https://wa.me/2206371941?text=' + encoded, '_blank', 'noopener,noreferrer');
+  } catch(e) {
+    console.warn('[TalentBoard] Featured notification failed:', e);
+  }
+}
 /* ============================================================
    PAYMENT RETURN HANDLER
    ============================================================ */
@@ -922,34 +960,38 @@ async function tbQaGenerate() {
         const pending = JSON.parse(localStorage.getItem('tb_pending_profile') || 'null');
 
         if (!pending) {
-          // Profile data truly not found — show helpful message
           if (typeof showView === 'function') showView('talent-board');
-          if (typeof toast === 'function') {
-            toast('Payment received! Your profile will appear shortly. If it is not visible, please re-submit your profile form.', 'gold', 8000);
-          }
+          // Send generic WhatsApp notification
+          const genericMsg = encodeURIComponent(
+            '🌟 *NEW FEATURED TALENT PROFILE — GamHub Jobs*\n' +
+            '━━━━━━━━━━━━━━━━━━━━\n\n' +
+            'Payment received for a Featured Profile.\n' +
+            'Profile data could not be loaded automatically.\n' +
+            'Please contact the candidate to re-submit.\n\n' +
+            '🕐 ' + new Date().toLocaleString('en-GB')
+          );
+          window.open('https://wa.me/2206371941?text=' + genericMsg, '_blank', 'noopener,noreferrer');
           return;
         }
 
-        // Mark as featured regardless of token mismatch
-        // (token mismatch happens due to page reload timing)
         pending.featured = true;
         pending.plan     = 'featured';
         pending.approved = true;
         localStorage.removeItem('tb_pending_profile');
 
         tbLoadLocalProfiles();
-        tbFinaliseProfileSubmit(pending);
+        tbSaveLocalProfile(pending);
+        TB_PROFILES.unshift(pending);
+        TB_PROFILES.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+
+        // Send WhatsApp notification — same as free but marked FEATURED + PAID
+        tbSendAdminNotificationFeatured(pending);
 
         if (typeof showView === 'function') showView('talent-board');
-        if (typeof toast === 'function') {
-          toast('Payment confirmed! ✦ Your featured profile is now live.', 'success', 6000);
-        }
+        if (typeof tbRenderProfiles === 'function') tbRenderProfiles(TB_PROFILES);
 
       } catch(e) {
         console.error('[TalentBoard] Payment return error:', e);
-        if (typeof toast === 'function') {
-          toast('Payment confirmed but profile could not load automatically. Please re-submit your profile.', 'gold', 8000);
-        }
         if (typeof showView === 'function') showView('talent-board');
       }
 
