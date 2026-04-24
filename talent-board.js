@@ -1144,11 +1144,91 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
       tbShowFeaturedProfileWhatsAppScreen(pending);
 
     } else if (status === 'cancelled') {
-      if (typeof showView === 'function') showView('talent-post');
-      if (typeof toast === 'function') {
-        toast('Payment cancelled — your profile was not posted.', 'error', 5000);
+  if (typeof showView === 'function') showView('talent-post');
+
+  // Restore the saved form data so user does not have to retype everything
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      try {
+        var raw = localStorage.getItem('tb_pending_profile');
+        if (!raw) return;
+        var saved = JSON.parse(raw);
+        if (!saved) return;
+
+        var setVal = function(id, val) {
+          var el = document.getElementById(id);
+          if (el && val) el.value = val;
+        };
+
+        setVal('tpp-name',       saved.name);
+        setVal('tpp-title',      saved.title);
+        setVal('tpp-email',      saved.email);
+        setVal('tpp-phone',      saved.phone);
+        setVal('tpp-summary',    saved.summary);
+        setVal('tpp-education',  saved.education);
+        setVal('tpp-link',       saved.link);
+        setVal('tpp-cv-link',    saved.cv_link);
+        setVal('tpp-salary',     saved.salary);
+
+        var catEl = document.getElementById('tpp-category');
+        if (catEl && saved.category) catEl.value = saved.category;
+
+        var expEl = document.getElementById('tpp-experience');
+        if (expEl && saved.experience) expEl.value = saved.experience;
+
+        var locEl = document.getElementById('tpp-location');
+        if (locEl && saved.location) locEl.value = saved.location;
+
+        // Restore availability pill
+        if (saved.availability) {
+          var availRadio = document.querySelector(
+            'input[name="tpp-avail"][value="' + saved.availability + '"]'
+          );
+          if (availRadio) {
+            availRadio.checked = true;
+            tbSelectPill(availRadio);
+          }
+        }
+
+        // Restore job type pill
+        if (saved.job_type) {
+          var typeRadio = document.querySelector(
+            'input[name="tpp-jobtype"][value="' + saved.job_type + '"]'
+          );
+          if (typeRadio) {
+            typeRadio.checked = true;
+            tbSelectPill(typeRadio);
+          }
+        }
+
+        // Restore skills
+        if (saved.skills) {
+          var skillList = document.getElementById('tpp-skills-list');
+          if (skillList) {
+            skillList.innerHTML = '';
+            saved.skills.split(',').map(function(s) {
+              return s.trim();
+            }).filter(Boolean).forEach(function(skillName) {
+              tbAddSkill(skillName);
+            });
+          }
+        }
+
+        if (typeof toast === 'function') {
+          toast(
+            'Your details have been restored — review and try again.',
+            'gold', 5000
+          );
+        }
+
+      } catch(e) {
+        if (typeof toast === 'function') {
+          toast('Payment cancelled.', 'error', 4000);
+        }
       }
-    }
+    });
+  });
+}
   });
 })();
 /* ============================================================
