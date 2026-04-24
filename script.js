@@ -151,7 +151,102 @@ function closeMobileNav() {
 function scrollToFeatures() { showView('landing'); setTimeout(()=>document.getElementById('features')?.scrollIntoView({behavior:'smooth'}),100); }
 function scrollToHow()      { showView('landing'); setTimeout(()=>document.getElementById('how')?.scrollIntoView({behavior:'smooth'}),100); }
 function scrollToTemplates(){ showView('landing'); setTimeout(()=>document.getElementById('templates')?.scrollIntoView({behavior:'smooth'}),100); }
+/* ============================================================
+   FREE LISTING RATE LIMITER
+   Tracks how many free listings a user has created within a
+   rolling time window. Paid listings are never affected.
+   ============================================================ */
+const FREE_LISTING_RULES = {
+  job:    { max: 2, windowDays: 7,  label: 'job listing'     },
+  talent: { max: 2, windowDays: 7,  label: 'talent profile'  },
+};
 
+const FREE_LISTING_KEYS = {
+  job:    'ghj_free_job_timestamps',
+  talent: 'ghj_free_talent_timestamps',
+};
+
+/**
+ * Returns all timestamps within the current window for a given type.
+ * @param {'job'|'talent'} type
+ */
+function freeListingGetTimestamps(type) {
+  const rule = FREE_LISTING_RULES[type];
+  const key  = FREE_LISTING_KEYS[type];
+  const windowMs = rule.windowDays * 24 * 60 * 60 * 1000;
+  const cutoff   = Date.now() - windowMs;
+  let stored = [];
+  try {
+    stored = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch(e) {
+    stored = [];
+  }
+  // Only keep timestamps within the rolling window
+  return stored.filter(ts => ts > cutoff);
+}
+
+/**
+ * Returns how many free listings of this type remain in the current window.
+ * @param {'job'|'talent'} type
+ */
+function freeListingCountRemaining(type) {
+  const rule   = FREE_LISTING_RULES[type];
+  const recent = freeListingGetTimestamps(type);
+  return Math.max(0, rule.max - recent.length);
+}
+
+/**
+ * Records a new free listing timestamp.
+ * Call this only AFTER the listing is confirmed saved.
+ * @param {'job'|'talent'} type
+ */
+function freeListingRecordUsage(type) {
+  const key  = FREE_LISTING_KEYS[type];
+  const rule = FREE_LISTING_RULES[type];
+  const windowMs = rule.windowDays * 24 * 60 * 60 * 1000;
+  const cutoff   = Date.now() - windowMs;
+  let stored = [];
+  try {
+    stored = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch(e) {
+    stored = [];
+  }
+  // Prune old entries, then add the new one
+  stored = stored.filter(ts => ts > cutoff);
+  stored.push(Date.now());
+  try {
+    localStorage.setItem(key, JSON.stringify(stored));
+  } catch(e) {}
+}
+
+/**
+ * Shows a clear "rate limit reached" toast/banner to the user.
+ * @param {'job'|'talent'} type
+ */
+function freeListingShowLimitMessage(type) {
+  const rule        = FREE_LISTING_RULES[type];
+  const recent      = freeListingGetTimestamps(type);
+  const oldestTs    = recent.length > 0 ? Math.min(...recent) : Date.now();
+  const windowMs    = rule.windowDays * 24 * 60 * 60 * 1000;
+  const resetsAt    = new Date(oldestTs + windowMs);
+  const resetsInMs  = resetsAt - Date.now();
+  const resetsInH   = Math.ceil(resetsInMs / (1000 * 60 * 60));
+
+  let resetMsg = '';
+  if (resetsInH <= 24) {
+    resetMsg = `Your limit resets in approximately ${resetsInH} hour${resetsInH === 1 ? '' : 's'}.`;
+  } else {
+    const resetsInDays = Math.ceil(resetsInH / 24);
+    resetMsg = `Your limit resets in approximately ${resetsInDays} day${resetsInDays === 1 ? '' : 's'}.`;
+  }
+
+  toast(
+    `Free ${rule.label} limit reached (${rule.max} per ${rule.windowDays} days). ` +
+    `Upgrade to a paid plan to post immediately. ${resetMsg}`,
+    'error',
+    9000
+  );
+}
 /* ============================================================
    DATA STORES
    ============================================================ */
