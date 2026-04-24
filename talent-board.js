@@ -949,13 +949,12 @@ function tbSendAdminNotificationFeatured(profile) {
    Shows after payment redirect. User taps to open WhatsApp.
    ============================================================ */
 function tbShowFeaturedProfileWhatsAppScreen(profile) {
-  // Remove any existing screen
   document.getElementById('ghj-tb-wa-screen')?.remove();
 
-  // Build the WhatsApp message
-  let waMessage = '';
+  // Build WhatsApp message
+  var waMessage = '';
   if (profile) {
-    const submittedAt = new Date().toLocaleString('en-GB', {
+    var submittedAt = new Date().toLocaleString('en-GB', {
       day: 'numeric', month: 'long', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
@@ -971,130 +970,129 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
       '• Availability: ' + (profile.availability || '—') + '\n' +
       '• Job Type: '     + (profile.job_type     || '—') + '\n' +
       '• Salary Exp: '   + (profile.salary       || '—') + '\n' +
-      '• Plan: FEATURED (GMD 10 — PAID ✅)\n\n' +
+      '• Plan: FEATURED (GMD 10 — PAID)\n\n' +
       '📧 *CONTACT*\n' +
       '• Email: '  + (profile.email || '—') + '\n' +
       '• Phone: '  + (profile.phone || '—') + '\n' +
       '• Link: '   + (profile.link  || '—') + '\n\n' +
-      '📝 *SUMMARY*\n'   + (profile.summary    || '—') + '\n\n' +
-      '🛠 *SKILLS*\n'    + (profile.skills     || '—') + '\n\n' +
-      '🎓 *EDUCATION*\n' + (profile.education  || '—') + '\n\n' +
+      '📝 *SUMMARY*\n'   + (profile.summary   || '—') + '\n\n' +
+      '🛠 *SKILLS*\n'    + (profile.skills    || '—') + '\n\n' +
+      '🎓 *EDUCATION*\n' + (profile.education || '—') + '\n\n' +
       '🕐 Submitted: '   + submittedAt;
   } else {
     waMessage =
       '🌟 *FEATURED TALENT PROFILE — GamHub Jobs*\n\n' +
       'Payment received but profile data could not load.\n' +
-      'Please ask the candidate to re-submit.\n\n' +
       '🕐 ' + new Date().toLocaleString('en-GB');
   }
 
-  const encoded = encodeURIComponent(waMessage);
-  const waUrl   = 'https://wa.me/2206371941?text=' + encoded;
+  var waUrl = 'https://wa.me/2206371941?text=' + encodeURIComponent(waMessage);
+  var candidateName = (profile && profile.name) ? profile.name : 'Your Profile';
 
-  const screen = document.createElement('div');
+  // ── Overlay ──────────────────────────────────────────
+  var screen = document.createElement('div');
   screen.id = 'ghj-tb-wa-screen';
-  screen.style.cssText = [
-    'position:fixed', 'inset:0', 'z-index:20000',
-    'background:linear-gradient(160deg,#0d1117 0%,#0a1a0f 60%,#0d1117 100%)',
-    'display:flex', 'align-items:center', 'justify-content:center',
-    'padding:24px', 'flex-direction:column', 'text-align:center',
-    'font-family:var(--font-body,sans-serif)'
-  ].join(';');
+  screen.style.cssText =
+    'position:fixed;inset:0;z-index:20000;' +
+    'background:linear-gradient(160deg,#0d1117 0%,#0a1a0f 60%,#0d1117 100%);' +
+    'display:flex;align-items:center;justify-content:center;' +
+    'padding:24px;flex-direction:column;text-align:center;' +
+    'font-family:Outfit,sans-serif;overflow-y:auto;';
 
-  const candidateName = profile ? (profile.name || 'Your Profile') : 'Your Profile';
+  // ── Inner card ────────────────────────────────────────
+  var card = document.createElement('div');
+  card.style.cssText = 'max-width:460px;width:100%;';
 
-  screen.innerHTML = `
-    <div style="max-width:460px;width:100%;">
+  // Star emoji
+  var emoji = document.createElement('div');
+  emoji.textContent = '🌟';
+  emoji.style.cssText = 'font-size:52px;margin-bottom:16px;';
 
-      <div style="font-size:52px;margin-bottom:16px">🌟</div>
+  // Pill badge
+  var badge = document.createElement('div');
+  badge.textContent = '⭐ Featured Profile — Payment Confirmed';
+  badge.style.cssText =
+    'display:inline-flex;align-items:center;' +
+    'background:rgba(212,168,83,0.12);' +
+    'border:1px solid rgba(212,168,83,0.3);' +
+    'border-radius:100px;padding:6px 16px;' +
+    'font-size:12px;font-weight:700;color:#f0c97a;' +
+    'letter-spacing:0.08em;text-transform:uppercase;' +
+    'margin-bottom:20px;';
 
-      <div style="
-        display:inline-flex;align-items:center;gap:6px;
-        background:rgba(212,168,83,0.12);
-        border:1px solid rgba(212,168,83,0.3);
-        border-radius:100px;padding:6px 16px;
-        font-size:12px;font-weight:700;color:#f0c97a;
-        letter-spacing:0.08em;text-transform:uppercase;
-        margin-bottom:20px;
-      ">⭐ Featured Profile — Payment Confirmed</div>
+  // Heading
+  var heading = document.createElement('h2');
+  heading.textContent = 'One last step — submit via WhatsApp';
+  heading.style.cssText =
+    'font-size:26px;font-weight:700;color:#fff;' +
+    'margin:0 0 12px;line-height:1.3;';
 
-      <h2 style="
-        font-family:var(--font-display,serif);
-        font-size:clamp(22px,5vw,28px);
-        font-weight:700;color:#fff;
-        margin:0 0 12px;line-height:1.3;
-      ">One last step — submit via WhatsApp</h2>
+  // Sub paragraph 1
+  var sub1 = document.createElement('p');
+  sub1.style.cssText =
+    'font-size:14px;color:rgba(255,255,255,0.6);' +
+    'line-height:1.75;margin:0 0 10px;';
+  sub1.innerHTML =
+    'Payment confirmed for <strong style="color:#fff">' +
+    candidateName + '</strong> ✦';
 
-      <p style="
-        font-size:14px;color:rgba(255,255,255,0.6);
-        line-height:1.75;margin:0 0 10px;
-      ">
-        Payment confirmed for <strong style="color:#fff">${candidateName}</strong> ✦
-      </p>
-      <p style="
-        font-size:14px;color:rgba(255,255,255,0.6);
-        line-height:1.75;margin:0 0 28px;
-      ">
-        Tap the button below to send your profile details to GamHub Jobs.<br>
-        <strong style="color:rgba(255,255,255,0.85)">
-          Your featured profile goes live within 24 hours.
-        </strong>
-      </p>
+  // Sub paragraph 2
+  var sub2 = document.createElement('p');
+  sub2.style.cssText =
+    'font-size:14px;color:rgba(255,255,255,0.6);' +
+    'line-height:1.75;margin:0 0 28px;';
+  sub2.innerHTML =
+    'Tap the button below to send your profile details to GamHub Jobs.<br>' +
+    '<strong style="color:rgba(255,255,255,0.85);">' +
+    'Your featured profile goes live within 24 hours.</strong>';
 
-      
-        id="ghj-tb-wa-btn"
-        href="${waUrl}"
-        target="_blank"
-        rel="noopener noreferrer"
-        style="
-          display:flex;align-items:center;justify-content:center;gap:10px;
-          width:100%;padding:18px 24px;
-          background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);
-          color:#fff;font-family:inherit;font-size:16px;font-weight:800;
-          border:none;border-radius:14px;cursor:pointer;
-          text-decoration:none;letter-spacing:0.02em;
-          box-shadow:0 8px 28px rgba(37,211,102,0.4);
-          margin-bottom:14px;
-        "
-        onclick="document.getElementById('ghj-tb-wa-screen').remove();"
-      >
-        <svg width="22" height="22" viewBox="0 0 32 32"
-          fill="#fff" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 2C8.28 2 2 8.28 2 16c0 2.46.66 4.77 1.8
-            6.77L2 30l7.43-1.75A13.93 13.93 0 0 0 16 30c7.72 0
-            14-6.28 14-14S23.72 2 16 2zm6.35 19.9c-.35-.17-2.06-1.02
-            -2.38-1.13-.32-.12-.55-.17-.78.17-.23.35-.9 1.13-1.1
-            1.36-.2.23-.4.26-.75.09-.35-.17-1.48-.55-2.82-1.74-1.04
-            -.93-1.75-2.08-1.95-2.43-.2-.35-.02-.54.15-.71.16-.16.35
-            -.4.52-.6.17-.2.23-.35.35-.58.12-.23.06-.43-.03-.6-.09-.17
-            -.78-1.88-1.07-2.57-.28-.67-.57-.58-.78-.59h-.67c-.23
-            0-.6.09-.91.43-.32.35-1.2 1.17-1.2 2.85s1.23 3.3 1.4
-            3.53c.17.23 2.42 3.7 5.86 5.19.82.35 1.46.56 1.96.72.82
-            .26 1.57.22 2.16.13.66-.1 2.06-.84 2.35-1.66.29-.81.29
-            -1.51.2-1.66-.08-.14-.31-.23-.66-.4z"/>
-        </svg>
-        Submit Profile on WhatsApp Now →
-      </a>
+  // WhatsApp button
+  var waBtn = document.createElement('a');
+  waBtn.href = waUrl;
+  waBtn.target = '_blank';
+  waBtn.rel = 'noopener noreferrer';
+  waBtn.style.cssText =
+    'display:flex;align-items:center;justify-content:center;gap:10px;' +
+    'width:100%;padding:18px 24px;' +
+    'background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);' +
+    'color:#fff;font-family:Outfit,sans-serif;font-size:16px;font-weight:800;' +
+    'border:none;border-radius:14px;cursor:pointer;' +
+    'text-decoration:none;letter-spacing:0.02em;' +
+    'box-shadow:0 8px 28px rgba(37,211,102,0.4);' +
+    'margin-bottom:14px;box-sizing:border-box;';
+  waBtn.textContent = '📲 Submit Profile on WhatsApp Now →';
+  waBtn.addEventListener('click', function() {
+    screen.remove();
+  });
 
-      <p style="font-size:12px;color:rgba(255,255,255,0.3);margin:0 0 20px;">
-        Opens WhatsApp with your full profile pre-filled and ready to send.
-      </p>
+  // Helper text
+  var helperText = document.createElement('p');
+  helperText.textContent = 'Opens WhatsApp with your full profile pre-filled and ready to send.';
+  helperText.style.cssText =
+    'font-size:12px;color:rgba(255,255,255,0.3);margin:0 0 20px;';
 
-      <button
-        onclick="document.getElementById('ghj-tb-wa-screen').remove();"
-        style="
-          background:none;border:1px solid rgba(255,255,255,0.12);
-          color:rgba(255,255,255,0.4);border-radius:100px;
-          padding:10px 20px;font-size:13px;cursor:pointer;
-          font-family:inherit;transition:all 0.2s;
-        "
-      >
-        I already sent it — skip this step
-      </button>
+  // Skip button
+  var skipBtn = document.createElement('button');
+  skipBtn.textContent = 'I already sent it — skip this step';
+  skipBtn.style.cssText =
+    'background:none;border:1px solid rgba(255,255,255,0.12);' +
+    'color:rgba(255,255,255,0.4);border-radius:100px;' +
+    'padding:10px 20px;font-size:13px;cursor:pointer;' +
+    'font-family:Outfit,sans-serif;';
+  skipBtn.addEventListener('click', function() {
+    screen.remove();
+  });
 
-    </div>
-  `;
-
+  // ── Assemble ──────────────────────────────────────────
+  card.appendChild(emoji);
+  card.appendChild(badge);
+  card.appendChild(heading);
+  card.appendChild(sub1);
+  card.appendChild(sub2);
+  card.appendChild(waBtn);
+  card.appendChild(helperText);
+  card.appendChild(skipBtn);
+  screen.appendChild(card);
   document.body.appendChild(screen);
 }
 /* ============================================================
