@@ -651,6 +651,18 @@ function tbShowPostForm() {
     tbInitSkillBlocks();
     tbAutoFillFromCV();
   });
+   // Show remaining free listing count as a subtle hint
+  requestAnimationFrame(() => {
+    const noteEl = document.getElementById('tp-submit-note');
+    if (noteEl && typeof freeListingCountRemaining === 'function') {
+      const remaining = freeListingCountRemaining('talent');
+      const plan      = tbGetSelectedPlan();
+      if ((TB_PLAN_PRICES[plan] || 0) === 0 && remaining <= 2) {
+        noteEl.textContent =
+          `Free · ${remaining} free profile${remaining === 1 ? '' : 's'} remaining this week`;
+      }
+    }
+  });
 }
 
 /* ============================================================
@@ -727,7 +739,25 @@ function tbSubmitProfile() {
   if (!category)                      { tbToast('Please select a profession category', 'error');    return; }
   if (!email || !email.includes('@')) { tbToast('Please enter a valid email', 'error');             return; }
   if (summary.length < 80)            { tbToast('Summary must be at least 80 characters', 'error'); return; }
-
+// ── Rate limit check for free plans ──
+  const _planForRateCheck = tbGetSelectedPlan();
+  const _amountForRateCheck = TB_PLAN_PRICES[_planForRateCheck] || 0;
+  if (_amountForRateCheck === 0) {
+    const talentSlotsLeft = freeListingCountRemaining('talent');
+    if (talentSlotsLeft <= 0) {
+      freeListingShowLimitMessage('talent');
+      return;
+    }
+    if (talentSlotsLeft === 1) {
+      if (typeof toast === 'function') {
+        toast(
+          'Heads up — this is your last free talent profile for the next 7 days.',
+          'gold',
+          5000
+        );
+      }
+    }
+  }
   const plan = tbGetSelectedPlan();
 
   // Generate a stable token from name + timestamp truncated
@@ -838,6 +868,13 @@ function tbFinaliseProfileSubmit(payload) {
   tbSaveLocalProfile(payload);
   TB_PROFILES.unshift(payload);
   TB_PROFILES.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+
+  // Record usage in the rate limiter ONLY for free plans
+  if ((payload.plan || 'free') === 'free') {
+    if (typeof freeListingRecordUsage === 'function') {
+      freeListingRecordUsage('talent');
+    }
+  }
 
   const formEl    = document.getElementById('tp-page-form');
   const successEl = document.getElementById('tp-page-success');
