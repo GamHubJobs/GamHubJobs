@@ -549,7 +549,22 @@ async function submitJobPost() {
     return;
   }
 
-  // Free plan → share gate BEFORE saving
+ // Free plan → rate limit check FIRST, then share gate, then save
+  const jobSlotsLeft = freeListingCountRemaining('job');
+  if (jobSlotsLeft <= 0) {
+    freeListingShowLimitMessage('job');
+    return;
+  }
+
+  // Warn when on the last free slot
+  if (jobSlotsLeft === 1) {
+    toast(
+      'Heads up — this is your last free job listing for the next 7 days.',
+      'gold',
+      5000
+    );
+  }
+
   showUnlockModal('job', async () => {
     const btn = document.getElementById('submit-job-btn');
     if (btn) { btn.classList.add('btn-submitting'); btn.disabled = true; }
@@ -588,6 +603,11 @@ async function _saveJobAndNotify(jobPayload) {
       : 'Job saved locally (connect Supabase to go live)',
     savedRemotely ? 'success' : 'gold', 4000
   );
+
+  // Record usage in the rate limiter ONLY for free plan
+  if ((jobPayload.plan || 'free') === 'free') {
+    freeListingRecordUsage('job');
+  }
 
   if (typeof updatePortalStats === 'function') updatePortalStats();
   setTimeout(() => sendJobNotificationWhatsApp(jobPayload, jobPayload.plan || 'free'), 600);
