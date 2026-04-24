@@ -1234,39 +1234,56 @@ function submitModemPayForm(type) {
 
 async function submitJobPaymentForm(jobPayload, plan, amount) {
   if (!rateLimiter.check('payment')) {
-    const wait = rateLimiter.waitSeconds('payment');
+    var wait = rateLimiter.waitSeconds('payment');
     toast('Too many payment attempts — please wait ' + wait + ' seconds.', 'error', 5000);
     return;
   }
 
   toast('Saving your listing…', 'default', 2000);
-  let realJobId = null;
+  var realJobId = null;
 
   try {
     if (SB_CONNECTED) {
-      const saved = await sbInsertJob({ ...jobPayload, paid: false });
-      const row = Array.isArray(saved) ? saved[0] : saved;
+      var saved = await sbInsertJob({ ...jobPayload, paid: false });
+      var row   = Array.isArray(saved) ? saved[0] : saved;
       realJobId = row?.id || null;
-      console.log('[Job] Pre-saved to Supabase with id:', realJobId);
     }
   } catch(err) {
     console.warn('[Job] Pre-save failed:', err.message);
   }
 
-  const jobId = realJobId || ('local-' + Date.now());
+  var jobId = realJobId || ('local-' + Date.now());
 
-  saveData_raw('folio_pending_job', Object.assign({}, jobPayload, { _pendingId: jobId, id: jobId }));
+  // Save the FULL payload to localStorage before redirect
+  var pendingRecord = Object.assign({}, jobPayload, {
+    _pendingId: jobId,
+    id: jobId,
+    _savedAt: new Date().toISOString()
+  });
 
-  const base      = mpBaseUrl();
-  const returnUrl = base + '?payment_status=success&job_id=' + mp(jobId, 80);
-  const cancelUrl = base + '?payment_status=cancelled';
+  try {
+    localStorage.setItem('folio_pending_job', JSON.stringify(pendingRecord));
+    // Verify it saved
+    var verify = JSON.parse(localStorage.getItem('folio_pending_job'));
+    if (!verify || !verify.title) {
+      toast('Could not save job data. Please try again.', 'error', 5000);
+      return;
+    }
+  } catch(e) {
+    toast('Storage error. Please try again.', 'error', 5000);
+    return;
+  }
 
-  const form = document.createElement('form');
+  var base      = mpBaseUrl();
+  var returnUrl = base + '?payment_status=success&job_id=' + mp(jobId, 80);
+  var cancelUrl = base + '?payment_status=cancelled';
+
+  var form = document.createElement('form');
   form.method = 'POST';
   form.action = 'https://checkout.modempay.com/api/pay';
   form.style.display = 'none';
 
-  const fields = {
+  var fields = {
     public_key:     mp(MODEMPAY_PUBLIC_KEY, 255),
     amount:         mp(String(amount), 20),
     currency:       'GMD',
@@ -1282,7 +1299,7 @@ async function submitJobPaymentForm(jobPayload, plan, amount) {
   };
 
   Object.entries(fields).forEach(function(entry) {
-    const input = document.createElement('input');
+    var input   = document.createElement('input');
     input.type  = 'hidden';
     input.name  = entry[0];
     input.value = entry[1];
@@ -1293,6 +1310,7 @@ async function submitJobPaymentForm(jobPayload, plan, amount) {
   toast('Redirecting to ModemPay payment… GMD ' + amount, 'gold', 2000);
   setTimeout(function() { form.submit(); }, 800);
 }
+
 
 function executePDFDownload(type) {
   if (type === 'bundle') {
@@ -1899,26 +1917,45 @@ async function finalisePaidJob(jobId) {
     console.warn('[Payment] Could not mark job paid in DB:', err.message);
   }
 
-  const pending = loadData_raw('folio_pending_job');
-
-  if (pending) {
-    const localJobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
-    localJobs.unshift({ ...pending, id: jobId, paid: true, _pendingId: undefined });
-    saveData_raw(EMPLOYER_STORAGE.myJobs, localJobs);
-    localStorage.removeItem('folio_pending_job');
-
-    // Show the WhatsApp submission screen instead of auto-opening
-    showPaidJobWhatsAppScreen(pending, pending.plan || 'featured');
-
-  } else {
-    // No pending data — show generic WhatsApp screen
-    showPaidJobWhatsAppScreen(null, 'featured', jobId);
+  // Read the real job data from localStorage
+  var pending = null;
+  try {
+    var raw = localStorage.getItem('folio_pending_job');
+    if (raw) {
+      pending = JSON.parse(raw);
+    }
+  } catch(e) {
+    pending = null;
   }
+
+  // If data is missing do NOT show any fallback.
+  // Send the user back to the form to re-submit.
+  if (!pending || !pending.title) {
+    var formEl2 = document.getElementById('post-job-form');
+    if (formEl2) formEl2.style.display = '';
+    toast(
+      'Payment confirmed ✦ Please re-fill and re-submit your job details below to complete posting.',
+      'gold', 8000
+    );
+    updatePortalStats();
+    return;
+  }
+
+  // Save locally
+  var localJobs = loadData_raw(EMPLOYER_STORAGE.myJobs) || [];
+  localJobs.unshift(Object.assign({}, pending, {
+    id: jobId, paid: true, _pendingId: undefined
+  }));
+  saveData_raw(EMPLOYER_STORAGE.myJobs, localJobs);
+  localStorage.removeItem('folio_pending_job');
+
+  // Show WhatsApp submission screen with real data
+  showPaidJobWhatsAppScreen(pending, pending.plan || 'featured');
 
   updatePortalStats();
 }
 
-function showPaidJobWhatsAppScreen(jobPayload, plan, fallbackJobId) {
+function showPaidJobWhatsAppScreen(jobPayload, plan) {
   var formEl    = document.getElementById('post-job-form');
   var successEl = document.getElementById('submission-success');
   if (formEl)    formEl.style.display = 'none';
@@ -1926,54 +1963,45 @@ function showPaidJobWhatsAppScreen(jobPayload, plan, fallbackJobId) {
 
   document.getElementById('ghj-wa-submit-screen')?.remove();
 
-  // Build WhatsApp message
-  var waMessage = '';
-  if (jobPayload) {
-    var perks = (function() {
-      try { return JSON.parse(jobPayload.perks || '[]').join(', '); }
-      catch(e) { return ''; }
-    })();
-    var submittedAt = new Date().toLocaleString('en-GB', {
-      day: 'numeric', month: 'long', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-    var planLabel = plan === 'premium'
-      ? 'PREMIUM — GMD 10 PAID'
-      : 'FEATURED — GMD 10 PAID';
+  var perks = (function() {
+    try { return JSON.parse(jobPayload.perks || '[]').join(', '); }
+    catch(e) { return ''; }
+  })();
 
-    waMessage =
-      '🆕 *NEW PAID JOB SUBMISSION — GamHub Jobs*\n' +
-      '━━━━━━━━━━━━━━━━━━━━\n\n' +
-      '🏢 *COMPANY DETAILS*\n' +
-      '• Company: '        + (jobPayload.company  || '—') + '\n' +
-      '• Industry: '       + (jobPayload.industry || '—') + '\n' +
-      '• Contact Email: '  + (jobPayload.email    || '—') + '\n' +
-      '• Website: '        + (jobPayload.website  || '—') + '\n\n' +
-      '📋 *JOB DETAILS*\n' +
-      '• Title: '      + (jobPayload.title      || '—') + '\n' +
-      '• Location: '   + (jobPayload.location   || '—') + '\n' +
-      '• Type: '       + (jobPayload.type       || '—') + '\n' +
-      '• Salary: '     + (jobPayload.salary     || 'Not specified') + '\n' +
-      '• Experience: ' + (jobPayload.experience || '—') + '\n' +
-      '• Deadline: '   + (jobPayload.deadline   || '—') + '\n' +
-      '• Plan: '       + planLabel + '\n\n' +
-      '📝 *DESCRIPTION*\n'  + (jobPayload.description  || '—') + '\n\n' +
-      '✅ *REQUIREMENTS*\n' + (jobPayload.requirements || '—') + '\n\n' +
-      '🎁 *PERKS*\n'        + (perks || '—') + '\n\n' +
-      '🔗 *APPLY URL*\n'    + (jobPayload.apply_url || '—') + '\n\n' +
-      '🕐 Submitted: '      + submittedAt;
-  } else {
-    waMessage =
-      '🆕 *PAID JOB SUBMISSION — GamHub Jobs*\n\n' +
-      'Payment received for a ' + (plan || 'featured').toUpperCase() + ' listing.\n' +
-      'Job ID: ' + (fallbackJobId || '—') + '\n' +
-      '🕐 ' + new Date().toLocaleString('en-GB');
-  }
+  var submittedAt = new Date().toLocaleString('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+
+  var planLabel = plan === 'premium'
+    ? 'PREMIUM — GMD 10 PAID'
+    : 'FEATURED — GMD 10 PAID';
+
+  var waMessage =
+    '🆕 *NEW PAID JOB SUBMISSION — GamHub Jobs*\n' +
+    '━━━━━━━━━━━━━━━━━━━━\n\n' +
+    '🏢 *COMPANY DETAILS*\n' +
+    '• Company: '       + (jobPayload.company  || '—') + '\n' +
+    '• Industry: '      + (jobPayload.industry || '—') + '\n' +
+    '• Contact Email: ' + (jobPayload.email    || '—') + '\n' +
+    '• Website: '       + (jobPayload.website  || '—') + '\n\n' +
+    '📋 *JOB DETAILS*\n' +
+    '• Title: '      + (jobPayload.title      || '—') + '\n' +
+    '• Location: '   + (jobPayload.location   || '—') + '\n' +
+    '• Type: '       + (jobPayload.type       || '—') + '\n' +
+    '• Salary: '     + (jobPayload.salary     || 'Not specified') + '\n' +
+    '• Experience: ' + (jobPayload.experience || '—') + '\n' +
+    '• Deadline: '   + (jobPayload.deadline   || '—') + '\n' +
+    '• Plan: '       + planLabel + '\n\n' +
+    '📝 *DESCRIPTION*\n'  + (jobPayload.description  || '—') + '\n\n' +
+    '✅ *REQUIREMENTS*\n' + (jobPayload.requirements || '—') + '\n\n' +
+    '🎁 *PERKS*\n'        + (perks || '—') + '\n\n' +
+    '🔗 *APPLY URL*\n'    + (jobPayload.apply_url || '—') + '\n\n' +
+    '🕐 Submitted: '      + submittedAt;
 
   var waUrl      = 'https://wa.me/2206371941?text=' + encodeURIComponent(waMessage);
   var planBadge  = plan === 'premium' ? '🏆 Premium' : '⭐ Featured';
 
-  // ── Overlay ──────────────────────────────────────────
   var screen = document.createElement('div');
   screen.id = 'ghj-wa-submit-screen';
   screen.style.cssText =
@@ -1983,16 +2011,13 @@ function showPaidJobWhatsAppScreen(jobPayload, plan, fallbackJobId) {
     'padding:24px;flex-direction:column;text-align:center;' +
     'font-family:Outfit,sans-serif;overflow-y:auto;';
 
-  // ── Inner card ────────────────────────────────────────
   var card = document.createElement('div');
   card.style.cssText = 'max-width:460px;width:100%;';
 
-  // Emoji
   var emoji = document.createElement('div');
   emoji.textContent = '🎉';
   emoji.style.cssText = 'font-size:52px;margin-bottom:16px;';
 
-  // Badge
   var badge = document.createElement('div');
   badge.textContent = '✅ Payment Confirmed — ' + planBadge;
   badge.style.cssText =
@@ -2004,29 +2029,25 @@ function showPaidJobWhatsAppScreen(jobPayload, plan, fallbackJobId) {
     'letter-spacing:0.08em;text-transform:uppercase;' +
     'margin-bottom:20px;';
 
-  // Heading
   var heading = document.createElement('h2');
   heading.textContent = 'One last step — submit via WhatsApp';
   heading.style.cssText =
     'font-size:26px;font-weight:700;color:#fff;' +
     'margin:0 0 12px;line-height:1.3;';
 
-  // Sub text
   var sub = document.createElement('p');
   sub.style.cssText =
     'font-size:14px;color:rgba(255,255,255,0.6);' +
     'line-height:1.75;margin:0 0 28px;';
   sub.innerHTML =
-    'Your payment is confirmed ✦<br>' +
-    'Tap the button below to send your job details to GamHub Jobs.<br>' +
+    'Your payment is confirmed ✦ Tap below to send your job details to GamHub Jobs.<br>' +
     '<strong style="color:rgba(255,255,255,0.85);">' +
     'Your listing goes live within 24 hours of WhatsApp submission.</strong>';
 
-  // WhatsApp button
   var waBtn = document.createElement('a');
-  waBtn.href = waUrl;
+  waBtn.href   = waUrl;
   waBtn.target = '_blank';
-  waBtn.rel = 'noopener noreferrer';
+  waBtn.rel    = 'noopener noreferrer';
   waBtn.style.cssText =
     'display:flex;align-items:center;justify-content:center;gap:10px;' +
     'width:100%;padding:18px 24px;' +
@@ -2043,13 +2064,12 @@ function showPaidJobWhatsAppScreen(jobPayload, plan, fallbackJobId) {
     if (s) s.classList.add('show');
   });
 
-  // Helper text
   var helperText = document.createElement('p');
-  helperText.textContent = 'Opens WhatsApp with your full job details pre-filled and ready to send.';
+  helperText.textContent =
+    'Opens WhatsApp with your full job details pre-filled and ready to send.';
   helperText.style.cssText =
     'font-size:12px;color:rgba(255,255,255,0.3);margin:0 0 20px;';
 
-  // Skip button
   var skipBtn = document.createElement('button');
   skipBtn.textContent = 'I already sent it — skip this step';
   skipBtn.style.cssText =
@@ -2063,7 +2083,6 @@ function showPaidJobWhatsAppScreen(jobPayload, plan, fallbackJobId) {
     if (s) s.classList.add('show');
   });
 
-  // ── Assemble ──────────────────────────────────────────
   card.appendChild(emoji);
   card.appendChild(badge);
   card.appendChild(heading);
