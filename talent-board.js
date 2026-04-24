@@ -1097,140 +1097,12 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
   var status = params.get('tb_payment');
   if (!status) return;
 
-  window.addEventListener('DOMContentLoaded', function() {
-    window.history.replaceState({}, '', window.location.pathname);
-
-    if (status === 'success') {
-
-      // Read the saved profile from localStorage
-      var pending = null;
-      try {
-        var raw = localStorage.getItem('tb_pending_profile');
-        if (raw) {
-          pending = JSON.parse(raw);
-        }
-      } catch(e) {
-        pending = null;
-      }
-
-      // If data is missing, do NOT show any fallback screen.
-      // Instead show a simple toast and let the user re-submit.
-      if (!pending || !pending.name) {
-        if (typeof showView === 'function') showView('talent-post');
-        if (typeof toast === 'function') {
-          toast(
-            'Payment confirmed ✦ Please re-submit your profile details below to complete posting.',
-            'gold', 8000
-          );
-        }
-        return;
-      }
-
-      // We have real data — mark as featured and save
-      pending.featured     = true;
-      pending.plan         = 'featured';
-      pending.approved     = true;
-      pending.submitted_at = pending.submitted_at || new Date().toISOString();
-
-      localStorage.removeItem('tb_pending_profile');
-
-      tbSaveLocalProfile(pending);
-      tbLoadLocalProfiles();
-
-      if (typeof showView === 'function') showView('talent-board');
-      if (typeof tbRenderProfiles === 'function') tbRenderProfiles(TB_PROFILES);
-
-      // Show the WhatsApp submission screen with real data
-      tbShowFeaturedProfileWhatsAppScreen(pending);
-
-    } else if (status === 'cancelled') {
-  if (typeof showView === 'function') showView('talent-post');
-
-  // Restore the saved form data so user does not have to retype everything
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      try {
-        var raw = localStorage.getItem('tb_pending_profile');
-        if (!raw) return;
-        var saved = JSON.parse(raw);
-        if (!saved) return;
-
-        var setVal = function(id, val) {
-          var el = document.getElementById(id);
-          if (el && val) el.value = val;
-        };
-
-        setVal('tpp-name',       saved.name);
-        setVal('tpp-title',      saved.title);
-        setVal('tpp-email',      saved.email);
-        setVal('tpp-phone',      saved.phone);
-        setVal('tpp-summary',    saved.summary);
-        setVal('tpp-education',  saved.education);
-        setVal('tpp-link',       saved.link);
-        setVal('tpp-cv-link',    saved.cv_link);
-        setVal('tpp-salary',     saved.salary);
-
-        var catEl = document.getElementById('tpp-category');
-        if (catEl && saved.category) catEl.value = saved.category;
-
-        var expEl = document.getElementById('tpp-experience');
-        if (expEl && saved.experience) expEl.value = saved.experience;
-
-        var locEl = document.getElementById('tpp-location');
-        if (locEl && saved.location) locEl.value = saved.location;
-
-        // Restore availability pill
-        if (saved.availability) {
-          var availRadio = document.querySelector(
-            'input[name="tpp-avail"][value="' + saved.availability + '"]'
-          );
-          if (availRadio) {
-            availRadio.checked = true;
-            tbSelectPill(availRadio);
-          }
-        }
-
-        // Restore job type pill
-        if (saved.job_type) {
-          var typeRadio = document.querySelector(
-            'input[name="tpp-jobtype"][value="' + saved.job_type + '"]'
-          );
-          if (typeRadio) {
-            typeRadio.checked = true;
-            tbSelectPill(typeRadio);
-          }
-        }
-
-        // Restore skills
-        if (saved.skills) {
-          var skillList = document.getElementById('tpp-skills-list');
-          if (skillList) {
-            skillList.innerHTML = '';
-            saved.skills.split(',').map(function(s) {
-              return s.trim();
-            }).filter(Boolean).forEach(function(skillName) {
-              tbAddSkill(skillName);
-            });
-          }
-        }
-
-        if (typeof toast === 'function') {
-          toast(
-            'Your details have been restored — review and try again.',
-            'gold', 5000
-          );
-        }
-
-      } catch(e) {
-        if (typeof toast === 'function') {
-          toast('Payment cancelled.', 'error', 4000);
-        }
-      }
-    });
-  });
-}
-  });
+  // Use a flag so the main DOMContentLoaded hook at the bottom
+  // of this file can trigger the handler AFTER showView is ready
+  window._tbPaymentStatus = status;
+  window.history.replaceState({}, '', window.location.pathname);
 })();
+
 /* ============================================================
    UTILITIES
    ============================================================ */
@@ -1266,6 +1138,7 @@ function tbTimeAgo(iso) {
    HOOK INTO showView() — universal safety net
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+
   /* Wire up back button on profile page */
   const backBtn = document.getElementById('tp-profile-back-btn');
   if (backBtn) backBtn.addEventListener('click', tbCloseProfilePage);
@@ -1274,13 +1147,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.showView = function(id) {
     tbForceUnlockScroll();
-
     if (typeof _originalShowView === 'function') _originalShowView(id);
-
     if (id === 'talent-board') {
       requestAnimationFrame(() => initTalentBoard());
     }
-
     if (id === 'talent-post') {
       requestAnimationFrame(() => {
         tbInitSkillBlocks();
@@ -1288,4 +1158,137 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   };
+
+  /* ── Handle payment return — runs here so showView is guaranteed ready ── */
+  const status = window._tbPaymentStatus;
+  if (!status) return;
+
+  if (status === 'success') {
+
+    var pending = null;
+    try {
+      var raw = localStorage.getItem('tb_pending_profile');
+      if (raw) pending = JSON.parse(raw);
+    } catch(e) {
+      pending = null;
+    }
+
+    if (!pending || !pending.name) {
+      // Data genuinely missing — send user back to form
+      if (typeof showView === 'function') showView('talent-post');
+      if (typeof toast === 'function') {
+        toast(
+          'Payment confirmed ✦ Please re-submit your profile details below to complete posting.',
+          'gold', 8000
+        );
+      }
+      return;
+    }
+
+    // Mark as featured with real data
+    pending.featured     = true;
+    pending.plan         = 'featured';
+    pending.approved     = true;
+    pending.submitted_at = pending.submitted_at || new Date().toISOString();
+
+    localStorage.removeItem('tb_pending_profile');
+
+    tbSaveLocalProfile(pending);
+    tbLoadLocalProfiles();
+
+    // Navigate to talent board first
+    if (typeof showView === 'function') showView('talent-board');
+
+    // Wait for the view to render, then show the WhatsApp screen
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        if (typeof tbRenderProfiles === 'function') tbRenderProfiles(TB_PROFILES);
+        tbShowFeaturedProfileWhatsAppScreen(pending);
+      });
+    });
+
+  } else if (status === 'cancelled') {
+
+    if (typeof showView === 'function') showView('talent-post');
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        try {
+          var raw = localStorage.getItem('tb_pending_profile');
+          if (!raw) return;
+          var saved = JSON.parse(raw);
+          if (!saved) return;
+
+          var setVal = function(id, val) {
+            var el = document.getElementById(id);
+            if (el && val) el.value = val;
+          };
+
+          setVal('tpp-name',      saved.name);
+          setVal('tpp-title',     saved.title);
+          setVal('tpp-email',     saved.email);
+          setVal('tpp-phone',     saved.phone);
+          setVal('tpp-summary',   saved.summary);
+          setVal('tpp-education', saved.education);
+          setVal('tpp-link',      saved.link);
+          setVal('tpp-cv-link',   saved.cv_link);
+          setVal('tpp-salary',    saved.salary);
+
+          var catEl = document.getElementById('tpp-category');
+          if (catEl && saved.category) catEl.value = saved.category;
+
+          var expEl = document.getElementById('tpp-experience');
+          if (expEl && saved.experience) expEl.value = saved.experience;
+
+          var locEl = document.getElementById('tpp-location');
+          if (locEl && saved.location) locEl.value = saved.location;
+
+          if (saved.availability) {
+            var availRadio = document.querySelector(
+              'input[name="tpp-avail"][value="' + saved.availability + '"]'
+            );
+            if (availRadio) {
+              availRadio.checked = true;
+              tbSelectPill(availRadio);
+            }
+          }
+
+          if (saved.job_type) {
+            var typeRadio = document.querySelector(
+              'input[name="tpp-jobtype"][value="' + saved.job_type + '"]'
+            );
+            if (typeRadio) {
+              typeRadio.checked = true;
+              tbSelectPill(typeRadio);
+            }
+          }
+
+          if (saved.skills) {
+            var skillList = document.getElementById('tpp-skills-list');
+            if (skillList) {
+              skillList.innerHTML = '';
+              saved.skills.split(',').map(function(s) {
+                return s.trim();
+              }).filter(Boolean).forEach(function(skillName) {
+                tbAddSkill(skillName);
+              });
+            }
+          }
+
+          if (typeof toast === 'function') {
+            toast(
+              'Your details have been restored — review and try again.',
+              'gold', 5000
+            );
+          }
+
+        } catch(e) {
+          if (typeof toast === 'function') {
+            toast('Payment cancelled.', 'error', 4000);
+          }
+        }
+      });
+    });
+  }
+
 });
