@@ -1745,19 +1745,102 @@ const MODEMPAY_CONFIG = {
       finaliseDownload(dlToken);
       clean();
     });
-  } else if (status === 'cancelled') {
-    window.addEventListener('DOMContentLoaded', () => {
-      const pending = loadData_raw('folio_pending_download');
-      if (pending) {
-        showView('preview');
-        toast('Payment cancelled — your CV was not downloaded.', 'error', 5000);
-      } else {
-        showView('employer');
-        toast('Payment cancelled — your job was not posted.', 'error', 5000);
-      }
+} else if (status === 'cancelled') {
+  window.addEventListener('DOMContentLoaded', () => {
+    const pendingDownload = loadData_raw('folio_pending_download');
+    if (pendingDownload) {
+      showView('preview');
+      toast('Payment cancelled — your CV was not downloaded.', 'error', 5000);
       clean();
+      return;
+    }
+
+    // Job posting cancellation — restore the form
+    showView('employer');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          const saved = loadData_raw('folio_pending_job');
+          if (!saved || !saved.title) {
+            toast('Payment cancelled.', 'error', 4000);
+            clean();
+            return;
+          }
+
+          // Switch to the Post a Job tab
+          const postTab = document.querySelector('.portal-tab');
+          if (postTab) switchPortalTab('post', postTab);
+
+          const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val) el.value = val;
+          };
+
+          setVal('pj-title',        saved.title);
+          setVal('pj-company',      saved.company);
+          setVal('pj-email',        saved.email);
+          setVal('pj-website',      saved.website);
+          setVal('pj-salary',       saved.salary);
+          setVal('pj-description',  saved.description);
+          setVal('pj-requirements', saved.requirements);
+          setVal('pj-apply-url',    saved.apply_url);
+          setVal('pj-logo-url',     saved.logo_url);
+
+          const locEl = document.getElementById('pj-location');
+          if (locEl && saved.location) locEl.value = saved.location;
+
+          const indEl = document.getElementById('pj-industry');
+          if (indEl && saved.industry) indEl.value = saved.industry;
+
+          const expEl = document.getElementById('pj-experience');
+          if (expEl && saved.experience) expEl.value = saved.experience;
+
+          // Restore job type pill
+          if (saved.type) {
+            const typeRadio = document.querySelector(
+              'input[name="jobtype"][value="' + saved.type + '"]'
+            );
+            if (typeRadio) {
+              typeRadio.checked = true;
+              selectPill(typeRadio);
+            }
+          }
+
+          // Restore perks
+          try {
+            const perks = JSON.parse(saved.perks || '[]');
+            document.querySelectorAll('.perk-chip').forEach(chip => {
+              if (perks.includes(chip.textContent.trim())) {
+                chip.classList.add('selected');
+              }
+            });
+          } catch(e) {}
+
+          // Restore the plan selection
+          if (saved.plan) {
+            document.querySelectorAll('.plan-card').forEach(card => {
+              const isMatch = card.dataset.plan === saved.plan;
+              card.classList.toggle('selected', isMatch);
+            });
+          }
+
+          updateJobPreview();
+
+          toast(
+            'Your job details have been restored — review and try again.',
+            'gold', 5000
+          );
+
+        } catch(e) {
+          toast('Payment cancelled.', 'error', 4000);
+        }
+
+        clean();
+      });
     });
-  }
+  });
+}
 })();
 
 async function finaliseDownload(token) {
