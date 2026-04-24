@@ -351,6 +351,52 @@ function tbCreateCard(profile) {
   /* Whole card is a button — matches openJobPage() pattern */
   card.style.cursor = 'pointer';
   card.addEventListener('click', () => tbOpenProfilePage(profile));
+  // ── Share dropdown logic ──
+  const tbShareBtn = card.querySelector(`#tb-sharebtn-${profile.id}`);
+  const tbDrop     = card.querySelector(`#tb-drop-${profile.id}`);
+
+  if (tbShareBtn && tbDrop) {
+    tbShareBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = tbDrop.classList.contains('open');
+      // Close all other share dropdowns first
+      document.querySelectorAll('.js-share-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        const btn = document.querySelector(`[aria-controls="${d.id}"]`);
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        tbDrop.classList.add('open');
+        tbShareBtn.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    tbDrop.querySelectorAll('.js-share-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.stopPropagation();
+        const action     = item.dataset.action;
+        const profileUrl = tbGetProfileUrl(profile.id);
+        const shareText  = profile.name + ' — ' + profile.title + ' | GamHub Jobs Talent Board';
+
+        if (action === 'whatsapp') tbShareProfileWhatsApp(profile, profileUrl);
+        if (action === 'copy')     tbCopyProfileLink(profileUrl, item);
+        if (action === 'email')    tbShareProfileEmail(profile, profileUrl, shareText);
+
+        if (action !== 'copy') {
+          tbDrop.classList.remove('open');
+          tbShareBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+
+    tbDrop.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        tbDrop.classList.remove('open');
+        tbShareBtn.setAttribute('aria-expanded', 'false');
+        tbShareBtn.focus();
+      }
+    });
+  }
 
   const initials = (profile.name || 'XX').split(' ')
     .slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -402,6 +448,40 @@ function tbCreateCard(profile) {
           onclick="event.stopPropagation();tbContactCandidate('${tbEsc(profile.id)}')">
           Contact →
         </button>
+        <div class="js-share-wrap" onclick="event.stopPropagation()">
+          <button class="js-btn-share tb-share-btn"
+            id="tb-sharebtn-${tbEsc(profile.id)}"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-controls="tb-drop-${tbEsc(profile.id)}">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="13" cy="2.5" r="1.75" stroke="currentColor" stroke-width="1.4"/>
+              <circle cx="13" cy="13.5" r="1.75" stroke="currentColor" stroke-width="1.4"/>
+              <circle cx="3"  cy="8"   r="1.75" stroke="currentColor" stroke-width="1.4"/>
+              <line x1="4.7" y1="7.1" x2="11.3" y2="3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              <line x1="4.7" y1="8.9" x2="11.3" y2="12.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            Share
+          </button>
+          <div class="js-share-dropdown"
+            id="tb-drop-${tbEsc(profile.id)}"
+            role="menu"
+            aria-labelledby="tb-sharebtn-${tbEsc(profile.id)}">
+            <div class="js-share-dropdown-title">Share this profile</div>
+            <button class="js-share-item priority" role="menuitem" data-action="whatsapp" data-id="${tbEsc(profile.id)}">
+              <span class="js-share-item-icon">💬</span>
+              <span class="js-share-item-label">WhatsApp</span>
+            </button>
+            <button class="js-share-item" role="menuitem" data-action="copy" data-id="${tbEsc(profile.id)}">
+              <span class="js-share-item-icon">🔗</span>
+              <span class="js-share-item-label">Copy Link</span>
+            </button>
+            <button class="js-share-item" role="menuitem" data-action="email" data-id="${tbEsc(profile.id)}">
+              <span class="js-share-item-icon">✉️</span>
+              <span class="js-share-item-label">Email a Friend</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -1133,7 +1213,86 @@ function tbTimeAgo(iso) {
   if (mins  > 0) return mins  + 'm ago';
   return 'Just now';
 }
+/* ============================================================
+   TALENT BOARD — SHARE HELPERS
+   ============================================================ */
 
+/** Returns a unique shareable URL for a profile */
+function tbGetProfileUrl(profileId) {
+  return window.location.origin +
+    window.location.pathname +
+    '?profile=' + encodeURIComponent(profileId);
+}
+
+/** Share profile via WhatsApp */
+function tbShareProfileWhatsApp(profile, profileUrl) {
+  const msg = encodeURIComponent(
+    '🌟 *Talent Profile on GamHub Jobs*\n\n' +
+    '*' + profile.name + '*\n' +
+    profile.title + (profile.category ? ' · ' + profile.category : '') + '\n' +
+    '📍 ' + (profile.location || 'The Gambia') + '\n' +
+    '⚡ ' + (profile.availability || 'Open to Opportunities') + '\n\n' +
+    (profile.summary ? profile.summary.slice(0, 180) + (profile.summary.length > 180 ? '…' : '') + '\n\n' : '') +
+    '👉 View full profile: ' + profileUrl
+  );
+  window.open('https://wa.me/?text=' + msg, '_blank', 'noopener,noreferrer');
+}
+
+/** Copy profile link to clipboard */
+function tbCopyProfileLink(profileUrl, itemEl) {
+  const label = itemEl?.querySelector('.js-share-item-label');
+
+  const doFeedback = () => {
+    if (label) {
+      const orig = label.textContent;
+      label.textContent = 'Copied! ✓';
+      itemEl.classList.add('copied');
+      setTimeout(() => {
+        label.textContent = orig;
+        itemEl.classList.remove('copied');
+        const drop = itemEl.closest('.js-share-dropdown');
+        const btn  = drop ? document.querySelector(`[aria-controls="${drop.id}"]`) : null;
+        if (drop) drop.classList.remove('open');
+        if (btn)  btn.setAttribute('aria-expanded', 'false');
+      }, 1600);
+    }
+    if (typeof toast === 'function') toast('Profile link copied ✓', 'success', 3000);
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(profileUrl).then(doFeedback).catch(() => {
+      tbLegacyCopy(profileUrl, doFeedback);
+    });
+  } else {
+    tbLegacyCopy(profileUrl, doFeedback);
+  }
+}
+
+/** Fallback copy for older browsers */
+function tbLegacyCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (cb) cb();
+}
+
+/** Share profile via email */
+function tbShareProfileEmail(profile, profileUrl, shareText) {
+  const subject = encodeURIComponent('Check out this talent profile: ' + shareText);
+  const body    = encodeURIComponent(
+    'Hi,\n\nI found this professional on the GamHub Jobs Talent Board and thought you might be interested:\n\n' +
+    profile.name + ' — ' + profile.title + '\n' +
+    '📍 ' + (profile.location || 'The Gambia') + '\n\n' +
+    (profile.summary ? profile.summary.slice(0, 200) + '\n\n' : '') +
+    'View their full profile here:\n' + profileUrl
+  );
+  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+}
 /* ============================================================
    HOOK INTO showView() — universal safety net
    ============================================================ */
@@ -1158,7 +1317,32 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   };
+/* ── Profile deep link handler ── */
+  (function handleProfileDeepLink() {
+    const params    = new URLSearchParams(window.location.search);
+    const profileId = params.get('profile');
+    if (!profileId) return;
 
+    // Clean the URL immediately so sharing again doesn't loop
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // Wait for profiles to load, then open the matching one
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        tbLoadLocalProfiles();
+        const found = TB_PROFILES.find(p => String(p.id) === String(profileId));
+        if (found) {
+          if (typeof showView === 'function') showView('talent-board');
+          setTimeout(() => tbOpenProfilePage(found), 300);
+        } else {
+          if (typeof showView === 'function') showView('talent-board');
+          if (typeof toast === 'function') {
+            toast('Profile not found — showing all profiles.', 'default', 4000);
+          }
+        }
+      });
+    });
+  })();
   /* ── Handle payment return — runs here so showView is guaranteed ready ── */
   const status = window._tbPaymentStatus;
   if (!status) return;
