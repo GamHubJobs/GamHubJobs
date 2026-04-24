@@ -695,24 +695,36 @@ const payload = {
    ============================================================ */
 function tbSubmitFeaturedPayment(payload, amount) {
   if (typeof rateLimiter !== 'undefined' && !rateLimiter.check('payment')) {
-    const wait = rateLimiter.waitSeconds('payment');
+    var wait = rateLimiter.waitSeconds('payment');
     tbToast('Too many payment attempts — please wait ' + wait + ' seconds.', 'error', 5000);
     return;
   }
 
-  try { localStorage.setItem('tb_pending_profile', JSON.stringify(payload)); } catch(e) {}
+  // Save full payload to localStorage NOW, before any redirect
+  try {
+    localStorage.setItem('tb_pending_profile', JSON.stringify(payload));
+    // Verify it saved correctly
+    var verify = JSON.parse(localStorage.getItem('tb_pending_profile'));
+    if (!verify || !verify.name) {
+      tbToast('Could not save profile data. Please try again.', 'error', 5000);
+      return;
+    }
+  } catch(e) {
+    tbToast('Storage error. Please try again.', 'error', 5000);
+    return;
+  }
 
-  const base      = window.location.origin + window.location.pathname;
-  const returnUrl = base + '?tb_payment=success&tb_token=' + encodeURIComponent(payload.id);
-  const cancelUrl = base + '?tb_payment=cancelled';
-  const mpTrim    = (val, max) => String(val || '').trim().slice(0, max || 255);
+  var base      = window.location.origin + window.location.pathname;
+  var returnUrl = base + '?tb_payment=success&tb_token=' + encodeURIComponent(payload.id);
+  var cancelUrl = base + '?tb_payment=cancelled';
+  var mpTrim    = function(val, max) { return String(val || '').trim().slice(0, max || 255); };
 
-  const form = document.createElement('form');
+  var form = document.createElement('form');
   form.method = 'POST';
   form.action = 'https://checkout.modempay.com/api/pay';
   form.style.display = 'none';
 
-  const fields = {
+  var fields = {
     public_key:     mpTrim(typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.MODEMPAY_PUBLIC_KEY : '', 255),
     amount:         mpTrim(String(amount), 20),
     currency:       'GMD',
@@ -726,17 +738,17 @@ function tbSubmitFeaturedPayment(payload, amount) {
     'metadata[tb_token]': mpTrim(payload.id, 80),
   };
 
-  Object.entries(fields).forEach(([key, val]) => {
-    const input = document.createElement('input');
+  Object.entries(fields).forEach(function(entry) {
+    var input   = document.createElement('input');
     input.type  = 'hidden';
-    input.name  = key;
-    input.value = val;
+    input.name  = entry[0];
+    input.value = entry[1];
     form.appendChild(input);
   });
 
   document.body.appendChild(form);
   tbToast('Redirecting to ModemPay… GMD ' + amount, 'gold', 2000);
-  setTimeout(() => form.submit(), 600);
+  setTimeout(function() { form.submit(); }, 600);
 }
 
 /* ============================================================
@@ -951,45 +963,36 @@ function tbSendAdminNotificationFeatured(profile) {
 function tbShowFeaturedProfileWhatsAppScreen(profile) {
   document.getElementById('ghj-tb-wa-screen')?.remove();
 
-  // Build WhatsApp message
-  var waMessage = '';
-  if (profile) {
-    var submittedAt = new Date().toLocaleString('en-GB', {
-      day: 'numeric', month: 'long', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-    waMessage =
-      '🌟 *NEW FEATURED TALENT PROFILE — GamHub Jobs*\n' +
-      '━━━━━━━━━━━━━━━━━━━━\n\n' +
-      '👤 *CANDIDATE DETAILS*\n' +
-      '• Name: '         + (profile.name         || '—') + '\n' +
-      '• Title: '        + (profile.title        || '—') + '\n' +
-      '• Category: '     + (profile.category     || '—') + '\n' +
-      '• Experience: '   + (profile.experience   || '—') + '\n' +
-      '• Location: '     + (profile.location     || '—') + '\n' +
-      '• Availability: ' + (profile.availability || '—') + '\n' +
-      '• Job Type: '     + (profile.job_type     || '—') + '\n' +
-      '• Salary Exp: '   + (profile.salary       || '—') + '\n' +
-      '• Plan: FEATURED (GMD 10 — PAID)\n\n' +
-      '📧 *CONTACT*\n' +
-      '• Email: '  + (profile.email || '—') + '\n' +
-      '• Phone: '  + (profile.phone || '—') + '\n' +
-      '• Link: '   + (profile.link  || '—') + '\n\n' +
-      '📝 *SUMMARY*\n'   + (profile.summary   || '—') + '\n\n' +
-      '🛠 *SKILLS*\n'    + (profile.skills    || '—') + '\n\n' +
-      '🎓 *EDUCATION*\n' + (profile.education || '—') + '\n\n' +
-      '🕐 Submitted: '   + submittedAt;
-  } else {
-    waMessage =
-      '🌟 *FEATURED TALENT PROFILE — GamHub Jobs*\n\n' +
-      'Payment received but profile data could not load.\n' +
-      '🕐 ' + new Date().toLocaleString('en-GB');
-  }
+  var submittedAt = new Date().toLocaleString('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
 
-  var waUrl = 'https://wa.me/2206371941?text=' + encodeURIComponent(waMessage);
-  var candidateName = (profile && profile.name) ? profile.name : 'Your Profile';
+  var waMessage =
+    '🌟 *NEW FEATURED TALENT PROFILE — GamHub Jobs*\n' +
+    '━━━━━━━━━━━━━━━━━━━━\n\n' +
+    '👤 *CANDIDATE DETAILS*\n' +
+    '• Name: '         + (profile.name         || '—') + '\n' +
+    '• Title: '        + (profile.title        || '—') + '\n' +
+    '• Category: '     + (profile.category     || '—') + '\n' +
+    '• Experience: '   + (profile.experience   || '—') + '\n' +
+    '• Location: '     + (profile.location     || '—') + '\n' +
+    '• Availability: ' + (profile.availability || '—') + '\n' +
+    '• Job Type: '     + (profile.job_type     || '—') + '\n' +
+    '• Salary Exp: '   + (profile.salary       || '—') + '\n' +
+    '• Plan: FEATURED (GMD 10 — PAID)\n\n' +
+    '📧 *CONTACT*\n' +
+    '• Email: '  + (profile.email || '—') + '\n' +
+    '• Phone: '  + (profile.phone || '—') + '\n' +
+    '• Link: '   + (profile.link  || '—') + '\n\n' +
+    '📝 *SUMMARY*\n'   + (profile.summary   || '—') + '\n\n' +
+    '🛠 *SKILLS*\n'    + (profile.skills    || '—') + '\n\n' +
+    '🎓 *EDUCATION*\n' + (profile.education || '—') + '\n\n' +
+    '🕐 Submitted: '   + submittedAt;
 
-  // ── Overlay ──────────────────────────────────────────
+  var waUrl         = 'https://wa.me/2206371941?text=' + encodeURIComponent(waMessage);
+  var candidateName = profile.name;
+
   var screen = document.createElement('div');
   screen.id = 'ghj-tb-wa-screen';
   screen.style.cssText =
@@ -999,16 +1002,13 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
     'padding:24px;flex-direction:column;text-align:center;' +
     'font-family:Outfit,sans-serif;overflow-y:auto;';
 
-  // ── Inner card ────────────────────────────────────────
   var card = document.createElement('div');
   card.style.cssText = 'max-width:460px;width:100%;';
 
-  // Star emoji
   var emoji = document.createElement('div');
   emoji.textContent = '🌟';
   emoji.style.cssText = 'font-size:52px;margin-bottom:16px;';
 
-  // Pill badge
   var badge = document.createElement('div');
   badge.textContent = '⭐ Featured Profile — Payment Confirmed';
   badge.style.cssText =
@@ -1020,14 +1020,12 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
     'letter-spacing:0.08em;text-transform:uppercase;' +
     'margin-bottom:20px;';
 
-  // Heading
   var heading = document.createElement('h2');
   heading.textContent = 'One last step — submit via WhatsApp';
   heading.style.cssText =
     'font-size:26px;font-weight:700;color:#fff;' +
     'margin:0 0 12px;line-height:1.3;';
 
-  // Sub paragraph 1
   var sub1 = document.createElement('p');
   sub1.style.cssText =
     'font-size:14px;color:rgba(255,255,255,0.6);' +
@@ -1036,7 +1034,6 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
     'Payment confirmed for <strong style="color:#fff">' +
     candidateName + '</strong> ✦';
 
-  // Sub paragraph 2
   var sub2 = document.createElement('p');
   sub2.style.cssText =
     'font-size:14px;color:rgba(255,255,255,0.6);' +
@@ -1046,11 +1043,10 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
     '<strong style="color:rgba(255,255,255,0.85);">' +
     'Your featured profile goes live within 24 hours.</strong>';
 
-  // WhatsApp button
   var waBtn = document.createElement('a');
-  waBtn.href = waUrl;
+  waBtn.href   = waUrl;
   waBtn.target = '_blank';
-  waBtn.rel = 'noopener noreferrer';
+  waBtn.rel    = 'noopener noreferrer';
   waBtn.style.cssText =
     'display:flex;align-items:center;justify-content:center;gap:10px;' +
     'width:100%;padding:18px 24px;' +
@@ -1065,13 +1061,12 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
     screen.remove();
   });
 
-  // Helper text
   var helperText = document.createElement('p');
-  helperText.textContent = 'Opens WhatsApp with your full profile pre-filled and ready to send.';
+  helperText.textContent =
+    'Opens WhatsApp with your full profile pre-filled and ready to send.';
   helperText.style.cssText =
     'font-size:12px;color:rgba(255,255,255,0.3);margin:0 0 20px;';
 
-  // Skip button
   var skipBtn = document.createElement('button');
   skipBtn.textContent = 'I already sent it — skip this step';
   skipBtn.style.cssText =
@@ -1083,7 +1078,6 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
     screen.remove();
   });
 
-  // ── Assemble ──────────────────────────────────────────
   card.appendChild(emoji);
   card.appendChild(badge);
   card.appendChild(heading);
@@ -1099,36 +1093,55 @@ function tbShowFeaturedProfileWhatsAppScreen(profile) {
    PAYMENT RETURN HANDLER
    ============================================================ */
 (function tbCheckPaymentReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const status = params.get('tb_payment');
-  const token  = params.get('tb_token');
+  var params = new URLSearchParams(window.location.search);
+  var status = params.get('tb_payment');
   if (!status) return;
 
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', function() {
     window.history.replaceState({}, '', window.location.pathname);
 
     if (status === 'success') {
+
+      // Read the saved profile from localStorage
+      var pending = null;
       try {
-        const pending = JSON.parse(localStorage.getItem('tb_pending_profile') || 'null');
-
-        pending.featured = true;
-        pending.plan     = 'featured';
-        pending.approved = true;
-        localStorage.removeItem('tb_pending_profile');
-
-        tbSaveLocalProfile(pending);
-        tbLoadLocalProfiles();
-        if (typeof showView === 'function') showView('talent-board');
-        if (typeof tbRenderProfiles === 'function') tbRenderProfiles(TB_PROFILES);
-
-        // Show the WhatsApp submission screen
-        tbShowFeaturedProfileWhatsAppScreen(pending);
-
+        var raw = localStorage.getItem('tb_pending_profile');
+        if (raw) {
+          pending = JSON.parse(raw);
+        }
       } catch(e) {
-        console.error('[TalentBoard] Payment return error:', e);
-        if (typeof showView === 'function') showView('talent-board');
-        tbShowFeaturedProfileWhatsAppScreen(null);
+        pending = null;
       }
+
+      // If data is missing, do NOT show any fallback screen.
+      // Instead show a simple toast and let the user re-submit.
+      if (!pending || !pending.name) {
+        if (typeof showView === 'function') showView('talent-post');
+        if (typeof toast === 'function') {
+          toast(
+            'Payment confirmed ✦ Please re-submit your profile details below to complete posting.',
+            'gold', 8000
+          );
+        }
+        return;
+      }
+
+      // We have real data — mark as featured and save
+      pending.featured     = true;
+      pending.plan         = 'featured';
+      pending.approved     = true;
+      pending.submitted_at = pending.submitted_at || new Date().toISOString();
+
+      localStorage.removeItem('tb_pending_profile');
+
+      tbSaveLocalProfile(pending);
+      tbLoadLocalProfiles();
+
+      if (typeof showView === 'function') showView('talent-board');
+      if (typeof tbRenderProfiles === 'function') tbRenderProfiles(TB_PROFILES);
+
+      // Show the WhatsApp submission screen with real data
+      tbShowFeaturedProfileWhatsAppScreen(pending);
 
     } else if (status === 'cancelled') {
       if (typeof showView === 'function') showView('talent-post');
