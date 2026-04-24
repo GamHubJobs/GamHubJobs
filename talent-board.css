@@ -585,3 +585,13 @@
   padding-top: 68px;
   min-height: 100vh;
 }
+
+/* ── Share button size adjustment on talent cards ── */
+.tb-share-btn {
+  padding: 7px 12px;
+  font-size: 11px;
+}
+.tb-share-btn svg {
+  width: 13px;
+  height: 13px;
+}
