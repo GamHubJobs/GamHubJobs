@@ -154,7 +154,31 @@ const TB_PLAN_PRICES = {
   free:     0,
   featured: 10,   /* GMD */
 };
+/* ============================================================
+   AVATAR IMAGE HELPER
+   Tries to load a profile photo from assets/avatars/{id}.jpg
+   Falls back to initials if no image exists.
+   ============================================================ */
+function tbGetAvatarHTML(profile, size) {
+  const sz       = size || 52;
+  const initials = (profile.name || 'XX').split(' ')
+    .slice(0, 2).map(w => (w[0] || '').toUpperCase()).join('');
+  const imgSrc   = 'assets/avatars/' + (profile.id || 'unknown') + '.jpg';
 
+  return `
+    <div class="tb-avatar tb-avatar-wrap" style="width:${sz}px;height:${sz}px;"
+         aria-label="${tbEsc(profile.name || 'Candidate')} profile photo">
+      <img
+        src="${imgSrc}"
+        alt="${tbEsc(profile.name || '')}"
+        class="tb-avatar-img"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+        onload="this.nextElementSibling.style.display='none';"
+      >
+      <span class="tb-avatar-initials" style="display:flex;">${initials}</span>
+    </div>
+  `;
+}
 /* ============================================================
    PLAN HELPERS
    ============================================================ */
@@ -372,7 +396,7 @@ function tbCreateCard(profile) {
       ? '<div class="tb-plan-badge-featured" style="margin-bottom:10px">⭐ Featured</div>'
       : ''}
     <div class="tb-card-head">
-      <div class="tb-avatar" aria-hidden="true">${initials}</div>
+      ${tbGetAvatarHTML(profile, 52)}
       <div class="tb-card-info">
         <h3 class="tb-card-name">${tbEsc(profile.name)}</h3>
         <p class="tb-card-title">${tbEsc(profile.title)}</p>
@@ -502,7 +526,10 @@ function tbOpenProfilePage(profile) {
 
   /* Avatar */
   const avatarEl = document.getElementById('tp-profile-avatar');
-  if (avatarEl) avatarEl.textContent = initials;
+  if (avatarEl) avatarEl.outerHTML = tbGetAvatarHTML(profile, 64).replace(
+    'class="tb-avatar tb-avatar-wrap"',
+    'class="tb-avatar tb-avatar-wrap" id="tp-profile-avatar"'
+  );
 
   /* Name & role */
   const nameEl = document.getElementById('tp-profile-name');
