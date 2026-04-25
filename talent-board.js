@@ -351,52 +351,6 @@ function tbCreateCard(profile) {
   /* Whole card is a button — matches openJobPage() pattern */
   card.style.cursor = 'pointer';
   card.addEventListener('click', () => tbOpenProfilePage(profile));
-  // ── Share dropdown logic ──
-  const tbShareBtn = card.querySelector(`#tb-sharebtn-${profile.id}`);
-  const tbDrop     = card.querySelector(`#tb-drop-${profile.id}`);
-
-  if (tbShareBtn && tbDrop) {
-    tbShareBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      const isOpen = tbDrop.classList.contains('open');
-      // Close all other share dropdowns first
-      document.querySelectorAll('.js-share-dropdown.open').forEach(d => {
-        d.classList.remove('open');
-        const btn = document.querySelector(`[aria-controls="${d.id}"]`);
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-      });
-      if (!isOpen) {
-        tbDrop.classList.add('open');
-        tbShareBtn.setAttribute('aria-expanded', 'true');
-      }
-    });
-
-    tbDrop.querySelectorAll('.js-share-item').forEach(item => {
-      item.addEventListener('click', e => {
-        e.stopPropagation();
-        const action     = item.dataset.action;
-        const profileUrl = tbGetProfileUrl(profile.id);
-        const shareText  = profile.name + ' — ' + profile.title + ' | GamHub Jobs Talent Board';
-
-        if (action === 'whatsapp') tbShareProfileWhatsApp(profile, profileUrl);
-        if (action === 'copy')     tbCopyProfileLink(profileUrl, item);
-        if (action === 'email')    tbShareProfileEmail(profile, profileUrl, shareText);
-
-        if (action !== 'copy') {
-          tbDrop.classList.remove('open');
-          tbShareBtn.setAttribute('aria-expanded', 'false');
-        }
-      });
-    });
-
-    tbDrop.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        tbDrop.classList.remove('open');
-        tbShareBtn.setAttribute('aria-expanded', 'false');
-        tbShareBtn.focus();
-      }
-    });
-  }
 
   const initials = (profile.name || 'XX').split(' ')
     .slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -485,6 +439,53 @@ function tbCreateCard(profile) {
       </div>
     </div>
   `;
+
+  // ── Share dropdown logic (must come AFTER card.innerHTML is set) ──
+  const tbShareBtn = card.querySelector(`#tb-sharebtn-${profile.id}`);
+  const tbDrop     = card.querySelector(`#tb-drop-${profile.id}`);
+
+  if (tbShareBtn && tbDrop) {
+    tbShareBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = tbDrop.classList.contains('open');
+      // Close all other open share dropdowns first
+      document.querySelectorAll('.js-share-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        const btn = document.querySelector(`[aria-controls="${d.id}"]`);
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        tbDrop.classList.add('open');
+        tbShareBtn.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    tbDrop.querySelectorAll('.js-share-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.stopPropagation();
+        const action     = item.dataset.action;
+        const profileUrl = tbGetProfileUrl(profile.id);
+        const shareText  = profile.name + ' — ' + profile.title + ' | GamHub Jobs Talent Board';
+
+        if (action === 'whatsapp') tbShareProfileWhatsApp(profile, profileUrl);
+        if (action === 'copy')     tbCopyProfileLink(profileUrl, item);
+        if (action === 'email')    tbShareProfileEmail(profile, profileUrl, shareText);
+
+        if (action !== 'copy') {
+          tbDrop.classList.remove('open');
+          tbShareBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+
+    tbDrop.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        tbDrop.classList.remove('open');
+        tbShareBtn.setAttribute('aria-expanded', 'false');
+        tbShareBtn.focus();
+      }
+    });
+  }
 
   return card;
 }
