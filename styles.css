@@ -3473,3 +3473,42 @@ body.cookie-visible .wa-widget { bottom: 100px; }
 #tb-qa-overlay[style*="flex"] {
   display: flex !important;
 }
+/* ============================================================
+   COMPANY LOGO — image + initials fallback
+   ============================================================ */
+.company-logo-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.company-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  display: block;
+  position: absolute;
+  top: 0; left: 0;
+  padding: 4px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.company-logo-initials {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: -0.02em;
+}
