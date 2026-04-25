@@ -1727,7 +1727,6 @@ function switchPortalTab(tab, btn) {
   if (tab === 'manage') renderManageJobs();
   if (tab === 'admin')  renderAdminPanel();
 }
-
 function updateJobPreview() {
   const title   = document.getElementById('pj-title')?.value       || '';
   const company = document.getElementById('pj-company')?.value     || '';
@@ -1740,7 +1739,6 @@ function updateJobPreview() {
   document.getElementById('prev-company').textContent = company || 'Company Name';
 
   const logoUrl  = document.getElementById('pj-logo-url')?.value.trim() || '';
-  const company  = document.getElementById('pj-company')?.value || '';
   const logoWrap = document.getElementById('prev-logo-wrap');
   if (logoWrap) {
     logoWrap.innerHTML = logoUrl && /^https?:\/\//i.test(logoUrl)
