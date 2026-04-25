@@ -101,7 +101,35 @@ function toast(msg, type='default', duration=3500) {
 function slug(s) {
   return (s||'unnamed').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
+/* ============================================================
+   COMPANY LOGO HELPER
+   Tries to load assets/logos/{company-slug}.png/.jpg/.webp
+   Falls back to initials if no logo file exists.
+   ============================================================ */
+function getCompanyLogoHTML(companyName, size, cssClass) {
+  const sz      = size      || 40;
+  const cls     = cssClass  || 'job-card-logo';
+  const safeSlg = slug(companyName || 'company');
+  const base    = 'assets/logos/' + safeSlg;
+  const initials = (companyName || 'CO').split(' ')
+    .slice(0, 2).map(w => (w[0] || '').toUpperCase()).join('');
 
+  return `
+    <div class="company-logo-wrap" style="width:${sz}px;height:${sz}px;" aria-label="${h(companyName || 'Company')} logo">
+      <picture>
+        <source srcset="${base}.webp" type="image/webp">
+        <source srcset="${base}.png"  type="image/png">
+        <img
+          src="${base}.jpg"
+          alt="${h(companyName || '')} logo"
+          class="${cls} company-logo-img"
+          onerror="this.closest('picture').style.display='none';this.closest('.company-logo-wrap').querySelector('.company-logo-initials').style.display='flex';"
+        >
+      </picture>
+      <span class="company-logo-initials" style="display:none;">${initials}</span>
+    </div>
+  `;
+}
 /* ============================================================
    VIEW ROUTING
    ============================================================ */
