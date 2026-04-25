@@ -156,26 +156,29 @@ const TB_PLAN_PRICES = {
 };
 /* ============================================================
    AVATAR IMAGE HELPER
-   Tries to load a profile photo from assets/avatars/{id}.jpg
-   Falls back to initials if no image exists.
+   Tries .jpg first, then .png, then .webp.
+   Falls back to initials if none exist.
    ============================================================ */
 function tbGetAvatarHTML(profile, size) {
   const sz       = size || 52;
   const initials = (profile.name || 'XX').split(' ')
     .slice(0, 2).map(w => (w[0] || '').toUpperCase()).join('');
-  const imgSrc   = 'assets/avatars/' + (profile.id || 'unknown') + '.jpg';
+  const base     = 'assets/avatars/' + (profile.id || 'unknown');
 
   return `
     <div class="tb-avatar tb-avatar-wrap" style="width:${sz}px;height:${sz}px;"
          aria-label="${tbEsc(profile.name || 'Candidate')} profile photo">
-      <img
-        src="${imgSrc}"
-        alt="${tbEsc(profile.name || '')}"
-        class="tb-avatar-img"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
-        onload="this.nextElementSibling.style.display='none';"
-      >
-      <span class="tb-avatar-initials" style="display:flex;">${initials}</span>
+      <picture>
+        <source srcset="${base}.webp" type="image/webp">
+        <source srcset="${base}.png"  type="image/png">
+        <img
+          src="${base}.jpg"
+          alt="${tbEsc(profile.name || '')}"
+          class="tb-avatar-img"
+          onerror="this.closest('picture').style.display='none';this.closest('.tb-avatar-wrap').querySelector('.tb-avatar-initials').style.display='flex';"
+        >
+      </picture>
+      <span class="tb-avatar-initials" style="display:none;">${initials}</span>
     </div>
   `;
 }
