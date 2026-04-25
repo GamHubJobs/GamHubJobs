@@ -107,25 +107,41 @@ function slug(s) {
    Falls back to initials if no logo file exists.
    ============================================================ */
 function getCompanyLogoHTML(companyName, size, cssClass) {
-  const sz      = size      || 40;
-  const cls     = cssClass  || 'job-card-logo';
-  const safeSlg = slug(companyName || 'company');
-  const base    = 'assets/logos/' + safeSlg;
+  const sz       = size     || 40;
+  const cls      = cssClass || 'job-card-logo';
+  const safeSlg  = slug(companyName || 'company');
   const initials = (companyName || 'CO').split(' ')
     .slice(0, 2).map(w => (w[0] || '').toUpperCase()).join('');
 
+  /* Resolve base path relative to where index.html lives,
+     so it works at the root AND on GitHub Pages subdirectories. */
+  const basePath = (function() {
+    const path = window.location.pathname;
+    const dir  = path.endsWith('/') ? path : path.substring(0, path.lastIndexOf('/') + 1);
+    return dir + 'assets/logos/' + safeSlg;
+  })();
+
+  const formats = [basePath + '.png', basePath + '.jpg', basePath + '.webp'];
+
   return `
     <div class="company-logo-wrap" style="width:${sz}px;height:${sz}px;" aria-label="${h(companyName || 'Company')} logo">
-      <picture>
-        <source srcset="${base}.webp" type="image/webp">
-        <source srcset="${base}.png"  type="image/png">
-        <img
-          src="${base}.jpg"
-          alt="${h(companyName || '')} logo"
-          class="${cls} company-logo-img"
-          onerror="this.closest('picture').style.display='none';this.closest('.company-logo-wrap').querySelector('.company-logo-initials').style.display='flex';"
-        >
-      </picture>
+      <img
+        src="${formats[0]}"
+        data-fallbacks="${formats[1]}|${formats[2]}"
+        alt="${h(companyName || '')} logo"
+        class="${cls} company-logo-img"
+        onerror="
+          var fb = this.dataset.fallbacks ? this.dataset.fallbacks.split('|') : [];
+          if (fb.length) {
+            this.src = fb[0];
+            this.dataset.fallbacks = fb.slice(1).join('|');
+          } else {
+            this.style.display='none';
+            var wrap = this.closest('.company-logo-wrap');
+            if (wrap) { var sp = wrap.querySelector('.company-logo-initials'); if(sp) sp.style.display='flex'; }
+          }
+        "
+      >
       <span class="company-logo-initials" style="display:none;">${initials}</span>
     </div>
   `;
