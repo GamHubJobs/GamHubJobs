@@ -163,21 +163,40 @@ function tbGetAvatarHTML(profile, size) {
   const sz       = size || 52;
   const initials = (profile.name || 'XX').split(' ')
     .slice(0, 2).map(w => (w[0] || '').toUpperCase()).join('');
-  const base     = 'assets/avatars/' + (profile.id || 'unknown');
+
+  /* Build a base path that works whether the site is at the root
+     or served from a GitHub Pages subdirectory like /GamHubJobs/  */
+  const basePath = (function() {
+    const path = window.location.pathname;
+    /* If index.html is at /GamHubJobs/index.html the base is /GamHubJobs/ */
+    const dir = path.endsWith('/') ? path : path.substring(0, path.lastIndexOf('/') + 1);
+    return dir + 'assets/avatars/' + (profile.id || 'unknown');
+  })();
+
+  /* Try jpg → png → webp in sequence using a data attribute chain.
+     When one format 404s we move to the next; if all fail show initials. */
+  const formats = [basePath + '.jpg', basePath + '.png', basePath + '.webp'];
 
   return `
     <div class="tb-avatar tb-avatar-wrap" style="width:${sz}px;height:${sz}px;"
          aria-label="${tbEsc(profile.name || 'Candidate')} profile photo">
-      <picture>
-        <source srcset="${base}.webp" type="image/webp">
-        <source srcset="${base}.png"  type="image/png">
-        <img
-          src="${base}.jpg"
-          alt="${tbEsc(profile.name || '')}"
-          class="tb-avatar-img"
-          onerror="this.closest('picture').style.display='none';this.closest('.tb-avatar-wrap').querySelector('.tb-avatar-initials').style.display='flex';"
-        >
-      </picture>
+      <img
+        src="${formats[0]}"
+        data-fallbacks="${formats[1]}|${formats[2]}"
+        alt="${tbEsc(profile.name || '')}"
+        class="tb-avatar-img"
+        onerror="
+          var fb = this.dataset.fallbacks ? this.dataset.fallbacks.split('|') : [];
+          if (fb.length) {
+            this.src = fb[0];
+            this.dataset.fallbacks = fb.slice(1).join('|');
+          } else {
+            this.style.display='none';
+            var wrap = this.closest('.tb-avatar-wrap');
+            if (wrap) { var sp = wrap.querySelector('.tb-avatar-initials'); if(sp) sp.style.display='flex'; }
+          }
+        "
+      >
       <span class="tb-avatar-initials" style="display:none;">${initials}</span>
     </div>
   `;
@@ -529,10 +548,13 @@ function tbOpenProfilePage(profile) {
 
   /* Avatar */
   const avatarEl = document.getElementById('tp-profile-avatar');
-  if (avatarEl) avatarEl.outerHTML = tbGetAvatarHTML(profile, 64).replace(
-    'class="tb-avatar tb-avatar-wrap"',
-    'class="tb-avatar tb-avatar-wrap" id="tp-profile-avatar"'
-  );
+  if (avatarEl) {
+    const newHTML = tbGetAvatarHTML(profile, 64).replace(
+      /class="tb-avatar tb-avatar-wrap"/,
+      'class="tb-avatar tb-avatar-wrap" id="tp-profile-avatar"'
+    );
+    avatarEl.outerHTML = newHTML;
+  }
 
   /* Name & role */
   const nameEl = document.getElementById('tp-profile-name');
