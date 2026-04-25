@@ -1740,11 +1740,12 @@ function updateJobPreview() {
   document.getElementById('prev-company').textContent = company || 'Company Name';
 
   const logoUrl  = document.getElementById('pj-logo-url')?.value.trim() || '';
+  const company  = document.getElementById('pj-company')?.value || '';
   const logoWrap = document.getElementById('prev-logo-wrap');
   if (logoWrap) {
-    logoWrap.innerHTML = logoUrl
-      ? (/^https?:\/\//i.test(logoUrl) ? '<img src="' + h(logoUrl) + '" class="job-card-logo" style="width:32px;height:32px">' : '<div class="job-card-logo-placeholder" style="width:32px;height:32px;font-size:13px">🏢</div>')
-      : '<div class="job-card-logo-placeholder" style="width:32px;height:32px;font-size:13px">🏢</div>';
+    logoWrap.innerHTML = logoUrl && /^https?:\/\//i.test(logoUrl)
+      ? '<img src="' + h(logoUrl) + '" class="job-card-logo" style="width:32px;height:32px">'
+      : getCompanyLogoHTML(company || 'Company', 32, 'job-card-logo');
   }
 
   const plan     = getSelectedPlan ? getSelectedPlan() : 'free';
@@ -3027,7 +3028,7 @@ function createJobCard(job, idx) {
   const initials = job.company.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
   const logoHTML = job.logo
     ? `<img class="js-logo" src="${escHtml(job.logo)}" alt="${escHtml(job.company)} logo" loading="lazy">`
-    : `<div class="js-logo-fallback" aria-hidden="true">${initials}</div>`;
+    : getCompanyLogoHTML(job.company, 56, 'js-logo');
 
   const typeClass = {
     'Remote':     'remote',
@@ -3201,7 +3202,7 @@ function openJobModal(job) {
   const initials = job.company.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
   document.getElementById('jd-logo-wrap').innerHTML = job.logo
     ? `<img class="js-logo" src="${escHtml(job.logo)}" alt="${escHtml(job.company)} logo" loading="lazy">`
-    : `<div class="js-logo-fallback" aria-hidden="true">${initials}</div>`;
+    : getCompanyLogoHTML(job.company, 52, 'js-logo');
   document.getElementById('jd-title').textContent   = job.title;
   document.getElementById('jd-company').textContent = job.company + (job.industry ? ' · ' + job.industry : '');
 
@@ -3323,7 +3324,7 @@ function openJobPage(job) {
   const initials = job.company.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   document.getElementById('jd-page-logo').innerHTML = job.logo
     ? '<img class="js-logo" src="'+escHtml(job.logo)+'" alt="'+escHtml(job.company)+' logo" loading="lazy">'
-    : '<div class="js-logo-fallback" aria-hidden="true">'+initials+'</div>';
+    : getCompanyLogoHTML(job.company, 64, 'js-logo');
   document.getElementById('jd-page-title').textContent   = job.title;
   document.getElementById('jd-page-company').textContent = job.company+(job.industry?' · '+job.industry:'');
   const typeClass={'Remote':'remote','Part-Time':'part','Internship':'intern','Contract':'contract'}[job.type]||'';
