@@ -292,6 +292,7 @@ function updateUnlockUI(count) {
    TRIGGER UNLOCK COMPLETE STATE
    ============================================================ */
 function triggerUnlockSuccess(type, onUnlock) {
+  trackShareUnlockCompleted(type); // ← ADD THIS LINE
   // Mark the unlock in session so the callback can re-enter showUnlockModal
   // without hitting the gate again (needed for the payment → download chain)
   consumeShareUnlock();   // resets localStorage count → 0, sets session flag
