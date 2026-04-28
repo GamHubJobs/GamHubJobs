@@ -1446,7 +1446,8 @@ async function submitJobPaymentForm(jobPayload, plan, amount) {
     input.value = entry[1];
     form.appendChild(input);
   });
-
+  
+  trackPaidJobPost(jobPayload.company, jobPayload.title, plan, amount); // ← ADD THIS LINE
   document.body.appendChild(form);
   toast('Redirecting to ModemPay payment… GMD ' + amount, 'gold', 2000);
   setTimeout(function() { form.submit(); }, 800);
