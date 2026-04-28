@@ -530,7 +530,8 @@ function wizardNext() {
   if (wizardStep === 1 && !wizardData.profession) { toast('Please select your profession first', 'error'); return; }
   if (wizardStep === 2 && !wizardData.palette)    { toast('Please choose a color palette', 'error'); return; }
   if (wizardStep === 3 && !wizardData.font)       { toast('Please select a font style', 'error'); return; }
-  if (wizardStep < 3) { goToWizardStep(wizardStep + 1); return; }
+ if (wizardStep < 3) { goToWizardStep(wizardStep + 1); return; }
+  trackCVBuilderStarted(wizardData.profession); // ← ADD THIS LINE
   showView('builder');
   toast('Design saved! Now fill in your details.', 'gold');
 }
@@ -982,6 +983,7 @@ function generateCV() {
   autoSave();
   const data = loadData('cvData');
   if (!data || !data.fullname.trim()) { toast('Please enter your full name before generating', 'error'); return; }
+  trackCVGenerated(wiz.profession); // ← ADD THIS LINE
   toast('CV generated! ✦', 'gold');
   showView('preview');
 }
@@ -2003,7 +2005,11 @@ async function finaliseDownload(token) {
       if (!error && data) {
         const type = data.payment_type || 'cv';
         toast('Payment confirmed! ✦ Starting your download…', 'success', 3000);
-        if (typeof trackCVDownload === 'function') trackCVDownload();
+        // Track paid revenue with correct amount
+        const prices = MODEMPAY_CONFIG.DOWNLOAD_PRICES;
+        if (type === 'cv')          trackPaidCVDownload(prices.cv);
+        else if (type === 'coverletter') trackPaidCoverLetterDownload(prices.coverletter);
+        else if (type === 'bundle') trackPaidBundleDownload(prices.bundle);
         showView(type === 'coverletter' ? 'coverletter' : 'preview');
         setTimeout(() => executePDFDownload(type), 1200);
         localStorage.removeItem('folio_pending_download');
@@ -3763,6 +3769,7 @@ async function aiWriteParagraph(type) {
 }
 
 async function aiWriteAll() {
+  trackAIWriteAll(); // ← ADD THIS LINE
   const btn = document.getElementById('ai-write-all-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Writing…';
@@ -3914,6 +3921,7 @@ function initAuth() {
     updateAuthUI();
 
     if (event === 'SIGNED_IN') {
+      trackUserLogin(); // ← ADD THIS LINE
       toast('Signed in as ' + (currentUser.email || 'user') + ' ✦', 'success', 4000);
       closeAuthModal();
       if (pendingAuthAction) {
@@ -4034,6 +4042,8 @@ async function sendMagicLink() {
 
     if (result.error) throw new Error(result.error.message);
 
+    trackUserRegistration(email); // ← ADD THIS LINE
+
     var stepEmail = document.getElementById('auth-step-email');
     var stepSent  = document.getElementById('auth-step-sent');
     var sentEmail = document.getElementById('auth-sent-email');
@@ -4111,6 +4121,7 @@ function initWACOverlay() {
 }
 
 function wacJoin() {
+  trackWhatsAppChannelJoin(); // ← ADD THIS LINE
   wacDismiss();
   window.open(WAC_CHANNEL_URL, '_blank', 'noopener,noreferrer');
 }
@@ -4336,42 +4347,259 @@ async function qaGenAchievement() {
 }
 
 /* ============================================================
-   GOOGLE ANALYTICS TRACKING
+   GOOGLE ANALYTICS TRACKING — EXTENDED
+   All monetary values are in GMD (Gambian Dalasi).
+   GA4 'value' parameter expects a number, currency a string.
    ============================================================ */
 
-/**
- * Track when a job detail page or modal is opened.
- * Called inside openJobPage() and openJobModal().
- */
+/* ── Helper: safely call gtag ── */
+function _gtag(eventName, params) {
+  if (typeof gtag === 'function') {
+    gtag('event', eventName, params || {});
+  }
+}
+
+/* ── Job viewed (detail page or modal opened) ── */
 function trackJobView(jobTitle) {
-  if (typeof gtag === 'function') {
-    gtag('event', 'job_view', {
-      job_title: jobTitle,
-    });
-  }
+  _gtag('job_view', {
+    job_title:  jobTitle,
+    event_category: 'engagement',
+  });
 }
 
-/**
- * Track when the Apply Now button is clicked.
- * Called inside applyNowEmail() before the mailto redirect.
- */
+/* ── Apply Now button clicked ── */
 function trackApply(jobTitle) {
-  if (typeof gtag === 'function') {
-    gtag('event', 'apply_click', {
-      job_title: jobTitle,
-    });
-  }
+  _gtag('apply_click', {
+    job_title:  jobTitle,
+    event_category: 'conversion',
+  });
 }
 
-/**
- * Track when a CV PDF download is initiated (free or paid).
- * Called inside downloadPDF() after the free-download check,
- * and inside finaliseDownload() after payment confirmation.
- */
+/* ── CV PDF downloaded (free) ── */
 function trackCVDownload() {
-  if (typeof gtag === 'function') {
-    gtag('event', 'cv_download');
-  }
+  _gtag('cv_download', {
+    download_type: 'cv',
+    event_category: 'downloads',
+    is_paid: false,
+  });
+}
+
+/* ── Cover Letter PDF downloaded (free) ── */
+function trackCoverLetterDownload() {
+  _gtag('cv_download', {
+    download_type: 'cover_letter',
+    event_category: 'downloads',
+    is_paid: false,
+  });
+}
+
+/* ── Bundle downloaded (free) ── */
+function trackBundleDownload() {
+  _gtag('cv_download', {
+    download_type: 'bundle',
+    event_category: 'downloads',
+    is_paid: false,
+  });
+}
+
+/* ── Paid CV download confirmed ── */
+function trackPaidCVDownload(amountGMD) {
+  _gtag('purchase', {
+    transaction_id: 'cv_dl_' + Date.now(),
+    value:          amountGMD,
+    currency:       'GMD',
+    items: [{
+      item_id:       'cv_download',
+      item_name:     'CV PDF Download',
+      item_category: 'downloads',
+      price:         amountGMD,
+      quantity:      1,
+    }],
+  });
+  /* Also fire a simpler custom event so Looker Studio can filter easily */
+  _gtag('paid_download', {
+    download_type:  'cv',
+    value:          amountGMD,
+    currency:       'GMD',
+    event_category: 'revenue',
+  });
+}
+
+/* ── Paid Cover Letter download confirmed ── */
+function trackPaidCoverLetterDownload(amountGMD) {
+  _gtag('purchase', {
+    transaction_id: 'cl_dl_' + Date.now(),
+    value:          amountGMD,
+    currency:       'GMD',
+    items: [{
+      item_id:       'coverletter_download',
+      item_name:     'Cover Letter PDF Download',
+      item_category: 'downloads',
+      price:         amountGMD,
+      quantity:      1,
+    }],
+  });
+  _gtag('paid_download', {
+    download_type:  'cover_letter',
+    value:          amountGMD,
+    currency:       'GMD',
+    event_category: 'revenue',
+  });
+}
+
+/* ── Paid Bundle download confirmed ── */
+function trackPaidBundleDownload(amountGMD) {
+  _gtag('purchase', {
+    transaction_id: 'bundle_dl_' + Date.now(),
+    value:          amountGMD,
+    currency:       'GMD',
+    items: [{
+      item_id:       'bundle_download',
+      item_name:     'CV + Cover Letter Bundle',
+      item_category: 'downloads',
+      price:         amountGMD,
+      quantity:      1,
+    }],
+  });
+  _gtag('paid_download', {
+    download_type:  'bundle',
+    value:          amountGMD,
+    currency:       'GMD',
+    event_category: 'revenue',
+  });
+}
+
+/* ── Free job listing submitted ── */
+function trackFreeJobPost(companyName, jobTitle) {
+  _gtag('job_posted', {
+    plan:           'free',
+    company:        companyName,
+    job_title:      jobTitle,
+    value:          0,
+    currency:       'GMD',
+    event_category: 'employer',
+  });
+}
+
+/* ── Paid job listing payment confirmed ── */
+function trackPaidJobPost(companyName, jobTitle, plan, amountGMD) {
+  _gtag('purchase', {
+    transaction_id: 'job_' + plan + '_' + Date.now(),
+    value:          amountGMD,
+    currency:       'GMD',
+    items: [{
+      item_id:       'job_listing_' + plan,
+      item_name:     plan.charAt(0).toUpperCase() + plan.slice(1) + ' Job Listing',
+      item_category: 'job_listings',
+      price:         amountGMD,
+      quantity:      1,
+    }],
+  });
+  _gtag('job_posted', {
+    plan:           plan,
+    company:        companyName,
+    job_title:      jobTitle,
+    value:          amountGMD,
+    currency:       'GMD',
+    event_category: 'revenue',
+  });
+}
+
+/* ── User registered (magic link sent = intent to register) ── */
+function trackUserRegistration(email) {
+  _gtag('sign_up', {
+    method:         'magic_link',
+    event_category: 'auth',
+  });
+  /* Custom event for easier dashboard filtering */
+  _gtag('user_registered', {
+    method:         'magic_link',
+    event_category: 'auth',
+  });
+}
+
+/* ── User signed in ── */
+function trackUserLogin() {
+  _gtag('login', {
+    method:         'magic_link',
+    event_category: 'auth',
+  });
+}
+
+/* ── CV builder started (entered wizard) ── */
+function trackCVBuilderStarted(profession) {
+  _gtag('cv_builder_started', {
+    profession:     profession || 'unknown',
+    event_category: 'engagement',
+  });
+}
+
+/* ── CV generated (hit Generate My CV) ── */
+function trackCVGenerated(profession) {
+  _gtag('cv_generated', {
+    profession:     profession || 'unknown',
+    event_category: 'engagement',
+  });
+}
+
+/* ── Cover letter generation started ── */
+function trackCoverLetterStarted() {
+  _gtag('cover_letter_started', {
+    event_category: 'engagement',
+  });
+}
+
+/* ── AI Write All clicked ── */
+function trackAIWriteAll() {
+  _gtag('ai_write_all', {
+    event_category: 'feature_usage',
+  });
+}
+
+/* ── Talent profile posted (free) ── */
+function trackTalentProfilePosted(category, plan) {
+  _gtag('talent_profile_posted', {
+    plan:           plan || 'free',
+    category:       category || 'unknown',
+    event_category: 'talent_board',
+  });
+}
+
+/* ── Paid talent profile confirmed ── */
+function trackPaidTalentProfile(amountGMD) {
+  _gtag('purchase', {
+    transaction_id: 'talent_' + Date.now(),
+    value:          amountGMD,
+    currency:       'GMD',
+    items: [{
+      item_id:       'featured_talent_profile',
+      item_name:     'Featured Talent Profile',
+      item_category: 'talent_board',
+      price:         amountGMD,
+      quantity:      1,
+    }],
+  });
+  _gtag('talent_profile_posted', {
+    plan:           'featured',
+    value:          amountGMD,
+    currency:       'GMD',
+    event_category: 'revenue',
+  });
+}
+
+/* ── WhatsApp channel join clicked ── */
+function trackWhatsAppChannelJoin() {
+  _gtag('whatsapp_channel_join', {
+    event_category: 'growth',
+  });
+}
+
+/* ── Share unlock completed (5 shares done) ── */
+function trackShareUnlockCompleted(type) {
+  _gtag('share_unlock_completed', {
+    unlock_type:    type,
+    event_category: 'growth',
+  });
 }
 
 /* ============================================================
