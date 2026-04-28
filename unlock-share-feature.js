@@ -608,7 +608,7 @@ async function _saveJobAndNotify(jobPayload) {
   if ((jobPayload.plan || 'free') === 'free') {
     freeListingRecordUsage('job');
   }
-
+  trackFreeJobPost(jobPayload.company, jobPayload.title); // ← ADD THIS LINE
   if (typeof updatePortalStats === 'function') updatePortalStats();
   setTimeout(() => sendJobNotificationWhatsApp(jobPayload, jobPayload.plan || 'free'), 600);
 }
