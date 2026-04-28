@@ -933,7 +933,8 @@ function tbFinaliseProfileSubmit(payload) {
   const successEl = document.getElementById('tp-page-success');
   if (formEl)    formEl.style.display    = 'none';
   if (successEl) successEl.style.display = '';
-
+   
+  trackTalentProfilePosted(payload.category, payload.plan); // ← ADD THIS LINE
   tbSendAdminNotification(payload);
   tbRenderProfiles(TB_PROFILES);
   tbToast('Profile posted! Employers can now find you ✦', 'success', 5000);
@@ -1469,6 +1470,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tbSaveLocalProfile(pending);
     tbLoadLocalProfiles();
+    trackPaidTalentProfile(TB_PLAN_PRICES.featured); // ← ADD THIS LINE
 
     // Navigate to talent board first
     if (typeof showView === 'function') showView('talent-board');
